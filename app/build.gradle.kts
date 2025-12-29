@@ -24,12 +24,21 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFile = System.getenv("STORE_FILE")?.let { file(it) } 
-                ?: file("${System.getProperty("user.home")}/key.jks")
-            val storePassword = System.getenv("STORE_PASSWORD") ?: ""
-            val keyAlias = System.getenv("KEY_ALIAS") ?: "pokemon_key"
-            val keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            // Try to load from local.properties first, then environment variables
+            val storeFilePath = System.getenv("STORE_FILE") 
+                ?: project.properties["STORE_FILE"]?.toString()
+                ?: "${System.getProperty("user.home")}/key.jks"
+            val storePassword = System.getenv("STORE_PASSWORD") 
+                ?: project.properties["STORE_PASSWORD"]?.toString() 
+                ?: ""
+            val keyAlias = System.getenv("KEY_ALIAS") 
+                ?: project.properties["KEY_ALIAS"]?.toString() 
+                ?: "pokemon_key"
+            val keyPassword = System.getenv("KEY_PASSWORD") 
+                ?: project.properties["KEY_PASSWORD"]?.toString() 
+                ?: ""
 
+            val storeFile = file(storeFilePath)
             if (storeFile.exists() && storePassword.isNotEmpty()) {
                 this.storeFile = storeFile
                 this.storePassword = storePassword

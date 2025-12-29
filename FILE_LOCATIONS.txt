@@ -1,0 +1,226 @@
+# 📍 Important File Locations
+
+## Your Project Structure
+
+```
+C:\Users\victo\Documents\TCG-MasterSet-Tracker\
+├── 📁 app/
+│   ├── 📁 src/main/
+│   │   ├── 📁 kotlin/...          Source code files
+│   │   └── 📁 res/                Resources (strings, colors, etc)
+│   ├── 📁 build/                  ← Build outputs (generated, don't commit)
+│   │   └── 📁 outputs/
+│   │       ├── 📁 bundle/
+│   │       │   └── 📁 release/
+│   │       │       └── ✅ app-release.aab ← YOUR RELEASE BUNDLE HERE!
+│   │       └── 📁 apk/
+│   │           └── 📁 release/
+│   │               └── app-release.apk
+│   └── build.gradle.kts
+├── 📁 docs/                       All documentation files
+│   ├── 00_START_HERE.md
+│   ├── BUILD_INSTRUCTIONS.md
+│   ├── MASTER_LAUNCH_CHECKLIST.md
+│   ├── READY_FOR_LAUNCH.md
+│   └── ... (27 more docs)
+├── README.md                      Top-level README with links
+├── build.gradle.kts               Root Gradle config
+├── gradle.properties              Gradle properties
+├── settings.gradle.kts            Module setup
+└── LICENSE                        MIT License
+```
+
+---
+
+## 🎯 Key File Locations for Publishing
+
+### 1. **Release Bundle (.aab)** ← For Google Play Store
+```
+📍 Location: app/build/outputs/bundle/release/app-release.aab
+⚠️  Does NOT exist yet - will be created when you build
+```
+
+### 2. **Signing Keystore** ← For signing the release
+```
+📍 Location: C:\Users\victo\key.jks
+⚠️  Does NOT exist yet - you'll create it with keytool
+```
+
+### 3. **Build Configuration** ← For signing setup
+```
+📍 Location: app/build.gradle.kts
+✅ Already configured and ready
+```
+
+### 4. **Documentation** ← All your guides
+```
+📍 Location: docs/ folder
+✅ All 27 guides organized here
+```
+
+---
+
+## 🚀 How to Generate the .aab File
+
+### Step 1: Generate Keystore (One Time)
+```powershell
+# Open PowerShell and run:
+$env:STORE_PASSWORD = "YourStrongPassword123!"
+$env:KEY_PASSWORD = "YourStrongPassword123!"
+
+keytool -genkey -v `
+  -keystore "$env:USERPROFILE\key.jks" `
+  -keyalg RSA `
+  -keysize 2048 `
+  -validity 10000 `
+  -alias pokemon_key `
+  -storepass $env:STORE_PASSWORD `
+  -keypass $env:KEY_PASSWORD `
+  -dname "CN=Your Name, O=Company, L=City, ST=State, C=Country"
+
+# This creates: C:\Users\victo\key.jks
+```
+
+### Step 2: Create local.properties
+```
+Create file: C:\Users\victo\Documents\TCG-MasterSet-Tracker\local.properties
+With content:
+STORE_FILE=C:\Users\victo\key.jks
+STORE_PASSWORD=YourStrongPassword123!
+KEY_ALIAS=pokemon_key
+KEY_PASSWORD=YourStrongPassword123!
+```
+
+### Step 3: Build Release Bundle
+```powershell
+# Set environment variables:
+$env:STORE_FILE = "C:\Users\victo\key.jks"
+$env:STORE_PASSWORD = "YourStrongPassword123!"
+$env:KEY_ALIAS = "pokemon_key"
+$env:KEY_PASSWORD = "YourStrongPassword123!"
+
+# Navigate to project:
+cd "C:\Users\victo\Documents\TCG-MasterSet-Tracker"
+
+# Build the bundle:
+./gradlew bundleRelease
+
+# This creates: app/build/outputs/bundle/release/app-release.aab
+```
+
+### Step 4: Find Your .aab File
+```powershell
+# After build completes, check:
+ls "C:\Users\victo\Documents\TCG-MasterSet-Tracker\app\build\outputs\bundle\release\"
+
+# You should see:
+# - app-release.aab (upload this to Google Play!)
+# - output-metadata.json
+```
+
+---
+
+## 📁 Clean Repository Structure
+
+### Before (Root had 27 markdown files)
+```
+TCG-MasterSet-Tracker/
+├── 00_START_HERE.md
+├── API_DOCUMENTATION.md
+├── BUILD_INSTRUCTIONS.md
+├── ... (24 more .md files)
+├── README.md
+├── LICENSE
+└── app/
+```
+
+### After (Clean root with /docs folder)
+```
+TCG-MasterSet-Tracker/
+├── 📁 docs/              ← All documentation organized here
+│   ├── 00_START_HERE.md
+│   ├── API_DOCUMENTATION.md
+│   ├── BUILD_INSTRUCTIONS.md
+│   └── ... (24 more files)
+├── README.md            ← Links to docs/
+├── LICENSE
+└── app/
+```
+
+---
+
+## 📂 Build Output Locations
+
+### Gradle Build Directory
+```
+app/build/
+├── outputs/
+│   ├── bundle/
+│   │   └── release/
+│   │       ├── app-release.aab  ← FOR GOOGLE PLAY STORE ✅
+│   │       └── output-metadata.json
+│   └── apk/
+│       ├── debug/
+│       │   └── app-debug.apk   ← FOR LOCAL TESTING
+│       └── release/
+│           └── app-release.apk  ← APK VERSION (optional)
+└── ... (other build files)
+```
+
+### Important: .gitignore Rules
+```
+The following are IGNORED (not committed):
+- app/build/ (all build outputs)
+- .gradle/  (gradle cache)
+- local.properties (your signing credentials)
+- *.jks (keystore files)
+```
+
+---
+
+## ✅ Next Steps
+
+1. **Read:** `docs/BUILD_INSTRUCTIONS.md`
+2. **Generate:** Keystore file using keytool
+3. **Create:** local.properties file
+4. **Build:** Release bundle with `./gradlew bundleRelease`
+5. **Find:** Your .aab at `app/build/outputs/bundle/release/app-release.aab`
+6. **Upload:** To Google Play Console
+
+---
+
+## 💾 Files to Backup
+
+⚠️ **CRITICAL - Back these up after generation:**
+
+1. **key.jks** (Keystore file)
+   - Location: `C:\Users\victo\key.jks`
+   - Backup to: External drive, cloud storage
+   - ⚠️ If lost, you can NEVER update your app on Google Play Store
+
+2. **Password**
+   - Store in: Password manager
+   - Never share or commit to Git
+
+3. **RELEASE APK/AAB**
+   - Location: `app/build/outputs/bundle/release/app-release.aab`
+   - Keep: For version history
+   - Auto-generated: No need to backup
+
+---
+
+## 🎯 Summary
+
+| Item | Location | Status |
+|------|----------|--------|
+| Source Code | `app/src/main/kotlin/` | ✅ Ready |
+| Documentation | `docs/` | ✅ Ready |
+| Build Config | `app/build.gradle.kts` | ✅ Ready |
+| Root README | `README.md` | ✅ Ready |
+| Release Bundle | `app/build/outputs/bundle/release/` | ⏳ Will create |
+| Keystore | `C:\Users\victo\key.jks` | ⏳ Will create |
+| local.properties | Project root | ⏳ Will create |
+
+---
+
+**Everything is organized and ready! Time to build your release! 🚀**
