@@ -26,12 +26,14 @@ class PokemonRepository @Inject constructor(
     suspend fun searchPokemonCards(pokemonName: String, language: String = "en"): List<Card> {
         return try {
             val query = buildCardQuery(pokemonName, language)
+            android.util.Log.d("PokemonRepository", "Searching cards with query: $query")
             val response = api.searchCards(query = query)
+            android.util.Log.d("PokemonRepository", "API response: ${response.cards.size} cards found")
             cardDao.insertCards(response.cards)
             response.cards
         } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
+            android.util.Log.e("PokemonRepository", "Error searching cards: ${e.message}", e)
+            throw e
         }
     }
 
@@ -172,7 +174,13 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        // Simplified query - just search by name
-        return "name:\"$pokemonName\""
+        // Query format for Pokemon TCG API: name:value language:code
+        // Examples: q=name:Pikachu language:en or q=name:Pikachu language:ja
+        val languageCode = when (language) {
+            "ja" -> "ja"
+            "en" -> "en"
+            else -> "en"
+        }
+        return "name:$pokemonName language:$languageCode"
     }
 }

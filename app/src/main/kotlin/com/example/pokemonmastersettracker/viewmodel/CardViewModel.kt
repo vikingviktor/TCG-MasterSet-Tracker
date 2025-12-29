@@ -34,10 +34,13 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
+                android.util.Log.d("CardViewModel", "Searching for: $pokemonName")
                 val cards = repository.searchPokemonCards(pokemonName, language)
+                android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
                 _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
             } catch (e: Exception) {
-                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+                android.util.Log.e("CardViewModel", "Search error: ${e.message}", e)
+                _cardUiState.value = CardUiState(error = "Error: ${e.message ?: "Unknown error"}")
             }
         }
     }
