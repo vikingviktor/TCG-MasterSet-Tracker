@@ -18,7 +18,9 @@ Track and manage your Pokemon Trading Card Game collection with ease.
 
 📋 **[Complete Checklist](docs/MASTER_LAUNCH_CHECKLIST.md)** - Step-by-step workflow for publishing
 
-📚 **[All Documentation](docs/)** - Browse all documentation files
+� **[Privacy Policy](docs/privacy-policy.html)** - Our privacy policy for the Play Store
+
+�📚 **[All Documentation](docs/)** - Browse all documentation files
 
 ---
 
