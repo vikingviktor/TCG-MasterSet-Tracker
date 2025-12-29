@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pokemon Master Set Tracker</string>
+    <string name="title_home">Home</string>
+    <string name="title_favorites">Favorites</string>
+    <string name="title_profile">Profile</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="search_pokemon">Search Pokemon</string>
+    <string name="view_cards">View Cards</string>
+    <string name="completion">Completion</string>
+    <string name="price">Price</string>
+    <string name="condition">Condition</string>
+    <string name="owned">Owned</string>
+    <string name="missing">Missing</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+</resources>
