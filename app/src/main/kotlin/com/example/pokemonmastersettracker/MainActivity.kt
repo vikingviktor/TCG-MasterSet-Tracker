@@ -20,13 +20,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.screens.CollectionScreen
 import com.example.pokemonmastersettracker.ui.screens.FavoritesScreen
 import com.example.pokemonmastersettracker.ui.screens.HomeScreen
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
-import com.example.pokemonmastersettracker.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -34,53 +33,53 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            PokemonTrackerApp()
+            PokemonTrackerAppScreen()
         }
     }
 }
 
 @Composable
-fun PokemonTrackerApp(
-    authViewModel: AuthViewModel = hiltViewModel()
-) {
+fun PokemonTrackerAppScreen() {
     // For testing, skip login and go straight to home
     // TODO: Implement proper user authentication when ready
     var currentScreen by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = PokemonColors.Background,
-        bottomBar = {
-            NavigationBar(
-                containerColor = PokemonColors.Surface,
-                contentColor = PokemonColors.OnSurface
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                    label = { Text("Home") },
-                    selected = currentScreen == 0,
-                    onClick = { currentScreen = 0 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection") },
-                    label = { Text("Collection") },
-                    selected = currentScreen == 1,
-                    onClick = { currentScreen = 1 }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Person, contentDescription = "Favorites") },
-                    label = { Text("Favorites") },
-                    selected = currentScreen == 2,
-                    onClick = { currentScreen = 2 }
-                )
+    MaterialTheme {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = PokemonColors.Background,
+            bottomBar = {
+                NavigationBar(
+                    containerColor = PokemonColors.Surface,
+                    contentColor = PokemonColors.OnSurface
+                ) {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
+                        label = { Text("Home") },
+                        selected = currentScreen == 0,
+                        onClick = { currentScreen = 0 }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection") },
+                        label = { Text("Collection") },
+                        selected = currentScreen == 1,
+                        onClick = { currentScreen = 1 }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Person, contentDescription = "Favorites") },
+                        label = { Text("Favorites") },
+                        selected = currentScreen == 2,
+                        onClick = { currentScreen = 2 }
+                    )
+                }
             }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            when (currentScreen) {
-                0 -> HomeScreen()
-                1 -> CollectionScreen(userId = "test-user")
-                2 -> FavoritesScreen(userId = "test-user")
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                when (currentScreen) {
+                    0 -> HomeScreen()
+                    1 -> CollectionScreen(userId = "test-user")
+                    2 -> FavoritesScreen(userId = "test-user")
+                }
             }
         }
     }
