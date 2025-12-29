@@ -3,6 +3,7 @@ package com.example.pokemonmastersettracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -15,7 +16,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -25,7 +25,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.screens.CollectionScreen
 import com.example.pokemonmastersettracker.ui.screens.FavoritesScreen
 import com.example.pokemonmastersettracker.ui.screens.HomeScreen
-import com.example.pokemonmastersettracker.ui.screens.LoginScreen
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,21 +43,9 @@ class MainActivity : ComponentActivity() {
 fun PokemonTrackerApp(
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    val authUiState by authViewModel.authUiState.collectAsState()
-
-    if (!authUiState.isLoggedIn) {
-        LoginScreen(
-            viewModel = authViewModel,
-            onLoginSuccess = { /* Navigate or update UI */ }
-        )
-    } else {
-        MainAppScreen(userId = authUiState.currentUser?.id ?: "")
-    }
-}
-
-@Composable
-fun MainAppScreen(userId: String) {
-    var selectedNavItem by remember { mutableIntStateOf(0) }
+    // For testing, skip login and go straight to home
+    // TODO: Implement proper user authentication when ready
+    var currentScreen by remember { mutableIntStateOf(0) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -69,53 +56,32 @@ fun MainAppScreen(userId: String) {
                 contentColor = PokemonColors.OnSurface
             ) {
                 NavigationBarItem(
-                    icon = {
-                        Icon(
-                            Icons.Filled.Home,
-                            contentDescription = "Home"
-                        )
-                    },
+                    icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
                     label = { Text("Home") },
-                    selected = selectedNavItem == 0,
-                    onClick = { selectedNavItem = 0 }
+                    selected = currentScreen == 0,
+                    onClick = { currentScreen = 0 }
                 )
-
                 NavigationBarItem(
-                    icon = {
-                        Icon(
-                            Icons.Filled.Favorite,
-                            contentDescription = "Favorites"
-                        )
-                    },
-                    label = { Text("Favorites") },
-                    selected = selectedNavItem == 1,
-                    onClick = { selectedNavItem = 1 }
-                )
-
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            Icons.Filled.Person,
-                            contentDescription = "Collection"
-                        )
-                    },
+                    icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection") },
                     label = { Text("Collection") },
-                    selected = selectedNavItem == 2,
-                    onClick = { selectedNavItem = 2 }
+                    selected = currentScreen == 1,
+                    onClick = { currentScreen = 1 }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Person, contentDescription = "Favorites") },
+                    label = { Text("Favorites") },
+                    selected = currentScreen == 2,
+                    onClick = { currentScreen = 2 }
                 )
             }
         }
     ) { paddingValues ->
-        when (selectedNavItem) {
-            0 -> HomeScreen(
-                onCardClick = { cardId ->
-                    // Handle card click - show details
-                }
-            )
-
-            1 -> FavoritesScreen(userId = userId)
-
-            2 -> CollectionScreen(userId = userId)
+        Box(modifier = Modifier.padding(paddingValues)) {
+            when (currentScreen) {
+                0 -> HomeScreen()
+                1 -> CollectionScreen(userId = "test-user")
+                2 -> FavoritesScreen(userId = "test-user")
+            }
         }
     }
 }
