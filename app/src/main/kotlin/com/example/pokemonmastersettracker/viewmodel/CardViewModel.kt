@@ -15,7 +15,8 @@ import javax.inject.Inject
 data class CardUiState(
     val cards: List<Card> = emptyList(),
     val loading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val selectedPokemonName: String? = null
 )
 
 @HiltViewModel
@@ -34,7 +35,7 @@ class CardViewModel @Inject constructor(
             _cardUiState.value = CardUiState(loading = true)
             try {
                 val cards = repository.searchPokemonCards(pokemonName, language)
-                _cardUiState.value = CardUiState(cards = cards)
+                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
             } catch (e: Exception) {
                 _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
             }
@@ -46,9 +47,21 @@ class CardViewModel @Inject constructor(
             _cardUiState.value = CardUiState(loading = true)
             try {
                 val cards = repository.getCardsByPokemonAndSet(pokemonName, setId)
-                _cardUiState.value = CardUiState(cards = cards)
+                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
             } catch (e: Exception) {
                 _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun selectPokemonCards(pokemonName: String) {
+        viewModelScope.launch {
+            _cardUiState.value = CardUiState(loading = true, selectedPokemonName = pokemonName)
+            try {
+                val cards = repository.searchPokemonCards(pokemonName)
+                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
+            } catch (e: Exception) {
+                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error", selectedPokemonName = pokemonName)
             }
         }
     }
@@ -59,5 +72,6 @@ class CardViewModel @Inject constructor(
 
     fun clearSelection() {
         _selectedCard.value = null
+        _cardUiState.value = CardUiState(selectedPokemonName = null)
     }
 }

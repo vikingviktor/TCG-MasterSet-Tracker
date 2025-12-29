@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 object PokemonColors {
     val Primary = Color(0xFFFF5722)
     val PrimaryDark = Color(0xFFE64A19)
+    val Secondary = Color(0xFF2196F3)
     val Accent = Color(0xFFFFEB3B)
     val Background = Color(0xFFFAFAFA)
     val Surface = Color(0xFFFFFFFF)
