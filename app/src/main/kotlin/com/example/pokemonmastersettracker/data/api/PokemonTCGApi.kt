@@ -18,7 +18,7 @@ interface PokemonTCGApi {
      * @param pageSize Number of cards per page
      * @param page Page number for pagination
      */
-    @GET("cards")
+    @GET("cards/all")
     suspend fun searchCards(
         @Query("q") query: String? = null,
         @Query("pageSize") pageSize: Int = 250,

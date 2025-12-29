@@ -174,13 +174,6 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        // Query format for Pokemon TCG API: name:value language:code
-        // Examples: q=name:Pikachu language:en or q=name:Pikachu language:ja
-        val languageCode = when (language) {
-            "ja" -> "ja"
-            "en" -> "en"
-            else -> "en"
-        }
-        return "name:$pokemonName language:$languageCode"
+        return "name:$pokemonName lang:$language"
     }
 }

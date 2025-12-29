@@ -30,12 +30,12 @@ class CardViewModel @Inject constructor(
     private val _selectedCard = MutableStateFlow<Card?>(null)
     val selectedCard: StateFlow<Card?> = _selectedCard.asStateFlow()
 
-    fun searchPokemonCards(pokemonName: String, language: String = "en") {
+    fun searchPokemonCards(pokemonName: String) {
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
                 android.util.Log.d("CardViewModel", "Searching for: $pokemonName")
-                val cards = repository.searchPokemonCards(pokemonName, language)
+                val cards = repository.searchPokemonCards(pokemonName)
                 android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
                 _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
             } catch (e: Exception) {
