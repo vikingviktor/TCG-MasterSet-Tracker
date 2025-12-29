@@ -172,10 +172,7 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        return when (language) {
-            "ja" -> "name:$pokemonName (set.printedTotal >= 1 AND language:ja)"
-            "en" -> "name:$pokemonName (set.printedTotal >= 1 AND language:en)"
-            else -> "name:$pokemonName"
-        }
+        // Simplified query - just search by name
+        return "name:\"$pokemonName\""
     }
 }
