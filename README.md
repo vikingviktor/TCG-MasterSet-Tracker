@@ -207,3 +207,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [PokemonTCG.io](https://pokemontcg.io) for the comprehensive API
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) for the modern UI toolkit
 - [Coil](https://coil-kt.github.io/coil/) for image loading
+=======
+# TCG-MasterSet-Tracker
+Track your Pokemon TCG card collection with ease
+>>>>>>> f45f57942c5162cddf34481037103dc4c6b896b7

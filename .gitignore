@@ -1,13 +1,122 @@
-.gradle
-.idea
-*.iml
-*.apk
-*.aar
-.DS_Store
+# Gradle
+.gradle/
 build/
-captures/
-.externalNativeBuild
-.cxx
+*.apk
+*.aab
+*.jks
+*.keystore
+*.ks
+
+# Android Studio
+.idea/
+.DS_Store
+*.iml
+*.swp
+*.swo
+*~
+.classpath
+.project
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Local configuration file
 local.properties
+secrets.properties
+
+# IDE
 .vscode/
+*.code-workspace
+*.sublime-project
+
+# Build files
+bin/
+gen/
+out/
+
+# Signing files (NEVER commit these)
+*.jks
+*.keystore
+key.jks
+signing/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
 *.log
+logs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Kotlin
+*.kt.bak
+*.kts.bak
+
+# Generated files
+captures/
+lint-baseline.xml
+
+# Android lint
+lint-results.xml
+lint-results-*.xml
+
+# Navigation
+.navigation
+
+# Crashes
+crash_log/
+
+# User-specific stuff
+.gradle
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/libraries
+.idea/shelf
+.idea/caches
+.idea/modules.xml
+.idea/vcs.xml
+.idea/misc.xml
+
+# Keystore files
+*.jks
+*.jkstore
+*.p12
+
+# Application certificates
+*.p8
+*.p12
+*.pem
+*.key
+
+# Google Play
+google-play-api.json
+play_key.json
+
+# Firebase
+google-services.json
+firebase-debug.log
+
+# Sensitive information
+secrets/
+.secrets/
+private/
+
+# Build artifacts
+app/release/
+app/debug/
