@@ -17,7 +17,7 @@ Track and manage your Pokemon Trading Card Game collection with ease.
 🚀 **[Ready to Launch?](docs/READY_FOR_LAUNCH.md)** - Want to publish to Google Play Store?
 
 📋 **[Complete Checklist](docs/MASTER_LAUNCH_CHECKLIST.md)** - Step-by-step workflow for publishing
-
+✅ **[Play Store Submission](docs/GOOGLE_PLAY_SUBMISSION_CHECKLIST.md)** - Complete checklist with all required information
 � **[Privacy Policy](docs/privacy-policy.html)** - Our privacy policy for the Play Store
 
 �📚 **[All Documentation](docs/)** - Browse all documentation files
