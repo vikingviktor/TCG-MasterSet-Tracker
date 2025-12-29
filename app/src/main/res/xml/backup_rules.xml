@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- TODO: Remove the following rules once the target API level of your app is 31+ -->
+    <!--
+    <include domain="sharedpref" path="."/>
+    <include domain="database" path="."/>
+    -->
+</full-backup-content>

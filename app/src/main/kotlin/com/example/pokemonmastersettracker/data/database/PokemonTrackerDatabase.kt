@@ -9,9 +9,7 @@ import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
 import com.example.pokemonmastersettracker.data.models.User
-import com.example.pokemonmastersettracker.utils.CardImageTypeConverter
-import com.example.pokemonmastersettracker.utils.TCGPlayerDataTypeConverter
-import com.example.pokemonmastersettracker.utils.PriceDataTypeConverter
+import com.example.pokemonmastersettracker.data.converters.TypeConverters as RoomTypeConverters
 
 @Database(
     entities = [
@@ -23,11 +21,7 @@ import com.example.pokemonmastersettracker.utils.PriceDataTypeConverter
     version = 1,
     exportSchema = false
 )
-@TypeConverters(
-    CardImageTypeConverter::class,
-    TCGPlayerDataTypeConverter::class,
-    PriceDataTypeConverter::class
-)
+@TypeConverters(RoomTypeConverters::class)
 abstract class PokemonTrackerDatabase : RoomDatabase() {
     
     abstract fun cardDao(): CardDao
