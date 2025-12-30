@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pokemonmastersettracker"
+    namespace = "com.mastersettracker.pokemon"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.pokemonmastersettracker"
+        applicationId = "com.mastersettracker.pokemon"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
