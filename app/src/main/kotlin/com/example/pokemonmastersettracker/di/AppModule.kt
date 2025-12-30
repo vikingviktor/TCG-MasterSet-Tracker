@@ -13,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -67,7 +68,7 @@ object AppModule {
         val apiKeyInterceptor = Interceptor { chain ->
             val originalRequest = chain.request()
             val requestWithApiKey = originalRequest.newBuilder()
-                .header("X-Api-Key", "YOUR_API_KEY_HERE") // Optional: Get free key from https://dev.pokemontcg.io/
+                .header("X-Api-Key", "99c671d7-ddc9-44c8-a843-d128e8596463")
                 .build()
             chain.proceed(requestWithApiKey)
         }
