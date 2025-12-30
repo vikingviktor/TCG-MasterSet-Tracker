@@ -63,7 +63,17 @@ object AppModule {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
+        // API Key interceptor for Pokemon TCG API
+        val apiKeyInterceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+            val requestWithApiKey = originalRequest.newBuilder()
+                .header("X-Api-Key", "YOUR_API_KEY_HERE") // Optional: Get free key from https://dev.pokemontcg.io/
+                .build()
+            chain.proceed(requestWithApiKey)
+        }
+
         return OkHttpClient.Builder()
+            .addInterceptor(apiKeyInterceptor)
             .addInterceptor(loggingInterceptor)
             .callTimeout(60, TimeUnit.SECONDS)
             .connectTimeout(60, TimeUnit.SECONDS)
