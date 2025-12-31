@@ -10,7 +10,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.pokemontcg.mastersettracker"
+        applicationId = "com.mastersettracker.pokemon"
         minSdk = 24
         targetSdk = 35
         versionCode = 3
