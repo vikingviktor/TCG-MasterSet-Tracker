@@ -3,3 +3,38 @@
 -keep class retrofit2.** { *; }
 -keep class com.google.gson.** { *; }
 -keep class androidx.** { *; }
+
+# Gson specific rules
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# Keep all model classes for Gson
+-keep class com.example.pokemonmastersettracker.data.models.** { *; }
+
+# Retrofit
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeInvisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes RuntimeInvisibleParameterAnnotations
+
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+-dontwarn javax.annotation.**
+-dontwarn kotlin.Unit
+-dontwarn retrofit2.KotlinExtensions
+-dontwarn retrofit2.KotlinExtensions$*
+
+# OkHttp
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+
+# Room
+-keep class * extends androidx.room.RoomDatabase
+-dontwarn androidx.room.paging.**
