@@ -14,11 +14,21 @@
 # Keep all model classes for Gson
 -keep class com.example.pokemonmastersettracker.data.models.** { *; }
 
-# Retrofit
+# Retrofit - CRITICAL: Keep generic signatures for API methods
 -keepattributes RuntimeVisibleAnnotations
 -keepattributes RuntimeInvisibleAnnotations
 -keepattributes RuntimeVisibleParameterAnnotations
 -keepattributes RuntimeInvisibleParameterAnnotations
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+# Keep Retrofit API interfaces and all their methods
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+# Keep API service interface methods
+-keep interface com.example.pokemonmastersettracker.data.api.** { *; }
 
 -keepclassmembers,allowshrinking,allowobfuscation interface * {
     @retrofit2.http.* <methods>;
@@ -38,3 +48,7 @@
 # Room
 -keep class * extends androidx.room.RoomDatabase
 -dontwarn androidx.room.paging.**
+
+# Kotlin serialization
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.AnnotationsKt
