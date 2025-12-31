@@ -61,7 +61,7 @@ object AppModule {
     @Provides
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.BASIC // Changed from BODY to reduce overhead
         }
 
         // API Key interceptor for Pokemon TCG API
@@ -70,16 +70,28 @@ object AppModule {
             val requestWithApiKey = originalRequest.newBuilder()
                 .header("X-Api-Key", "99c671d7-ddc9-44c8-a843-d128e8596463")
                 .build()
-            chain.proceed(requestWithApiKey)
+            android.util.Log.d("OkHttp", "Making request to: ${requestWithApiKey.url}")
+            val startTime = System.currentTimeMillis()
+            try {
+                val response = chain.proceed(requestWithApiKey)
+                val duration = System.currentTimeMillis() - startTime
+                android.util.Log.d("OkHttp", "Request completed in ${duration}ms with code ${response.code}")
+                response
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                android.util.Log.e("OkHttp", "Request failed after ${duration}ms: ${e.message}")
+                throw e
+            }
         }
 
         return OkHttpClient.Builder()
             .addInterceptor(apiKeyInterceptor)
             .addInterceptor(loggingInterceptor)
-            .callTimeout(60, TimeUnit.SECONDS)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(120, TimeUnit.SECONDS)     // Increased to 2 minutes
+            .connectTimeout(30, TimeUnit.SECONDS)    // 30 seconds to establish connection
+            .readTimeout(120, TimeUnit.SECONDS)      // 2 minutes to read response
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)          // Auto retry on connection failure
             .build()
     }
 
