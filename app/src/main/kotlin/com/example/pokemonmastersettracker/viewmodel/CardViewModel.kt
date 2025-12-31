@@ -39,8 +39,11 @@ class CardViewModel @Inject constructor(
                 android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
                 _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
             } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Search error: ${e.message}", e)
-                _cardUiState.value = CardUiState(error = "Error: ${e.message ?: "Unknown error"}")
+                val errorType = e.javaClass.simpleName
+                val errorLocation = e.stackTrace.firstOrNull()?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "Unknown"
+                val detailedError = "$errorType: ${e.message}\nAt: $errorLocation"
+                android.util.Log.e("CardViewModel", "Search error:\n${e.stackTraceToString()}")
+                _cardUiState.value = CardUiState(error = "Error:$detailedError")
             }
         }
     }

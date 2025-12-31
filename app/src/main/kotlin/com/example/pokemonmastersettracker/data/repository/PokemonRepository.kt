@@ -29,11 +29,20 @@ class PokemonRepository @Inject constructor(
             android.util.Log.d("PokemonRepository", "Searching cards with query: $query")
             val response = api.searchCards(query = query)
             android.util.Log.d("PokemonRepository", "API response: ${response.cards.size} cards found")
+            android.util.Log.d("PokemonRepository", "Starting to insert cards into database...")
             cardDao.insertCards(response.cards)
+            android.util.Log.d("PokemonRepository", "Cards inserted successfully")
             response.cards
         } catch (e: Exception) {
-            android.util.Log.e("PokemonRepository", "Error searching cards: ${e.message}", e)
-            throw e
+            val errorDetails = """
+                Error Type: ${e.javaClass.simpleName}
+                Message: ${e.message}
+                Cause: ${e.cause?.message}
+                Stack Trace:
+                ${e.stackTraceToString()}
+            """.trimIndent()
+            android.util.Log.e("PokemonRepository", "Error searching cards:\n$errorDetails")
+            throw Exception("${e.javaClass.simpleName}: ${e.message}\nAt: ${e.stackTrace.firstOrNull()}", e)
         }
     }
 
