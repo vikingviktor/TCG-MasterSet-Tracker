@@ -39,11 +39,18 @@ class CardViewModel @Inject constructor(
                 android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
                 _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
             } catch (e: Exception) {
-                val errorType = e.javaClass.simpleName
-                val errorLocation = e.stackTrace.firstOrNull()?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "Unknown"
-                val detailedError = "$errorType: ${e.message}\nAt: $errorLocation"
+                val userMessage = when {
+                    e.message?.contains("504") == true -> "Pokemon TCG API is slow. Please try again."
+                    e.message?.contains("timeout") == true -> "Request timed out. Check your internet connection."
+                    e.message?.contains("Unable to resolve host") == true -> "No internet connection."
+                    else -> {
+                        val errorType = e.javaClass.simpleName
+                        val errorLocation = e.stackTrace.firstOrNull()?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "Unknown"
+                        "$errorType: ${e.message}\nAt: $errorLocation"
+                    }
+                }
                 android.util.Log.e("CardViewModel", "Search error:\n${e.stackTraceToString()}")
-                _cardUiState.value = CardUiState(error = "Error:$detailedError")
+                _cardUiState.value = CardUiState(error = "Error:$userMessage")
             }
         }
     }

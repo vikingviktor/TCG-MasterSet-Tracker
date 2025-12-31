@@ -21,7 +21,7 @@ interface PokemonTCGApi {
     @GET("cards")
     suspend fun searchCards(
         @Query("q") query: String? = null,
-        @Query("pageSize") pageSize: Int = 250,
+        @Query("pageSize") pageSize: Int = 50,
         @Query("page") page: Int = 1
     ): CardResponse
 

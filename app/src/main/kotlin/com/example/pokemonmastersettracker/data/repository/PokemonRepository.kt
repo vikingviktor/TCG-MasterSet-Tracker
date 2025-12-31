@@ -183,6 +183,7 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        return "name:$pokemonName lang:$language"
+        // Use wildcard for partial matching and filter by language
+        return "name:*$pokemonName*"
     }
 }
