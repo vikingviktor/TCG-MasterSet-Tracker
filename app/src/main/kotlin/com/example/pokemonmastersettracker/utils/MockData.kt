@@ -1,4 +1,5 @@
 import com.example.pokemonmastersettracker.data.models.Card
+import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.CardCondition
 
@@ -17,7 +18,7 @@ object MockData {
             hp = "45",
             types = listOf("Electric"),
             rarity = rarity,
-            set = "sv04pt",
+            set = CardSet(id = "sv04pt", name = "Paradox Rift", series = "Scarlet & Violet", total = 182),
             image = null,
             number = number,
             artist = "Ken Sugimori",

@@ -59,7 +59,7 @@ data class Card(
             hp: String? = null,
             types: List<String>? = null,
             rarity: String? = null,
-            set: String? = null,
+            set: CardSet? = null,
             image: CardImage? = null,
             number: String? = null,
             artist: String? = null,
