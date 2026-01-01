@@ -35,9 +35,9 @@ data class Card(
     val rarity: String?,
     
     @SerializedName("set")
-    val set: String?, // Set ID
+    val set: CardSet?,
     
-    @SerializedName("image")
+    @SerializedName("images")
     val image: CardImage?,
     
     @SerializedName("number")
@@ -74,6 +74,20 @@ data class CardImage(
     
     @SerializedName("large")
     val large: String?
+)
+
+data class CardSet(
+    @SerializedName("id")
+    val id: String,
+    
+    @SerializedName("name")
+    val name: String?,
+    
+    @SerializedName("series")
+    val series: String?,
+    
+    @SerializedName("total")
+    val total: Int?
 )
 
 data class TCGPlayerData(
