@@ -51,11 +51,16 @@ import coil.compose.AsyncImage
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
+import com.example.pokemonmastersettracker.viewmodel.CardSortOption
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import kotlinx.coroutines.launch
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: CardViewModel = hiltViewModel(),
@@ -68,6 +73,7 @@ fun HomeScreen(
     var isCardOwned by remember { mutableStateOf(false) }
     var isCardInWishlist by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableIntStateOf(0) } // Trigger for refreshing card states
+    var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Show dialog when a card is selected
@@ -547,6 +553,51 @@ fun CardDetailView(
                             fontWeight = if (pageSize == size) FontWeight.Bold else FontWeight.Normal
                         )
                     }
+                }
+            }
+        }
+        
+        // Sort options
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Sort:",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+            
+            val sortOptions = listOf(
+                CardSortOption.NONE to "None",
+                CardSortOption.SET_NAME to "Set",
+                CardSortOption.PRICE_LOW to "Price↑",
+                CardSortOption.PRICE_HIGH to "Price↓",
+                CardSortOption.RARITY to "Rarity",
+                CardSortOption.CARD_NUMBER to "Number"
+            )
+            
+            sortOptions.forEach { (option, label) ->
+                OutlinedButton(
+                    onClick = { viewModel.setSortOption(option) },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (viewModel.cardUiState.value.sortOption == option) 
+                            PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                        contentColor = if (viewModel.cardUiState.value.sortOption == option) 
+                            PokemonColors.Primary else Color.Gray
+                    ),
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 11.sp,
+                        fontWeight = if (viewModel.cardUiState.value.sortOption == option) 
+                            FontWeight.Bold else FontWeight.Normal
+                    )
                 }
             }
         }

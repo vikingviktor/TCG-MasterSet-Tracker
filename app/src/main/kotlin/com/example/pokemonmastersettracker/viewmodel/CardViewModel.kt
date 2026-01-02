@@ -13,6 +13,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class CardSortOption {
+    NONE,           // Default - no sorting
+    SET_NAME,       // Sort by set name (alphabetical)
+    PRICE_LOW,      // Sort by price (low to high)
+    PRICE_HIGH,     // Sort by price (high to low)
+    RARITY,         // Sort by rarity
+    CARD_NUMBER     // Sort by card number
+}
+
 data class CardUiState(
     val pokemonList: List<Pokemon> = emptyList(), // Pokemon from local database
     val cards: List<Card> = emptyList(),
@@ -24,7 +33,8 @@ data class CardUiState(
     val hasMorePages: Boolean = false,
     val pageSize: Int = 25,
     val lastQuery: String? = null, // For debugging - shows the actual query used
-    val debugInfo: String? = null // For debugging - shows diagnostic information
+    val debugInfo: String? = null, // For debugging - shows diagnostic information
+    val sortOption: CardSortOption = CardSortOption.NONE
 )
 
 @HiltViewModel
@@ -97,27 +107,38 @@ class CardViewModel @Inject constructor(
                 loading = true, 
                 selectedPokemonName = pokemonName,
                 lastQuery = queryInfo,
-                debugInfo = "Searching: $pokemonName | Query: $queryInfo | Page: $page"
+                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize"
             )
             try {
-                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (languages: $languages, page: $page)")
+                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize)")
                 
-                // Fetch cards for all selected languages
-                val allCards = mutableListOf<Card>()
-                for (language in languages) {
-                    val cards = repository.searchPokemonCardsWithPagination(pokemonName, language, page, pageSize)
-                    allCards.addAll(cards)
-                }
+                // The Pokemon TCG API returns ALL cards (English, Japanese, etc.) in one query
+                // pageSize controls how many cards per page
+                // page controls which page of results to fetch
+                val cards = repository.searchPokemonCardsWithPagination(
+                    pokemonName, 
+                    "en", // Language param is not used by API, but required by signature
+                    page, 
+                    pageSize
+                )
                 
-                android.util.Log.d("CardViewModel", "Loaded ${allCards.size} cards")
+                android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards for page $page")
                 
                 // Save the first card's image to Pokemon entity for future searches
-                allCards.firstOrNull()?.image?.small?.let { imageUrl ->
+                cards.firstOrNull()?.image?.small?.let { imageUrl ->
                     repository.updatePokemonImage(pokemonName, imageUrl)
                     android.util.Log.d("CardViewModel", "Saved image for $pokemonName")
                 }
                 
-                val hasMore = allCards.size >= pageSize * languages.size
+                // If we got exactly pageSize cards, there might be more
+                val hasMore = cards.size >= pageSize
+                
+                // If loading more pages (page > 1), append to existing cards
+                val allCards = if (page > 1) {
+                    _cardUiState.value.allCards + cards
+                } else {
+                    cards
+                }
                 
                 _cardUiState.value = _cardUiState.value.copy(
                     cards = allCards,
@@ -127,7 +148,7 @@ class CardViewModel @Inject constructor(
                     currentPage = page,
                     hasMorePages = hasMore,
                     pageSize = pageSize,
-                    debugInfo = "✓ Loaded ${allCards.size} cards for $pokemonName"
+                    debugInfo = "✓ Loaded ${cards.size} cards for page $page (Total: ${allCards.size})"
                 )
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
@@ -158,6 +179,40 @@ class CardViewModel @Inject constructor(
             // Reset to page 1 when changing page size
             selectPokemonCards(pokemonName, languages, 1, newPageSize)
         }
+    }
+    
+    fun setSortOption(sortOption: CardSortOption) {
+        val currentCards = _cardUiState.value.allCards
+        val sortedCards = when (sortOption) {
+            CardSortOption.NONE -> currentCards
+            CardSortOption.SET_NAME -> currentCards.sortedBy { it.set?.name ?: "" }
+            CardSortOption.PRICE_LOW -> currentCards.sortedBy { 
+                it.tcgplayer?.prices?.get("normal")?.market ?: it.tcgplayer?.prices?.get("holofoil")?.market ?: Double.MAX_VALUE
+            }
+            CardSortOption.PRICE_HIGH -> currentCards.sortedByDescending { 
+                it.tcgplayer?.prices?.get("normal")?.market ?: it.tcgplayer?.prices?.get("holofoil")?.market ?: 0.0
+            }
+            CardSortOption.RARITY -> {
+                val rarityOrder = mapOf(
+                    "Common" to 1,
+                    "Uncommon" to 2,
+                    "Rare" to 3,
+                    "Rare Holo" to 4,
+                    "Rare Ultra" to 5,
+                    "Rare Secret" to 6
+                )
+                currentCards.sortedBy { rarityOrder[it.rarity] ?: 999 }
+            }
+            CardSortOption.CARD_NUMBER -> currentCards.sortedBy { 
+                it.number?.toIntOrNull() ?: Int.MAX_VALUE
+            }
+        }
+        
+        _cardUiState.value = _cardUiState.value.copy(
+            cards = sortedCards,
+            allCards = sortedCards,
+            sortOption = sortOption
+        )
     }
 
     fun getCardsByPokemonAndSet(pokemonName: String, setId: String) {

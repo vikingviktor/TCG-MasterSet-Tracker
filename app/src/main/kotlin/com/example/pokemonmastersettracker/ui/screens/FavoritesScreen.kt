@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,11 +18,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,10 +46,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
+import com.example.pokemonmastersettracker.viewmodel.CardSortOption
 import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
     viewModel: CardViewModel = hiltViewModel(),
@@ -55,6 +63,7 @@ fun FavoritesScreen(
     var isCardOwned by remember { mutableStateOf(false) }
     var isCardInWishlist by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableIntStateOf(0) }
+    var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
@@ -151,30 +160,90 @@ fun FavoritesScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Sort options
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        items(cardUiState.cards) { card ->
-                            var cardOwned by remember { mutableStateOf(false) }
-                            
-                            LaunchedEffect(card.id, refreshTrigger) {
-                                cardOwned = viewModel.isCardOwned(card.id)
+                        Text(
+                            text = "Sort:",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        
+                        val sortOptions = listOf(
+                            CardSortOption.NONE to "None",
+                            CardSortOption.SET_NAME to "Set",
+                            CardSortOption.PRICE_LOW to "Price↑",
+                            CardSortOption.PRICE_HIGH to "Price↓",
+                            CardSortOption.RARITY to "Rarity",
+                            CardSortOption.CARD_NUMBER to "Number"
+                        )
+                        
+                        sortOptions.forEach { (option, label) ->
+                            OutlinedButton(
+                                onClick = { viewModel.setSortOption(option) },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (cardUiState.sortOption == option) 
+                                        PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                                    contentColor = if (cardUiState.sortOption == option) 
+                                        PokemonColors.Primary else Color.Gray
+                                ),
+                                modifier = Modifier.height(32.dp),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (cardUiState.sortOption == option) 
+                                        FontWeight.Bold else FontWeight.Normal
+                                )
                             }
-                            
-                            CardItem(
-                                card = card,
-                                isOwned = cardOwned,
-                                onCardClick = {
-                                    selectedCardForDialog = card
-                                    scope.launch {
-                                        isCardOwned = viewModel.isCardOwned(card.id)
-                                        isCardInWishlist = viewModel.isInWishlist(card.id)
-                                    }
-                                },
-                                onFavoriteToggle = { /* Handle favorite toggle */ }
-                            )
+                        }
+                    }
+                    
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            scope.launch {
+                                isRefreshing = true
+                                cardUiState.selectedPokemonName?.let { pokemonName ->
+                                    viewModel.selectPokemonCards(pokemonName)
+                                }
+                                refreshTrigger++
+                                delay(500)
+                                isRefreshing = false
+                            }
+                        }
+                    ) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(cardUiState.cards) { card ->
+                                var cardOwned by remember { mutableStateOf(false) }
+                                
+                                LaunchedEffect(card.id, refreshTrigger) {
+                                    cardOwned = viewModel.isCardOwned(card.id)
+                                }
+                                
+                                CardItem(
+                                    card = card,
+                                    isOwned = cardOwned,
+                                    onCardClick = {
+                                        selectedCardForDialog = card
+                                        scope.launch {
+                                            isCardOwned = viewModel.isCardOwned(card.id)
+                                            isCardInWishlist = viewModel.isInWishlist(card.id)
+                                        }
+                                    },
+                                    onFavoriteToggle = { /* Handle favorite toggle */ }
+                                )
+                            }
                         }
                     }
                 }
@@ -200,22 +269,35 @@ fun FavoritesScreen(
             }
 
             else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        scope.launch {
+                            isRefreshing = true
+                            viewModel.loadFavorites()
+                            refreshTrigger++
+                            delay(500)
+                            isRefreshing = false
+                        }
+                    }
                 ) {
-                    items(cardUiState.pokemonList.size) { index ->
-                        val pokemon = cardUiState.pokemonList[index]
-                        FavoritePokemonCard(
-                            pokemonName = pokemon.name,
-                            imageUrl = pokemon.imageUrl,
-                            onRemove = {
-                                viewModel.toggleFavorite(pokemon.name)
-                                viewModel.loadFavorites() // Refresh list
-                            },
-                            onViewCards = {
-                                viewModel.selectPokemonCards(pokemon.name)
-                            }
-                        )
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(cardUiState.pokemonList.size) { index ->
+                            val pokemon = cardUiState.pokemonList[index]
+                            FavoritePokemonCard(
+                                pokemonName = pokemon.name,
+                                imageUrl = pokemon.imageUrl,
+                                onRemove = {
+                                    viewModel.toggleFavorite(pokemon.name)
+                                    viewModel.loadFavorites() // Refresh list
+                                },
+                                onViewCards = {
+                                    viewModel.selectPokemonCards(pokemon.name)
+                                }
+                            )
+                        }
                     }
                 }
             }

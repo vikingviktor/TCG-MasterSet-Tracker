@@ -323,12 +323,10 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        // The Pokemon TCG API uses the format: name:pokemonname*
-        // We need to handle special characters properly
-        // Remove quotes from Pokemon names and use wildcard for better matching
+        // The Pokemon TCG API doesn't filter by language in the query
+        // Instead, it returns cards from all sets (English, Japanese, etc.)
+        // Cards are distinguished by their set.id
         val cleanName = pokemonName.trim()
-        
-        // Try without quotes first - the API might work better this way
         return "name:$cleanName*"
     }
     

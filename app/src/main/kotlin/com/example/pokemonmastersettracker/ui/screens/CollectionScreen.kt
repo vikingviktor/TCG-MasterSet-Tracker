@@ -48,9 +48,13 @@ import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import com.example.pokemonmastersettracker.viewmodel.UserCollectionViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.math.RoundingMode
 import java.text.DecimalFormat
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollectionScreen(
     viewModel: UserCollectionViewModel = hiltViewModel(),
@@ -63,6 +67,8 @@ fun CollectionScreen(
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
     var isCardOwned by remember { mutableStateOf(false) }
     var isCardInWishlist by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableIntStateOf(0) }
+    var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Initialize the collection viewModel with userId
@@ -76,7 +82,10 @@ fun CollectionScreen(
             card = card,
             isOwned = isCardOwned,
             isInWishlist = isCardInWishlist,
-            onDismiss = { selectedCardForDialog = null },
+            onDismiss = { 
+                selectedCardForDialog = null
+                refreshTrigger++ // Trigger refresh
+            },
             onToggleOwned = {
                 cardViewModel.toggleCardOwnership(card.id, isCardOwned)
                 isCardOwned = !isCardOwned
@@ -111,6 +120,17 @@ fun CollectionScreen(
         when (selectedTab) {
             0 -> CollectionContent(
                 collectionUiState = collectionUiState,
+                isRefreshing = isRefreshing,
+                refreshTrigger = refreshTrigger,
+                onRefresh = {
+                    scope.launch {
+                        isRefreshing = true
+                        viewModel.setCurrentUser(userId)
+                        refreshTrigger++
+                        delay(500)
+                        isRefreshing = false
+                    }
+                },
                 onCardClick = { card ->
                     selectedCardForDialog = card
                     scope.launch {
@@ -122,6 +142,17 @@ fun CollectionScreen(
             1 -> WishlistContent(
                 cardViewModel = cardViewModel,
                 userId = userId,
+                isRefreshing = isRefreshing,
+                refreshTrigger = refreshTrigger,
+                onRefresh = {
+                    scope.launch {
+                        isRefreshing = true
+                        viewModel.setCurrentUser(userId)
+                        refreshTrigger++
+                        delay(500)
+                        isRefreshing = false
+                    }
+                },
                 onCardClick = { card ->
                     selectedCardForDialog = card
                     scope.launch {
@@ -137,6 +168,9 @@ fun CollectionScreen(
 @Composable
 fun CollectionContent(
     collectionUiState: com.example.pokemonmastersettracker.viewmodel.UserCollectionUiState,
+    isRefreshing: Boolean,
+    refreshTrigger: Int,
+    onRefresh: () -> Unit,
     onCardClick: (Card) -> Unit
 ) {
     Column(
@@ -170,18 +204,23 @@ fun CollectionContent(
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh
                 ) {
-                    items(collectionUiState.userCards.size) { index ->
-                        val userCard = collectionUiState.userCards[index]
-                        CollectionCardItem(
-                            userCard = userCard,
-                            onRemove = { /* Handle remove */ }
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(collectionUiState.userCards.size) { index ->
+                            val userCard = collectionUiState.userCards[index]
+                            CollectionCardItem(
+                                userCard = userCard,
+                                onRemove = { /* Handle remove */ }
+                            )
+                        }
                     }
                 }
             }
@@ -291,6 +330,9 @@ fun CollectionCardItem(
 fun WishlistContent(
     cardViewModel: CardViewModel,
     userId: String,
+    isRefreshing: Boolean,
+    refreshTrigger: Int,
+    onRefresh: () -> Unit,
     onCardClick: (Card) -> Unit
 ) {
     // Get wishlist cards from repository
@@ -299,7 +341,7 @@ fun WishlistContent(
     var loading by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refreshTrigger) {
         loading = true
         try {
             // This would need to be implemented in the ViewModel
@@ -333,20 +375,25 @@ fun WishlistContent(
             }
             
             cards.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("No cards in your wishlist yet")
-                        Text(
-                            "Add cards from search to build your wishlist",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("No cards in your wishlist yet")
+                            Text(
+                                "Add cards from search to build your wishlist",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }
