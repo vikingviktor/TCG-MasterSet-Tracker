@@ -87,7 +87,9 @@ object AppModule {
             
             android.util.Log.d("PokemonAPI", "============================================")
             android.util.Log.d("PokemonAPI", "REQUEST: ${requestWithApiKey.method} ${requestWithApiKey.url}")
-            android.util.Log.d("PokemonAPI", "Query: ${requestWithApiKey.url.query}")
+            android.util.Log.d("PokemonAPI", "Full URL: ${requestWithApiKey.url}")
+            android.util.Log.d("PokemonAPI", "Query Params: ${requestWithApiKey.url.query}")
+            android.util.Log.d("PokemonAPI", "Path: ${requestWithApiKey.url.encodedPath}")
             
             val startTime = System.currentTimeMillis()
             try {

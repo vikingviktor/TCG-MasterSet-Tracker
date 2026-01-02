@@ -370,7 +370,9 @@ class PokemonRepository @Inject constructor(
         // Instead, it returns cards from all sets (English, Japanese, etc.)
         // Cards are distinguished by their set.id
         val cleanName = pokemonName.trim()
-        return "name:$cleanName*"
+        // FIXED: Removed asterisk (*) wildcard - API returns 404 with it
+        // Using exact name match works better with the Pokemon TCG API
+        return "name:$cleanName"
     }
     
     private fun getPopularPokemonList(): List<Pokemon> {

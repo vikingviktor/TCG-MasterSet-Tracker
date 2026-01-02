@@ -69,6 +69,20 @@ fun ApiTestScreen(
                     val results = mutableListOf<String>()
                     results.add("=== API Test Started ===\n")
                     
+                    // Test 0: Direct API call to verify endpoint
+                    results.add("Test 0: Direct API endpoint check")
+                    val test0Start = System.currentTimeMillis()
+                    try {
+                        // Try the simplest possible query - no parameters
+                        viewModel.testDirectApiCall()
+                        delay(2000)
+                        val test0Time = System.currentTimeMillis() - test0Start
+                        results.add("✓ Base endpoint reachable in ${test0Time}ms\n")
+                    } catch (e: Exception) {
+                        results.add("✗ Base endpoint failed: ${e.message}\n")
+                    }
+                    testResults = results.toList()
+                    
                     // Test 1: Simple search query
                     results.add("Test 1: Searching for 'Pikachu' (25 cards)")
                     val test1Start = System.currentTimeMillis()
@@ -137,7 +151,7 @@ fun ApiTestScreen(
                     results.add("Test 5: Testing exact app query format + Total Count")
                     val test5Start = System.currentTimeMillis()
                     try {
-                        results.add("Query: name:Pikachu* | PageSize: 50 | Page: 1")
+                        results.add("Query: name:Pikachu (no asterisk) | PageSize: 50 | Page: 1")
                         viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
                         delay(2000) // Wait longer for response and state update
                         val test5Time = System.currentTimeMillis() - test5Start
@@ -171,6 +185,10 @@ fun ApiTestScreen(
                             results.add("⚠ This is a TIMEOUT error - API took >120s to respond")
                         } else if (errorMsg.contains("404")) {
                             results.add("⚠ This is a NOT FOUND error - query may be incorrect")
+                            results.add("  Possible causes:")
+                            results.add("  • Wildcard (*) not supported")
+                            results.add("  • URL encoding issue")
+                            results.add("  • Check logs for actual URL")
                         }
                         results.add("")
                     }

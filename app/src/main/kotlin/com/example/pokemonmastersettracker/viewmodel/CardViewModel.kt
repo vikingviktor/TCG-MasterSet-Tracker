@@ -102,7 +102,8 @@ class CardViewModel @Inject constructor(
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
     fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25) {
         viewModelScope.launch {
-            val queryInfo = "name:$pokemonName*"
+            // FIXED: Removed asterisk wildcard - API doesn't support it
+            val queryInfo = "name:$pokemonName"
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true, 
                 selectedPokemonName = pokemonName,
@@ -287,6 +288,16 @@ class CardViewModel @Inject constructor(
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error toggling wishlist: ${e.message}", e)
             }
+        }
+    }
+
+    // Test direct API call with simplest possible query
+    suspend fun testDirectApiCall(): String {
+        return try {
+            val response = repository.searchCardsByName("")
+            "SUCCESS: Retrieved ${response.totalCount} total cards (${response.count} on this page)"
+        } catch (e: Exception) {
+            "ERROR: ${e.message}"
         }
     }
 }
