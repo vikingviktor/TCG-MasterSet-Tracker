@@ -10,11 +10,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,14 +30,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
-import com.example.pokemonmastersettracker.viewmodel.FavoritesViewModel
+import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 
 @Composable
 fun FavoritesScreen(
-    viewModel: FavoritesViewModel = hiltViewModel(),
-    userId: String
+    viewModel: CardViewModel = hiltViewModel(),
+    onPokemonClick: (String) -> Unit = {}
 ) {
-    val favoritesUiState by viewModel.favoritesUiState.collectAsState()
+    val cardUiState by viewModel.cardUiState.collectAsState()
+    
+    // Load favorites when screen opens
+    LaunchedEffect(Unit) {
+        viewModel.loadFavorites()
+    }
 
     Column(
         modifier = Modifier
@@ -40,15 +50,33 @@ fun FavoritesScreen(
             .background(PokemonColors.Background)
             .padding(16.dp)
     ) {
-        Text(
-            text = "Favorite Pokemon",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        // Header with title and refresh button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Favorite Pokemon",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
+            IconButton(
+                onClick = { viewModel.loadFavorites() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh favorites",
+                    tint = PokemonColors.Primary
+                )
+            }
+        }
 
         when {
-            favoritesUiState.loading -> {
+            cardUiState.loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -57,12 +85,22 @@ fun FavoritesScreen(
                 }
             }
 
-            favoritesUiState.favorites.isEmpty() -> {
+            cardUiState.pokemonList.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No favorite pokemon yet")
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("No favorite Pokemon yet")
+                        Text(
+                            "Star Pokemon from search to add them here",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
             }
 
@@ -70,14 +108,17 @@ fun FavoritesScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(favoritesUiState.favorites) { favorite ->
+                    items(cardUiState.pokemonList.size) { index ->
+                        val pokemon = cardUiState.pokemonList[index]
                         FavoritePokemonCard(
-                            pokemonName = favorite.pokemonName,
+                            pokemonName = pokemon.name,
                             onRemove = {
-                                viewModel.removeFavoritePokemon(favorite.pokemonName)
+                                viewModel.toggleFavorite(pokemon.name)
+                                viewModel.loadFavorites() // Refresh list
                             },
                             onViewCards = {
-                                // Navigate to cards screen
+                                viewModel.selectPokemonCards(pokemon.name)
+                                onPokemonClick(pokemon.name)
                             }
                         )
                     }

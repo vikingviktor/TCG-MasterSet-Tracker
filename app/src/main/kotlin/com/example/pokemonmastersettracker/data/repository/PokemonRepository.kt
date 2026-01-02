@@ -45,6 +45,10 @@ class PokemonRepository @Inject constructor(
         }
     }
     
+    suspend fun updatePokemonImage(pokemonName: String, imageUrl: String) {
+        pokemonDao.updatePokemonImage(pokemonName, imageUrl)
+    }
+    
     suspend fun seedPopularPokemon() {
         val count = pokemonDao.getPokemonCount()
         if (count == 0) {
@@ -253,27 +257,92 @@ class PokemonRepository @Inject constructor(
     
     private fun getPopularPokemonList(): List<Pokemon> {
         return listOf(
+            // Gen 1 (Kanto)
             "Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard",
-            "Squirtle", "Wartortle", "Blastoise", "Pikachu", "Raichu", "Mewtwo", "Mew",
-            "Chikorita", "Cyndaquil", "Totodile", "Lugia", "Ho-Oh", "Celebi",
-            "Treecko", "Torchic", "Mudkip", "Rayquaza", "Kyogre", "Groudon", "Jirachi", "Deoxys",
-            "Turtwig", "Chimchar", "Piplup", "Dialga", "Palkia", "Giratina", "Darkrai", "Arceus",
-            "Snivy", "Tepig", "Oshawott", "Reshiram", "Zekrom", "Kyurem", "Keldeo", "Genesect",
-            "Chespin", "Fennekin", "Froakie", "Xerneas", "Yveltal", "Zygarde", "Diancie",
-            "Rowlet", "Litten", "Popplio", "Solgaleo", "Lunala", "Necrozma", "Marshadow",
-            "Grookey", "Scorbunny", "Sobble", "Zacian", "Zamazenta", "Eternatus",
-            "Sprigatito", "Fuecoco", "Quaxly", "Koraidon", "Miraidon",
-            "Eevee", "Vaporeon", "Jolteon", "Flareon", "Espeon", "Umbreon", "Leafeon", "Glaceon", "Sylveon",
-            "Snorlax", "Dragonite", "Gengar", "Alakazam", "Machamp", "Gyarados", "Lapras",
-            "Articuno", "Zapdos", "Moltres", "Aerodactyl", "Scyther", "Scizor",
-            "Tyranitar", "Ampharos", "Heracross", "Houndoom", "Steelix", "Kingdra",
-            "Blaziken", "Gardevoir", "Aggron", "Salamence", "Metagross", "Latias", "Latios",
-            "Lucario", "Garchomp", "Electivire", "Magmortar", "Togekiss", "Mamoswine", "Gallade",
-            "Serperior", "Emboar", "Samurott", "Excadrill", "Zoroark", "Chandelure", "Haxorus", "Volcarona",
-            "Greninja", "Talonflame", "Aegislash", "Tyrantrum", "Goodra", "Noivern",
-            "Decidueye", "Incineroar", "Primarina", "Lycanroc", "Mimikyu", "Tapu Koko", "Tapu Lele",
-            "Rillaboom", "Cinderace", "Inteleon", "Corviknight", "Toxtricity", "Dragapult",
-            "Meowscarada", "Skeledirge", "Quaquaval", "Tinkaton", "Gholdengo"
+            "Squirtle", "Wartortle", "Blastoise", "Caterpie", "Metapod", "Butterfree",
+            "Weedle", "Kakuna", "Beedrill", "Pidgey", "Pidgeotto", "Pidgeot",
+            "Rattata", "Raticate", "Spearow", "Fearow", "Ekans", "Arbok",
+            "Pikachu", "Raichu", "Sandshrew", "Sandslash", "Nidoran♀", "Nidorina", "Nidoqueen",
+            "Nidoran♂", "Nidorino", "Nidoking", "Clefairy", "Clefable", "Vulpix", "Ninetales",
+            "Jigglypuff", "Wigglytuff", "Zubat", "Golbat", "Oddish", "Gloom", "Vileplume",
+            "Paras", "Parasect", "Venonat", "Venomoth", "Diglett", "Dugtrio",
+            "Meowth", "Persian", "Psyduck", "Golduck", "Mankey", "Primeape",
+            "Growlithe", "Arcanine", "Poliwag", "Poliwhirl", "Poliwrath", "Abra", "Kadabra", "Alakazam",
+            "Machop", "Machoke", "Machamp", "Bellsprout", "Weepinbell", "Victreebel",
+            "Tentacool", "Tentacruel", "Geodude", "Graveler", "Golem", "Ponyta", "Rapidash",
+            "Slowpoke", "Slowbro", "Magnemite", "Magneton", "Farfetch'd", "Doduo", "Dodrio",
+            "Seel", "Dewgong", "Grimer", "Muk", "Shellder", "Cloyster",
+            "Gastly", "Haunter", "Gengar", "Onix", "Drowzee", "Hypno",
+            "Krabby", "Kingler", "Voltorb", "Electrode", "Exeggcute", "Exeggutor",
+            "Cubone", "Marowak", "Hitmonlee", "Hitmonchan", "Lickitung",
+            "Koffing", "Weezing", "Rhyhorn", "Rhydon", "Chansey", "Tangela",
+            "Kangaskhan", "Horsea", "Seadra", "Goldeen", "Seaking",
+            "Staryu", "Starmie", "Mr. Mime", "Scyther", "Jynx",
+            "Electabuzz", "Magmar", "Pinsir", "Tauros", "Magikarp", "Gyarados",
+            "Lapras", "Ditto", "Eevee", "Vaporeon", "Jolteon", "Flareon",
+            "Porygon", "Omanyte", "Omastar", "Kabuto", "Kabutops",
+            "Aerodactyl", "Snorlax", "Articuno", "Zapdos", "Moltres",
+            "Dratini", "Dragonair", "Dragonite", "Mewtwo", "Mew",
+            // Gen 2 (Johto)
+            "Chikorita", "Bayleef", "Meganium", "Cyndaquil", "Quilava", "Typhlosion",
+            "Totodile", "Croconaw", "Feraligatr", "Sentret", "Furret",
+            "Hoothoot", "Noctowl", "Ledyba", "Ledian", "Spinarak", "Ariados",
+            "Crobat", "Chinchou", "Lanturn", "Pichu", "Cleffa", "Igglybuff",
+            "Togepi", "Togetic", "Natu", "Xatu", "Mareep", "Flaaffy", "Ampharos",
+            "Bellossom", "Marill", "Azumarill", "Sudowoodo", "Politoed",
+            "Hoppip", "Skiploom", "Jumpluff", "Aipom", "Sunkern", "Sunflora",
+            "Yanma", "Wooper", "Quagsire", "Espeon", "Umbreon",
+            "Murkrow", "Slowking", "Misdreavus", "Unown", "Wobbuffet",
+            "Girafarig", "Pineco", "Forretress", "Dunsparce", "Gligar",
+            "Steelix", "Snubbull", "Granbull", "Qwilfish", "Scizor",
+            "Shuckle", "Heracross", "Sneasel", "Teddiursa", "Ursaring",
+            "Slugma", "Magcargo", "Swinub", "Piloswine", "Corsola",
+            "Remoraid", "Octillery", "Delibird", "Mantine", "Skarmory",
+            "Houndour", "Houndoom", "Kingdra", "Phanpy", "Donphan",
+            "Porygon2", "Stantler", "Smeargle", "Tyrogue", "Hitmontop",
+            "Smoochum", "Elekid", "Magby", "Miltank", "Blissey",
+            "Raikou", "Entei", "Suicune", "Larvitar", "Pupitar", "Tyranitar",
+            "Lugia", "Ho-Oh", "Celebi",
+            // Gen 3 (Hoenn)
+            "Treecko", "Grovyle", "Sceptile", "Torchic", "Combusken", "Blaziken",
+            "Mudkip", "Marshtomp", "Swampert", "Poochyena", "Mightyena",
+            "Zigzagoon", "Linoone", "Wurmple", "Silcoon", "Beautifly",
+            "Cascoon", "Dustox", "Lotad", "Lombre", "Ludicolo",
+            "Seedot", "Nuzleaf", "Shiftry", "Taillow", "Swellow",
+            "Wingull", "Pelipper", "Ralts", "Kirlia", "Gardevoir",
+            "Surskit", "Masquerain", "Shroomish", "Breloom", "Slakoth", "Vigoroth", "Slaking",
+            "Nincada", "Ninjask", "Shedinja", "Whismur", "Loudred", "Exploud",
+            "Makuhita", "Hariyama", "Azurill", "Nosepass", "Skitty", "Delcatty",
+            "Sableye", "Mawile", "Aron", "Lairon", "Aggron",
+            "Meditite", "Medicham", "Electrike", "Manectric", "Plusle", "Minun",
+            "Volbeat", "Illumise", "Roselia", "Gulpin", "Swalot",
+            "Carvanha", "Sharpedo", "Wailmer", "Wailord", "Numel", "Camerupt",
+            "Torkoal", "Spoink", "Grumpig", "Spinda", "Trapinch", "Vibrava", "Flygon",
+            "Cacnea", "Cacturne", "Swablu", "Altaria", "Zangoose", "Seviper",
+            "Lunatone", "Solrock", "Barboach", "Whiscash", "Corphish", "Crawdaunt",
+            "Baltoy", "Claydol", "Lileep", "Cradily", "Anorith", "Armaldo",
+            "Feebas", "Milotic", "Castform", "Kecleon", "Shuppet", "Banette",
+            "Duskull", "Dusclops", "Tropius", "Chimecho", "Absol",
+            "Wynaut", "Snorunt", "Glalie", "Spheal", "Sealeo", "Walrein",
+            "Clamperl", "Huntail", "Gorebyss", "Relicanth",
+            "Luvdisc", "Bagon", "Shelgon", "Salamence",
+            "Beldum", "Metang", "Metagross", "Regirock", "Regice", "Registeel",
+            "Latias", "Latios", "Kyogre", "Groudon", "Rayquaza",
+            "Jirachi", "Deoxys",
+            // Gen 4-9 starters and legendaries
+            "Turtwig", "Grotle", "Torterra", "Chimchar", "Monferno", "Infernape",
+            "Piplup", "Prinplup", "Empoleon", "Dialga", "Palkia", "Giratina",
+            "Darkrai", "Arceus", "Lucario", "Garchomp", "Togekiss", "Mamoswine",
+            "Snivy", "Servine", "Serperior", "Tepig", "Pignite", "Emboar",
+            "Oshawott", "Dewott", "Samurott", "Reshiram", "Zekrom", "Kyurem",
+            "Chespin", "Quilladin", "Chesnaught", "Fennekin", "Braixen", "Delphox",
+            "Froakie", "Frogadier", "Greninja", "Xerneas", "Yveltal", "Zygarde",
+            "Rowlet", "Dartrix", "Decidueye", "Litten", "Torracat", "Incineroar",
+            "Popplio", "Brionne", "Primarina", "Solgaleo", "Lunala", "Necrozma",
+            "Grookey", "Thwackey", "Rillaboom", "Scorbunny", "Raboot", "Cinderace",
+            "Sobble", "Drizzile", "Inteleon", "Zacian", "Zamazenta", "Eternatus",
+            "Sprigatito", "Floragato", "Meowscarada", "Fuecoco", "Crocalor", "Skeledirge",
+            "Quaxly", "Quaxwell", "Quaquaval", "Koraidon", "Miraidon"
         ).map { Pokemon(name = it) }
     }
 }

@@ -89,6 +89,12 @@ class CardViewModel @Inject constructor(
                 val cards = repository.searchPokemonCards(pokemonName, "en")
                 android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards")
                 
+                // Save the first card's image to Pokemon entity for future searches
+                cards.firstOrNull()?.image?.small?.let { imageUrl ->
+                    repository.updatePokemonImage(pokemonName, imageUrl)
+                    android.util.Log.d("CardViewModel", "Saved image for $pokemonName")
+                }
+                
                 _cardUiState.value = _cardUiState.value.copy(
                     cards = cards,
                     allCards = cards,
@@ -124,5 +130,38 @@ class CardViewModel @Inject constructor(
     fun clearSelection() {
         _selectedCard.value = null
         _cardUiState.value = CardUiState()
+    }
+    
+    fun loadFavorites() {
+        viewModelScope.launch {
+            _cardUiState.value = CardUiState(loading = true)
+            try {
+                val favorites = repository.getFavoritePokemon()
+                android.util.Log.d("CardViewModel", "Loaded ${favorites.size} favorite Pokemon")
+                _cardUiState.value = CardUiState(pokemonList = favorites)
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error loading favorites: ${e.message}", e)
+                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+            }
+        }
+    }
+    
+    fun toggleFavorite(pokemonName: String) {
+        viewModelScope.launch {
+            try {
+                repository.toggleFavorite(pokemonName)
+                android.util.Log.d("CardViewModel", "Toggled favorite for: $pokemonName")
+                // Refresh the current list
+                val currentState = _cardUiState.value
+                if (currentState.pokemonList.isNotEmpty()) {
+                    val updatedList = repository.searchPokemonLocal(
+                        currentState.pokemonList.firstOrNull()?.name?.take(3) ?: ""
+                    )
+                    _cardUiState.value = currentState.copy(pokemonList = updatedList)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error toggling favorite: ${e.message}", e)
+            }
+        }
     }
 }

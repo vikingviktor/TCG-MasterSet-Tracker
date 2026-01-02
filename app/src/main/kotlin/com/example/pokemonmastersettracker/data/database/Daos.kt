@@ -33,6 +33,9 @@ interface PokemonDao {
     @Query("UPDATE pokemon SET isFavorite = :isFavorite WHERE name = :name")
     suspend fun updateFavoriteStatus(name: String, isFavorite: Boolean)
     
+    @Query("UPDATE pokemon SET imageUrl = :imageUrl WHERE name = :name")
+    suspend fun updatePokemonImage(name: String, imageUrl: String)
+    
     @Query("SELECT COUNT(*) FROM pokemon")
     suspend fun getPokemonCount(): Int
 }
