@@ -65,8 +65,8 @@ class PokemonRepository @Inject constructor(
     // Card Operations
     
     suspend fun searchPokemonCardsWithPagination(pokemonName: String, language: String = "en", page: Int = 1, pageSize: Int = 25): List<Card> {
+        val query = buildCardQuery(pokemonName, language)
         return try {
-            val query = buildCardQuery(pokemonName, language)
             android.util.Log.d("PokemonRepository", "🌐 API REQUEST: pokemonName='$pokemonName', query='$query', page=$page, pageSize=$pageSize")
             val apiStartTime = System.currentTimeMillis()
             
