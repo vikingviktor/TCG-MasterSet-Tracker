@@ -288,9 +288,9 @@ class PokemonRepository @Inject constructor(
         // Then try to fetch total card count from API in the background
         val totalCards = try {
             val query = "name:${pokemonName}*"
-            // Use smaller pageSize to reduce load and timeout issues
-            val response = api.searchCards(query = query, pageSize = 50)
-            val count = response.cards.size
+            // Use pageSize=1 to minimize data transfer, we only need the totalCount
+            val response = api.searchCards(query = query, pageSize = 1)
+            val count = response.totalCount // Use the totalCount field from API response
             android.util.Log.d("PokemonRepository", "Fetched total cards for $pokemonName: $count")
             count
         } catch (e: Exception) {

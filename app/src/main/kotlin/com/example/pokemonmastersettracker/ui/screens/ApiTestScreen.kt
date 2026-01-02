@@ -134,22 +134,34 @@ fun ApiTestScreen(
                     testResults = results.toList()
                     
                     // Test 5: Exact query format we use in app
-                    results.add("Test 5: Testing exact app query format")
+                    results.add("Test 5: Testing exact app query format + Total Count")
                     val test5Start = System.currentTimeMillis()
                     try {
                         results.add("Query: name:Pikachu* | PageSize: 50 | Page: 1")
                         viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
-                        delay(1000) // Wait for response
+                        delay(2000) // Wait longer for response and state update
                         val test5Time = System.currentTimeMillis() - test5Start
                         results.add("✓ Query completed in ${test5Time}ms")
                         
                         val cardCount = viewModel.cardUiState.value.cards.size
-                        results.add("ℹ Retrieved $cardCount cards")
+                        val debugInfo = viewModel.cardUiState.value.debugInfo ?: "No debug info"
+                        val errorInfo = viewModel.cardUiState.value.error
                         
-                        if (cardCount == 0) {
+                        results.add("ℹ Retrieved $cardCount cards on this page")
+                        results.add("ℹ Total cards for Pikachu: (check API response)")
+                        results.add("ℹ Debug: $debugInfo")
+                        
+                        if (errorInfo != null) {
+                            results.add("⚠ Error occurred: $errorInfo")
+                        } else if (cardCount == 0) {
                             results.add("⚠ WARNING: No cards returned!")
+                            results.add("  This could mean:")
+                            results.add("  • API returned empty results")
+                            results.add("  • Query format is incorrect")
+                            results.add("  • State not updating properly")
                         } else {
                             results.add("✓ Cards successfully loaded")
+                            results.add("  First card: ${viewModel.cardUiState.value.cards.firstOrNull()?.name ?: "N/A"}")
                         }
                         results.add("")
                     } catch (e: Exception) {

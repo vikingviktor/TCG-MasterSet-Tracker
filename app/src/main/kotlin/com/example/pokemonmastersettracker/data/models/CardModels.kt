@@ -16,7 +16,15 @@ data class Pokemon(
 // API Response Models
 data class CardResponse(
     @SerializedName("data")
-    val cards: List<Card>
+    val cards: List<Card>,
+    @SerializedName("page")
+    val page: Int = 1,
+    @SerializedName("pageSize")
+    val pageSize: Int = 250,
+    @SerializedName("count")
+    val count: Int = 0,
+    @SerializedName("totalCount")
+    val totalCount: Int = 0
 )
 
 @Entity(tableName = "cards")
