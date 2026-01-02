@@ -100,23 +100,12 @@ class CardViewModel @Inject constructor(
         }
     }
 
-    fun clearSelection() {
-        _cardUiState.value = CardUiState()
-    }
-                val cards = repository.searchPokemonCards(pokemonName)
-                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
-            } catch (e: Exception) {
-                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error", selectedPokemonName = pokemonName)
-            }
-        }
-    }
-
     fun selectCard(card: Card) {
         _selectedCard.value = card
     }
 
     fun clearSelection() {
         _selectedCard.value = null
-        _cardUiState.value = CardUiState(selectedPokemonName = null)
+        _cardUiState.value = CardUiState()
     }
 }
