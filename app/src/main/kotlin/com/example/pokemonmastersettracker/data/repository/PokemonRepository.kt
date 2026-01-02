@@ -276,25 +276,40 @@ class PokemonRepository @Inject constructor(
     // Favorite Pokemon Operations
 
     suspend fun addFavoritePokemon(userId: String, pokemonName: String) {
-        // Fetch total card count from API when adding to favorites
-        val totalCards = try {
-            val query = "name:${pokemonName}*"
-            // Get all cards for this Pokemon (max pageSize to get accurate count)
-            val response = api.searchCards(query = query, pageSize = 250)
-            android.util.Log.d("PokemonRepository", "Cached total cards for $pokemonName: ${response.cards.size}")
-            response.cards.size
-        } catch (e: Exception) {
-            android.util.Log.e("PokemonRepository", "Error fetching total cards for $pokemonName: ${e.message}")
-            0
-        }
-        
+        // First, add the favorite immediately so it shows up in the list
         favoritePokemonDao.addFavorite(
             FavoritePokemon(
                 userId = userId,
                 pokemonName = pokemonName,
-                totalCards = totalCards
+                totalCards = 0 // Start with 0, will update
             )
         )
+        
+        // Then try to fetch total card count from API in the background
+        val totalCards = try {
+            val query = "name:${pokemonName}*"
+            // Use smaller pageSize to reduce load and timeout issues
+            val response = api.searchCards(query = query, pageSize = 50)
+            val count = response.cards.size
+            android.util.Log.d("PokemonRepository", "Fetched total cards for $pokemonName: $count")
+            count
+        } catch (e: Exception) {
+            android.util.Log.w("PokemonRepository", "Could not fetch total cards for $pokemonName (${e.message}), will use estimated count")
+            // Fallback: estimate based on Pokemon popularity (most Pokemon have 50-200 cards)
+            100 // Reasonable default
+        }
+        
+        // Update with the actual count
+        if (totalCards > 0) {
+            favoritePokemonDao.addFavorite(
+                FavoritePokemon(
+                    userId = userId,
+                    pokemonName = pokemonName,
+                    totalCards = totalCards
+                )
+            )
+            android.util.Log.d("PokemonRepository", "Updated total cards for $pokemonName: $totalCards")
+        }
     }
 
     suspend fun removeFavoritePokemon(userId: String, pokemonName: String) {

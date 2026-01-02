@@ -205,15 +205,31 @@ fun HomeScreen(
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            cardUiState.selectedPokemonName?.let { pokemonName ->
-                                viewModel.selectPokemonCards(pokemonName, selectedLanguages)
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Retry")
+                        Button(
+                            onClick = {
+                                cardUiState.selectedPokemonName?.let { pokemonName ->
+                                    viewModel.selectPokemonCards(pokemonName, selectedLanguages)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(\"Retry\")
+                        }
+                        
+                        // Test query button for debugging
+                        OutlinedButton(
+                            onClick = {
+                                // Test with Pikachu (very common Pokemon)
+                                viewModel.selectPokemonCards(\"Pikachu\", setOf(\"en\"))
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(\"Test API\", fontSize = 12.sp)
+                        }
                     }
                 }
             }

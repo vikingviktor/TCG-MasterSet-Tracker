@@ -76,6 +76,13 @@ fun CollectionScreen(
         viewModel.setCurrentUser(userId)
     }
     
+    // Refresh when refreshTrigger changes
+    LaunchedEffect(refreshTrigger) {
+        if (refreshTrigger > 0) {
+            viewModel.setCurrentUser(userId)
+        }
+    }
+    
     // Show dialog when a card is selected
     selectedCardForDialog?.let { card ->
         CardDetailDialog(

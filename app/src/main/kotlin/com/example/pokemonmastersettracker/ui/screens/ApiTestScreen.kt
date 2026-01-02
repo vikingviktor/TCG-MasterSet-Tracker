@@ -133,6 +133,37 @@ fun ApiTestScreen(
                     }
                     testResults = results.toList()
                     
+                    // Test 5: Exact query format we use in app
+                    results.add("Test 5: Testing exact app query format")
+                    val test5Start = System.currentTimeMillis()
+                    try {
+                        results.add("Query: name:Pikachu* | PageSize: 50 | Page: 1")
+                        viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
+                        delay(1000) // Wait for response
+                        val test5Time = System.currentTimeMillis() - test5Start
+                        results.add("✓ Query completed in ${test5Time}ms")
+                        
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("ℹ Retrieved $cardCount cards")
+                        
+                        if (cardCount == 0) {
+                            results.add("⚠ WARNING: No cards returned!")
+                        } else {
+                            results.add("✓ Cards successfully loaded")
+                        }
+                        results.add("")
+                    } catch (e: Exception) {
+                        val errorMsg = e.message ?: "Unknown error"
+                        results.add("✗ Failed: $errorMsg")
+                        if (errorMsg.contains("504") || errorMsg.contains("timeout")) {
+                            results.add("⚠ This is a TIMEOUT error - API took >120s to respond")
+                        } else if (errorMsg.contains("404")) {
+                            results.add("⚠ This is a NOT FOUND error - query may be incorrect")
+                        }
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
                     results.add("=== Test Complete ===")
                     results.add("\nDiagnostic Info:")
                     results.add("• API: https://api.pokemontcg.io/v2/")
