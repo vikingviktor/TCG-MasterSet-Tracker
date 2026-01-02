@@ -138,6 +138,9 @@ dependencies {
 
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Accompanist for SwipeRefresh
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
 
     // Firebase (Optional - for authentication)
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

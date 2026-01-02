@@ -57,10 +57,10 @@ import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: CardViewModel = hiltViewModel(),

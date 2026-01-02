@@ -19,7 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,7 +53,6 @@ import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
     viewModel: CardViewModel = hiltViewModel(),
@@ -205,8 +205,8 @@ fun FavoritesScreen(
                         }
                     }
                     
-                    PullToRefreshBox(
-                        isRefreshing = isRefreshing,
+                    SwipeRefresh(
+                        state = rememberSwipeRefreshState(isRefreshing),
                         onRefresh = {
                             scope.launch {
                                 isRefreshing = true
@@ -269,8 +269,8 @@ fun FavoritesScreen(
             }
 
             else -> {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
                     onRefresh = {
                         scope.launch {
                             isRefreshing = true

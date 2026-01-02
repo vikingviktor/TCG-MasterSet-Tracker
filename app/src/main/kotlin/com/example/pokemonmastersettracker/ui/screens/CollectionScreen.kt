@@ -52,9 +52,9 @@ import kotlinx.coroutines.delay
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollectionScreen(
     viewModel: UserCollectionViewModel = hiltViewModel(),
@@ -204,8 +204,8 @@ fun CollectionContent(
             }
 
             else -> {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
                     onRefresh = onRefresh
                 ) {
                     LazyColumn(
@@ -375,8 +375,8 @@ fun WishlistContent(
             }
             
             cards.isEmpty() -> {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
                     onRefresh = onRefresh
                 ) {
                     Box(
