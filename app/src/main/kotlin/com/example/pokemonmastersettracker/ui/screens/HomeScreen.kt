@@ -42,17 +42,8 @@ import coil.compose.AsyncImage
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.components.CardItem
-import com.example.pokemonmastersettracker.ui.theme.PokemonColors
-import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 
 @Composable
 fun HomeScreen(
