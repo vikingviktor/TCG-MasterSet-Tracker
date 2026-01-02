@@ -104,19 +104,19 @@ fun HomeScreen(
                 )
             }
 
-            cardUiState.cards.isEmpty() && searchQuery.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
+            cardUiState.pokemonList.isEmpty() && searchQuery.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No cards found for \"$searchQuery\"")
+                    Text("No Pokemon found for \"$searchQuery\"")
                 }
             }
 
-            cardUiState.cards.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
+            cardUiState.pokemonList.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
                 // Show Pokemon selection view (grouped by name)
-                PokemonSelectionView(
-                    cards = cardUiState.cards,
+                PokemonListView(
+                    pokemonList = cardUiState.pokemonList,
                     onPokemonSelect = { pokemonName ->
                         viewModel.selectPokemonCards(pokemonName)
                     }
@@ -217,27 +217,23 @@ fun SearchSection(
 }
 
 @Composable
-fun PokemonSelectionView(
-    cards: List<Card>,
+fun PokemonListView(
+    pokemonList: List<com.example.pokemonmastersettracker.viewmodel.PokemonSummary>,
     onPokemonSelect: (String) -> Unit
 ) {
-    // Group cards by Pokemon name
-    val groupedByName = cards.groupBy { it.name }
-    val pokemonNames = groupedByName.keys.toList()
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(count = pokemonNames.size) { index ->
-            val pokemonName = pokemonNames[index]
-            val cardsForPokemon = groupedByName[pokemonName] ?: emptyList()
+        items(count = pokemonList.size) { index ->
+            val pokemon = pokemonList[index]
             PokemonSelectionCard(
-                pokemonName = pokemonName,
-                cardCount = cardsForPokemon.size,
-                onClick = { onPokemonSelect(pokemonName) }
+                pokemonName = pokemon.name,
+                cardCount = pokemon.cardCount,
+                imageUrl = pokemon.imageUrl,
+                onClick = { onPokemonSelect(pokemon.name) }
             )
         }
     }
@@ -247,6 +243,7 @@ fun PokemonSelectionView(
 fun PokemonSelectionCard(
     pokemonName: String,
     cardCount: Int,
+    imageUrl: String?,
     onClick: () -> Unit
 ) {
     Card(
@@ -264,6 +261,25 @@ fun PokemonSelectionCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Pokemon image
+            if (imageUrl != null) {
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = pokemonName,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray)
+                )
+            }
+            
             // Pokemon info
             Column(
                 modifier = Modifier

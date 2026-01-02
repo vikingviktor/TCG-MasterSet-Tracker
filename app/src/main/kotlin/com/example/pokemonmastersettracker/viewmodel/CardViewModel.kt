@@ -12,7 +12,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class PokemonSummary(
+    val name: String,
+    val cardCount: Int,
+    val imageUrl: String?
+)
+
 data class CardUiState(
+    val pokemonList: List<PokemonSummary> = emptyList(),
     val cards: List<Card> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
@@ -37,7 +44,18 @@ class CardViewModel @Inject constructor(
                 android.util.Log.d("CardViewModel", "Searching for: $pokemonName")
                 val cards = repository.searchPokemonCards(pokemonName, language)
                 android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
-                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = null)
+                
+                // Group cards by Pokemon name
+                val pokemonGroups = cards.groupBy { it.name }
+                val pokemonList = pokemonGroups.map { (name, cardList) ->
+                    PokemonSummary(
+                        name = name,
+                        cardCount = cardList.size,
+                        imageUrl = cardList.firstOrNull()?.image?.small
+                    )
+                }.sortedBy { it.name }
+                
+                _cardUiState.value = CardUiState(pokemonList = pokemonList, selectedPokemonName = null)
             } catch (e: Exception) {
                 val userMessage = when {
                     e.message?.contains("504") == true -> "Pokemon TCG API is slow. Please try again."
@@ -71,6 +89,20 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true, selectedPokemonName = pokemonName)
             try {
+                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName")
+                val cards = repository.searchPokemonCards(pokemonName, "en")
+                android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards for $pokemonName")
+                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
+                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun clearSelection() {
+        _cardUiState.value = CardUiState()
+    }
                 val cards = repository.searchPokemonCards(pokemonName)
                 _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
             } catch (e: Exception) {
