@@ -7,6 +7,7 @@ import com.example.pokemonmastersettracker.data.database.CardDao
 import com.example.pokemonmastersettracker.data.database.UserCardDao
 import com.example.pokemonmastersettracker.data.database.FavoritePokemonDao
 import com.example.pokemonmastersettracker.data.database.UserDao
+import com.example.pokemonmastersettracker.data.database.PokemonDao
 import com.example.pokemonmastersettracker.data.repository.PokemonRepository
 import dagger.Module
 import dagger.Provides
