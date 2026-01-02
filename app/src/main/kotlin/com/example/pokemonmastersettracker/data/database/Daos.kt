@@ -26,6 +26,9 @@ interface CardDao {
 
     @Query("SELECT * FROM cards WHERE name LIKE '%' || :pokemonName || '%'")
     fun getCardsByPokemonName(pokemonName: String): Flow<List<Card>>
+    
+    @Query("SELECT * FROM cards WHERE name LIKE :pokemonName")
+    suspend fun getCardsByPokemonNameSync(pokemonName: String): List<Card>
 
     @Query("SELECT * FROM cards")
     fun getAllCards(): Flow<List<Card>>

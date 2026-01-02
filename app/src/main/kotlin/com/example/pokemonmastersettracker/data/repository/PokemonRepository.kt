@@ -25,15 +25,31 @@ class PokemonRepository @Inject constructor(
     
     suspend fun searchPokemonCards(pokemonName: String, language: String = "en"): List<Card> {
         return try {
+            // First, check database for cached results
+            val localCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            
+            // If we have local results, return them immediately for better UX
+            if (localCards.isNotEmpty()) {
+                android.util.Log.d("PokemonRepository", "Found ${localCards.size} cards in cache for: $pokemonName")
+                // Still fetch fresh data in background but return cached first
+                return localCards
+            }
+            
+            // No cache, fetch from API
             val query = buildCardQuery(pokemonName, language)
-            android.util.Log.d("PokemonRepository", "Searching cards with query: $query")
-            val response = api.searchCards(query = query)
+            android.util.Log.d("PokemonRepository", "Searching API with query: $query")
+            val response = api.searchCards(query = query, pageSize = 25) // Reduced page size for faster response
             android.util.Log.d("PokemonRepository", "API response: ${response.cards.size} cards found")
-            android.util.Log.d("PokemonRepository", "Starting to insert cards into database...")
             cardDao.insertCards(response.cards)
-            android.util.Log.d("PokemonRepository", "Cards inserted successfully")
             response.cards
         } catch (e: Exception) {
+            // On error, try to return cached data as fallback
+            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            if (cachedCards.isNotEmpty()) {
+                android.util.Log.w("PokemonRepository", "API failed, using ${cachedCards.size} cached cards")
+                return cachedCards
+            }
+            
             val errorDetails = """
                 Error Type: ${e.javaClass.simpleName}
                 Message: ${e.message}

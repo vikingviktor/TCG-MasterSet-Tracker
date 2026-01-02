@@ -21,6 +21,7 @@ data class PokemonSummary(
 data class CardUiState(
     val pokemonList: List<PokemonSummary> = emptyList(),
     val cards: List<Card> = emptyList(),
+    val allCards: List<Card> = emptyList(), // Store all cards from search
     val loading: Boolean = false,
     val error: String? = null,
     val selectedPokemonName: String? = null
@@ -36,13 +37,27 @@ class CardViewModel @Inject constructor(
 
     private val _selectedCard = MutableStateFlow<Card?>(null)
     val selectedCard: StateFlow<Card?> = _selectedCard.asStateFlow()
+    
+    // Cache recent searches to avoid duplicate API calls
+    private val searchCache = mutableMapOf<String, List<Card>>()
 
     fun searchPokemonCards(pokemonName: String, language: String = "en") {
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
-                android.util.Log.d("CardViewModel", "Searching for: $pokemonName")
-                val cards = repository.searchPokemonCards(pokemonName, language)
+                // Check cache first
+                val cacheKey = "${pokemonName.lowercase()}_$language"
+                val cachedCards = searchCache[cacheKey]
+                
+                val cards = if (cachedCards != null) {
+                    android.util.Log.d("CardViewModel", "Using cached results for: $pokemonName")
+                    cachedCards
+                } else {
+                    android.util.Log.d("CardViewModel", "Searching for: $pokemonName")
+                    val fetchedCards = repository.searchPokemonCards(pokemonName, language)
+                    searchCache[cacheKey] = fetchedCards // Cache the results
+                    fetchedCards
+                }
                 android.util.Log.d("CardViewModel", "Got ${cards.size} cards")
                 
                 // Group cards by Pokemon name
@@ -55,7 +70,12 @@ class CardViewModel @Inject constructor(
                     )
                 }.sortedBy { it.name }
                 
-                _cardUiState.value = CardUiState(pokemonList = pokemonList, selectedPokemonName = null)
+                // Store all cards and the pokemon list
+                _cardUiState.value = CardUiState(
+                    pokemonList = pokemonList, 
+                    allCards = cards,
+                    selectedPokemonName = null
+                )
             } catch (e: Exception) {
                 val userMessage = when {
                     e.message?.contains("504") == true -> "Pokemon TCG API is slow. Please try again."
@@ -86,18 +106,17 @@ class CardViewModel @Inject constructor(
     }
 
     fun selectPokemonCards(pokemonName: String) {
-        viewModelScope.launch {
-            _cardUiState.value = CardUiState(loading = true, selectedPokemonName = pokemonName)
-            try {
-                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName")
-                val cards = repository.searchPokemonCards(pokemonName, "en")
-                android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards for $pokemonName")
-                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
-            } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
-                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
-            }
-        }
+        val currentState = _cardUiState.value
+        // Filter from already loaded cards instead of making a new API call
+        val filteredCards = currentState.allCards.filter { it.name == pokemonName }
+        
+        android.util.Log.d("CardViewModel", "Selecting cards for: $pokemonName")
+        android.util.Log.d("CardViewModel", "Found ${filteredCards.size} cards")
+        
+        _cardUiState.value = currentState.copy(
+            cards = filteredCards,
+            selectedPokemonName = pokemonName
+        )
     }
 
     fun selectCard(card: Card) {
