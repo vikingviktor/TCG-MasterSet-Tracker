@@ -279,9 +279,10 @@ class PokemonRepository @Inject constructor(
         // Fetch total card count from API when adding to favorites
         val totalCards = try {
             val query = "name:${pokemonName}*"
-            val response = api.searchCards(query = query, pageSize = 1)
-            android.util.Log.d("PokemonRepository", "Cached total cards for $pokemonName: ${response.totalCount}")
-            response.totalCount
+            // Get all cards for this Pokemon (max pageSize to get accurate count)
+            val response = api.searchCards(query = query, pageSize = 250)
+            android.util.Log.d("PokemonRepository", "Cached total cards for $pokemonName: ${response.cards.size}")
+            response.cards.size
         } catch (e: Exception) {
             android.util.Log.e("PokemonRepository", "Error fetching total cards for $pokemonName: ${e.message}")
             0
