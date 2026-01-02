@@ -67,7 +67,7 @@ class PokemonRepository @Inject constructor(
     suspend fun searchPokemonCardsWithPagination(pokemonName: String, language: String = "en", page: Int = 1, pageSize: Int = 25): List<Card> {
         return try {
             val query = buildCardQuery(pokemonName, language)
-            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: query=$query, page=$page, pageSize=$pageSize")
+            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: pokemonName='$pokemonName', query='$query', page=$page, pageSize=$pageSize")
             val apiStartTime = System.currentTimeMillis()
             
             val response = api.searchCards(query = query, pageSize = pageSize, page = page)
@@ -78,13 +78,22 @@ class PokemonRepository @Inject constructor(
             cardDao.insertCards(response.cards)
             response.cards
         } catch (e: Exception) {
+            // Try to get cached results on error
+            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            if (cachedCards.isNotEmpty()) {
+                android.util.Log.w("PokemonRepository", "API failed for '$pokemonName', using ${cachedCards.size} cached cards")
+                return cachedCards
+            }
+            
             val errorDetails = """
+                Pokemon Name: '$pokemonName'
+                Query Used: '$query'
                 Error Type: ${e.javaClass.simpleName}
                 Message: ${e.message}
                 Cause: ${e.cause?.message}
             """.trimIndent()
-            android.util.Log.e("PokemonRepository", "Error searching cards:\n$errorDetails")
-            throw Exception("${e.javaClass.simpleName}: ${e.message}\nAt: ${e.stackTrace.firstOrNull()}", e)
+            android.util.Log.e("PokemonRepository", "❌ Error searching cards:\n$errorDetails")
+            throw Exception("${e.javaClass.simpleName}: ${e.message}\n\nPokemon: $pokemonName\nQuery: $query", e)
         }
     }
     
@@ -314,9 +323,13 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        // Use wildcard matching for better performance
-        // name:"pikachu*" matches Pikachu, Pikachu-EX, Pikachu V, etc.
-        return "name:\"${pokemonName}*\""
+        // The Pokemon TCG API uses the format: name:pokemonname*
+        // We need to handle special characters properly
+        // Remove quotes from Pokemon names and use wildcard for better matching
+        val cleanName = pokemonName.trim()
+        
+        // Try without quotes first - the API might work better this way
+        return "name:$cleanName*"
     }
     
     private fun getPopularPokemonList(): List<Pokemon> {

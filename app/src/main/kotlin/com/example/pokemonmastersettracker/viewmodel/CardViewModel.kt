@@ -22,7 +22,9 @@ data class CardUiState(
     val selectedPokemonName: String? = null,
     val currentPage: Int = 1,
     val hasMorePages: Boolean = false,
-    val pageSize: Int = 25
+    val pageSize: Int = 25,
+    val lastQuery: String? = null, // For debugging - shows the actual query used
+    val debugInfo: String? = null // For debugging - shows diagnostic information
 )
 
 @HiltViewModel
@@ -90,7 +92,13 @@ class CardViewModel @Inject constructor(
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
     fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25) {
         viewModelScope.launch {
-            _cardUiState.value = _cardUiState.value.copy(loading = true, selectedPokemonName = pokemonName)
+            val queryInfo = "name:$pokemonName*"
+            _cardUiState.value = _cardUiState.value.copy(
+                loading = true, 
+                selectedPokemonName = pokemonName,
+                lastQuery = queryInfo,
+                debugInfo = "Searching: $pokemonName | Query: $queryInfo | Page: $page"
+            )
             try {
                 android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (languages: $languages, page: $page)")
                 
@@ -118,13 +126,20 @@ class CardViewModel @Inject constructor(
                     selectedPokemonName = pokemonName,
                     currentPage = page,
                     hasMorePages = hasMore,
-                    pageSize = pageSize
+                    pageSize = pageSize,
+                    debugInfo = "✓ Loaded ${allCards.size} cards for $pokemonName"
                 )
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
+                val errorType = when {
+                    e.message?.contains("404") == true -> "404 Not Found"
+                    e.message?.contains("504") == true -> "504 Timeout"
+                    else -> e.javaClass.simpleName
+                }
                 _cardUiState.value = _cardUiState.value.copy(
                     error = e.message ?: "Unknown error",
-                    loading = false
+                    loading = false,
+                    debugInfo = "✗ Failed: $errorType | Pokemon: $pokemonName | Query: $queryInfo"
                 )
             }
         }

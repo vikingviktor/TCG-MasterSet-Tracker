@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -135,37 +136,122 @@ fun HomeScreen(
             }
 
             cardUiState.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Error: ${cardUiState.error}",
+                        text = "Unable to load cards",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
                         color = PokemonColors.Error
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = when {
+                            cardUiState.error!!.contains("404") -> "Pokemon not found. Try a different Pokemon name."
+                            cardUiState.error!!.contains("504") || cardUiState.error!!.contains("timeout") -> 
+                                "Server timeout. The Pokemon TCG API is slow right now. Please try again."
+                            else -> "Error: ${cardUiState.error}"
+                        },
+                        color = PokemonColors.Error.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    // Show diagnostic info
+                    cardUiState.debugInfo?.let { debug ->
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.Black.copy(alpha = 0.7f)
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "Debug Info:",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Yellow
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = debug,
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            cardUiState.selectedPokemonName?.let { pokemonName ->
+                                viewModel.selectPokemonCards(pokemonName, selectedLanguages)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary)
+                    ) {
+                        Text("Retry")
+                    }
                 }
             }
 
             cardUiState.selectedPokemonName != null && cardUiState.cards.isNotEmpty() -> {
-                // Show all cards for selected Pokemon
-                CardDetailView(
-                    pokemonName = cardUiState.selectedPokemonName!!,
-                    cards = cardUiState.cards,
-                    currentPage = cardUiState.currentPage,
-                    hasMorePages = cardUiState.hasMorePages,
-                    pageSize = cardUiState.pageSize,
-                    refreshTrigger = refreshTrigger,
-                    viewModel = viewModel,
-                    onCardClick = { card ->
-                        selectedCardForDialog = card
-                        scope.launch {
-                            isCardOwned = viewModel.isCardOwned(card.id)
-                            isCardInWishlist = viewModel.isInWishlist(card.id)
+                Column {
+                    // Debug info banner (shows query used)
+                    cardUiState.debugInfo?.let { debug ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFF1B5E20).copy(alpha = 0.9f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = debug,
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
-                    },
-                    onLoadMore = { viewModel.loadMoreCards(selectedLanguages) },
-                    onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, selectedLanguages) }
-                )
+                    }
+                    
+                    // Show all cards for selected Pokemon
+                    CardDetailView(
+                        pokemonName = cardUiState.selectedPokemonName!!,
+                        cards = cardUiState.cards,
+                        currentPage = cardUiState.currentPage,
+                        hasMorePages = cardUiState.hasMorePages,
+                        pageSize = cardUiState.pageSize,
+                        refreshTrigger = refreshTrigger,
+                        viewModel = viewModel,
+                        onCardClick = { card ->
+                            selectedCardForDialog = card
+                            scope.launch {
+                                isCardOwned = viewModel.isCardOwned(card.id)
+                                isCardInWishlist = viewModel.isInWishlist(card.id)
+                            }
+                        },
+                        onLoadMore = { viewModel.loadMoreCards(selectedLanguages) },
+                        onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, selectedLanguages) }
+                    )
+                }
             }
 
             cardUiState.pokemonList.isEmpty() && searchQuery.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
