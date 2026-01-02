@@ -294,8 +294,8 @@ class CardViewModel @Inject constructor(
     // Test direct API call with simplest possible query
     suspend fun testDirectApiCall(): String {
         return try {
-            val response = repository.searchCardsByName("")
-            "SUCCESS: Retrieved ${response.totalCount} total cards (${response.count} on this page)"
+            val cards = repository.searchPokemonCards("Pikachu")
+            "SUCCESS: Retrieved ${cards.size} cards"
         } catch (e: Exception) {
             "ERROR: ${e.message}"
         }
