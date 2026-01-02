@@ -120,8 +120,9 @@ object AppModule {
         cardDao: CardDao,
         userCardDao: UserCardDao,
         favoritePokemonDao: FavoritePokemonDao,
-        userDao: UserDao
+        userDao: UserDao,
+        pokemonDao: PokemonDao
     ): PokemonRepository {
-        return PokemonRepository(api, cardDao, userCardDao, favoritePokemonDao, userDao)
+        return PokemonRepository(api, cardDao, userCardDao, favoritePokemonDao, userDao, pokemonDao)
     }
 }
