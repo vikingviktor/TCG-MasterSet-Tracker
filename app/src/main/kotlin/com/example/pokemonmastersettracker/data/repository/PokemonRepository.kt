@@ -4,11 +4,13 @@ import com.example.pokemonmastersettracker.data.api.PokemonTCGApi
 import com.example.pokemonmastersettracker.data.database.CardDao
 import com.example.pokemonmastersettracker.data.database.UserCardDao
 import com.example.pokemonmastersettracker.data.database.FavoritePokemonDao
+import com.example.pokemonmastersettracker.data.database.WishlistCardDao
 import com.example.pokemonmastersettracker.data.database.UserDao
 import com.example.pokemonmastersettracker.data.database.PokemonDao
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
+import com.example.pokemonmastersettracker.data.models.WishlistCard
 import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.models.CardCondition
@@ -20,6 +22,7 @@ class PokemonRepository @Inject constructor(
     private val cardDao: CardDao,
     private val userCardDao: UserCardDao,
     private val favoritePokemonDao: FavoritePokemonDao,
+    private val wishlistCardDao: WishlistCardDao,
     private val userDao: UserDao,
     private val pokemonDao: PokemonDao
 ) {
@@ -60,6 +63,30 @@ class PokemonRepository @Inject constructor(
     }
     
     // Card Operations
+    
+    suspend fun searchPokemonCardsWithPagination(pokemonName: String, language: String = "en", page: Int = 1, pageSize: Int = 25): List<Card> {
+        return try {
+            val query = buildCardQuery(pokemonName, language)
+            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: query=$query, page=$page, pageSize=$pageSize")
+            val apiStartTime = System.currentTimeMillis()
+            
+            val response = api.searchCards(query = query, pageSize = pageSize, page = page)
+            
+            val apiTime = System.currentTimeMillis() - apiStartTime
+            android.util.Log.d("PokemonRepository", "⏱️ API RESPONSE: ${response.cards.size} cards in ${apiTime}ms")
+            
+            cardDao.insertCards(response.cards)
+            response.cards
+        } catch (e: Exception) {
+            val errorDetails = """
+                Error Type: ${e.javaClass.simpleName}
+                Message: ${e.message}
+                Cause: ${e.cause?.message}
+            """.trimIndent()
+            android.util.Log.e("PokemonRepository", "Error searching cards:\n$errorDetails")
+            throw Exception("${e.javaClass.simpleName}: ${e.message}\nAt: ${e.stackTrace.firstOrNull()}", e)
+        }
+    }
     
     suspend fun searchPokemonCards(pokemonName: String, language: String = "en"): List<Card> {
         return try {
@@ -198,6 +225,38 @@ class PokemonRepository @Inject constructor(
 
     suspend fun getOwnedCardsCount(userId: String): Int {
         return userCardDao.getOwnedCardsCount(userId)
+    }
+    
+    suspend fun isCardOwned(userId: String, cardId: String): Boolean {
+        val userCard = userCardDao.getUserCard(userId, cardId)
+        return userCard?.isOwned == true
+    }
+
+    // Wishlist Operations
+    
+    suspend fun addToWishlist(userId: String, cardId: String) {
+        wishlistCardDao.addToWishlist(
+            WishlistCard(
+                userId = userId,
+                cardId = cardId
+            )
+        )
+    }
+    
+    suspend fun removeFromWishlist(userId: String, cardId: String) {
+        wishlistCardDao.removeFromWishlist(userId, cardId)
+    }
+    
+    fun getUserWishlist(userId: String): Flow<List<WishlistCard>> {
+        return wishlistCardDao.getUserWishlist(userId)
+    }
+    
+    suspend fun getUserWishlistSync(userId: String): List<WishlistCard> {
+        return wishlistCardDao.getUserWishlistSync(userId)
+    }
+    
+    suspend fun isInWishlist(userId: String, cardId: String): Boolean {
+        return wishlistCardDao.isInWishlist(userId, cardId) > 0
     }
 
     // Favorite Pokemon Operations

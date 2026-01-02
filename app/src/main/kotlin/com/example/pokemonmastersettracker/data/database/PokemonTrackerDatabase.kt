@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
+import com.example.pokemonmastersettracker.data.models.WishlistCard
 import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.converters.TypeConverters as RoomTypeConverters
@@ -17,10 +18,11 @@ import com.example.pokemonmastersettracker.data.converters.TypeConverters as Roo
         Card::class,
         UserCard::class,
         FavoritePokemon::class,
+        WishlistCard::class,
         User::class,
         Pokemon::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
@@ -29,6 +31,7 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun userCardDao(): UserCardDao
     abstract fun favoritePokemonDao(): FavoritePokemonDao
+    abstract fun wishlistCardDao(): WishlistCardDao
     abstract fun userDao(): UserDao
     abstract fun pokemonDao(): PokemonDao
 

@@ -6,6 +6,7 @@ import com.example.pokemonmastersettracker.data.database.PokemonTrackerDatabase
 import com.example.pokemonmastersettracker.data.database.CardDao
 import com.example.pokemonmastersettracker.data.database.UserCardDao
 import com.example.pokemonmastersettracker.data.database.FavoritePokemonDao
+import com.example.pokemonmastersettracker.data.database.WishlistCardDao
 import com.example.pokemonmastersettracker.data.database.UserDao
 import com.example.pokemonmastersettracker.data.database.PokemonDao
 import com.example.pokemonmastersettracker.data.repository.PokemonRepository
@@ -50,6 +51,12 @@ object AppModule {
     @Provides
     fun provideFavoritePokemonDao(database: PokemonTrackerDatabase): FavoritePokemonDao {
         return database.favoritePokemonDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideWishlistCardDao(database: PokemonTrackerDatabase): WishlistCardDao {
+        return database.wishlistCardDao()
     }
 
     @Singleton
@@ -120,9 +127,10 @@ object AppModule {
         cardDao: CardDao,
         userCardDao: UserCardDao,
         favoritePokemonDao: FavoritePokemonDao,
+        wishlistCardDao: WishlistCardDao,
         userDao: UserDao,
         pokemonDao: PokemonDao
     ): PokemonRepository {
-        return PokemonRepository(api, cardDao, userCardDao, favoritePokemonDao, userDao, pokemonDao)
+        return PokemonRepository(api, cardDao, userCardDao, favoritePokemonDao, wishlistCardDao, userDao, pokemonDao)
     }
 }

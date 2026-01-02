@@ -64,6 +64,31 @@ data class FavoritePokemon(
     val addedAt: Long = System.currentTimeMillis()
 )
 
+@Entity(
+    tableName = "wishlist_cards",
+    foreignKeys = [
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["id"],
+            childColumns = ["userId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Card::class,
+            parentColumns = ["id"],
+            childColumns = ["cardId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class WishlistCard(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val userId: String,
+    val cardId: String,
+    val addedAt: Long = System.currentTimeMillis()
+)
+
 enum class CardCondition {
     MINT,
     NEAR_MINT,

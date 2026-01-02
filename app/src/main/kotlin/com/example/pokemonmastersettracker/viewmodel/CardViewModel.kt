@@ -19,7 +19,10 @@ data class CardUiState(
     val allCards: List<Card> = emptyList(), // Store all cards from search
     val loading: Boolean = false,
     val error: String? = null,
-    val selectedPokemonName: String? = null
+    val selectedPokemonName: String? = null,
+    val currentPage: Int = 1,
+    val hasMorePages: Boolean = false,
+    val pageSize: Int = 25
 )
 
 @HiltViewModel
@@ -35,6 +38,9 @@ class CardViewModel @Inject constructor(
     
     // Cache recent searches to avoid duplicate API calls
     private val searchCache = mutableMapOf<String, List<Card>>()
+    
+    // Default user ID (in production, this would come from authentication)
+    private val defaultUserId = "default_user"
     
     init {
         // Seed Pokemon database on first launch
@@ -80,26 +86,38 @@ class CardViewModel @Inject constructor(
         }
     }
 
-    // MODIFIED: Now loads cards from API when Pokemon is clicked
-    fun selectPokemonCards(pokemonName: String) {
+    // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
+    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25) {
         viewModelScope.launch {
             _cardUiState.value = _cardUiState.value.copy(loading = true, selectedPokemonName = pokemonName)
             try {
-                android.util.Log.d("CardViewModel", "Loading all cards for: $pokemonName")
-                val cards = repository.searchPokemonCards(pokemonName, "en")
-                android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards")
+                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (languages: $languages, page: $page)")
+                
+                // Fetch cards for all selected languages
+                val allCards = mutableListOf<Card>()
+                for (language in languages) {
+                    val cards = repository.searchPokemonCardsWithPagination(pokemonName, language, page, pageSize)
+                    allCards.addAll(cards)
+                }
+                
+                android.util.Log.d("CardViewModel", "Loaded ${allCards.size} cards")
                 
                 // Save the first card's image to Pokemon entity for future searches
-                cards.firstOrNull()?.image?.small?.let { imageUrl ->
+                allCards.firstOrNull()?.image?.small?.let { imageUrl ->
                     repository.updatePokemonImage(pokemonName, imageUrl)
                     android.util.Log.d("CardViewModel", "Saved image for $pokemonName")
                 }
                 
+                val hasMore = allCards.size >= pageSize * languages.size
+                
                 _cardUiState.value = _cardUiState.value.copy(
-                    cards = cards,
-                    allCards = cards,
+                    cards = allCards,
+                    allCards = allCards,
                     loading = false,
-                    selectedPokemonName = pokemonName
+                    selectedPokemonName = pokemonName,
+                    currentPage = page,
+                    hasMorePages = hasMore,
+                    pageSize = pageSize
                 )
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
@@ -108,6 +126,21 @@ class CardViewModel @Inject constructor(
                     loading = false
                 )
             }
+        }
+    }
+    
+    fun loadMoreCards(languages: Set<String> = setOf("en")) {
+        val currentState = _cardUiState.value
+        currentState.selectedPokemonName?.let { pokemonName ->
+            selectPokemonCards(pokemonName, languages, currentState.currentPage + 1, currentState.pageSize)
+        }
+    }
+    
+    fun changePageSize(newPageSize: Int, languages: Set<String> = setOf("en")) {
+        val currentState = _cardUiState.value
+        currentState.selectedPokemonName?.let { pokemonName ->
+            // Reset to page 1 when changing page size
+            selectPokemonCards(pokemonName, languages, 1, newPageSize)
         }
     }
 
@@ -142,6 +175,46 @@ class CardViewModel @Inject constructor(
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error loading favorites: ${e.message}", e)
                 _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+            }
+        }
+    }
+    
+    // Collection Management
+    
+    suspend fun isCardOwned(cardId: String): Boolean {
+        return repository.isCardOwned(defaultUserId, cardId)
+    }
+    
+    fun toggleCardOwnership(cardId: String, currentlyOwned: Boolean) {
+        viewModelScope.launch {
+            try {
+                if (currentlyOwned) {
+                    repository.markCardAsMissing(defaultUserId, cardId)
+                } else {
+                    repository.markCardAsOwned(defaultUserId, cardId)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error toggling ownership: ${e.message}", e)
+            }
+        }
+    }
+    
+    // Wishlist Management
+    
+    suspend fun isInWishlist(cardId: String): Boolean {
+        return repository.isInWishlist(defaultUserId, cardId)
+    }
+    
+    fun toggleWishlist(cardId: String, currentlyInWishlist: Boolean) {
+        viewModelScope.launch {
+            try {
+                if (currentlyInWishlist) {
+                    repository.removeFromWishlist(defaultUserId, cardId)
+                } else {
+                    repository.addToWishlist(defaultUserId, cardId)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error toggling wishlist: ${e.message}", e)
             }
         }
     }

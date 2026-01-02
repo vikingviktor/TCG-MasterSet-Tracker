@@ -18,24 +18,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -44,6 +50,8 @@ import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.components.CardItem
+import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -51,8 +59,30 @@ fun HomeScreen(
     onCardClick: (String) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedLanguage by remember { mutableStateOf("en") }
+    var selectedLanguages by remember { mutableStateOf(setOf("en")) } // Changed to Set for multi-select
     val cardUiState by viewModel.cardUiState.collectAsState()
+    var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
+    var isCardOwned by remember { mutableStateOf(false) }
+    var isCardInWishlist by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Show dialog when a card is selected
+    selectedCardForDialog?.let { card ->
+        CardDetailDialog(
+            card = card,
+            isOwned = isCardOwned,
+            isInWishlist = isCardInWishlist,
+            onDismiss = { selectedCardForDialog = null },
+            onToggleOwned = {
+                viewModel.toggleCardOwnership(card.id, isCardOwned)
+                isCardOwned = !isCardOwned
+            },
+            onToggleWishlist = {
+                viewModel.toggleWishlist(card.id, isCardInWishlist)
+                isCardInWishlist = !isCardInWishlist
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -61,21 +91,31 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Search Section
-        SearchSection(
-            searchQuery = searchQuery,
-            onSearchQueryChanged = { searchQuery = it },
-            selectedLanguage = selectedLanguage,
-            onLanguageChanged = { selectedLanguage = it },
-            onSearch = {
-                if (searchQuery.isNotEmpty()) {
-                    viewModel.searchPokemonLocal(searchQuery) // Changed to local search
+        // Only show search section when NOT viewing a Pokemon's cards
+        if (cardUiState.selectedPokemonName == null) {
+            SearchSection(
+                searchQuery = searchQuery,
+                onSearchQueryChanged = { searchQuery = it },
+                selectedLanguages = selectedLanguages,
+                onLanguagesChanged = { selectedLanguages = it },
+                onSearch = {
+                    if (searchQuery.isNotEmpty()) {
+                        viewModel.searchPokemonLocal(searchQuery)
+                    }
                 }
-            },
-            onBackClick = if (cardUiState.selectedPokemonName != null) {
-                { viewModel.clearSelection() }
-            } else null
-        )
+            )
+        } else {
+            // Show back button when viewing cards
+            Button(
+                onClick = { viewModel.clearSelection() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = PokemonColors.Secondary
+                )
+            ) {
+                Text("← Back to Search Results")
+            }
+        }
 
         // Content Section
         when {
@@ -105,7 +145,18 @@ fun HomeScreen(
                 CardDetailView(
                     pokemonName = cardUiState.selectedPokemonName!!,
                     cards = cardUiState.cards,
-                    onCardClick = onCardClick
+                    currentPage = cardUiState.currentPage,
+                    hasMorePages = cardUiState.hasMorePages,
+                    pageSize = cardUiState.pageSize,
+                    onCardClick = { card ->
+                        selectedCardForDialog = card
+                        scope.launch {
+                            isCardOwned = viewModel.isCardOwned(card.id)
+                            isCardInWishlist = viewModel.isInWishlist(card.id)
+                        }
+                    },
+                    onLoadMore = { viewModel.loadMoreCards(selectedLanguages) },
+                    onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, selectedLanguages) }
                 )
             }
 
@@ -123,7 +174,7 @@ fun HomeScreen(
                 PokemonListView(
                     pokemonList = cardUiState.pokemonList,
                     onPokemonSelect = { pokemonName ->
-                        viewModel.selectPokemonCards(pokemonName) // Triggers API call
+                        viewModel.selectPokemonCards(pokemonName, selectedLanguages) // Pass selected languages
                     },
                     onFavoriteToggle = { pokemonName ->
                         viewModel.toggleFavorite(pokemonName)
@@ -147,10 +198,9 @@ fun HomeScreen(
 fun SearchSection(
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
-    selectedLanguage: String,
-    onLanguageChanged: (String) -> Unit,
-    onSearch: () -> Unit,
-    onBackClick: (() -> Unit)? = null
+    selectedLanguages: Set<String>,
+    onLanguagesChanged: (Set<String>) -> Unit,
+    onSearch: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -159,19 +209,6 @@ fun SearchSection(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Back button if viewing details
-        if (onBackClick != null) {
-            Button(
-                onClick = onBackClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = PokemonColors.Secondary
-                )
-            ) {
-                Text("← Back to Search Results")
-            }
-        }
-
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChanged,
@@ -186,29 +223,48 @@ fun SearchSection(
             singleLine = true
         )
 
-        // Language Selection
+        // Multi-Language Selection
+        Text(
+            text = "Languages (select one or both):",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
-                onClick = { onLanguageChanged("en") },
+                onClick = {
+                    val updated = if (selectedLanguages.contains("en")) {
+                        selectedLanguages - "en"
+                    } else {
+                        selectedLanguages + "en"
+                    }
+                    if (updated.isNotEmpty()) onLanguagesChanged(updated)
+                },
                 modifier = Modifier.weight(1f),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedLanguage == "en") PokemonColors.Primary else Color.LightGray
+                    containerColor = if (selectedLanguages.contains("en")) PokemonColors.Primary else Color.LightGray
                 )
             ) {
-                Text("English")
+                Text(if (selectedLanguages.contains("en")) "✓ English" else "English")
             }
 
             Button(
-                onClick = { onLanguageChanged("ja") },
+                onClick = {
+                    val updated = if (selectedLanguages.contains("ja")) {
+                        selectedLanguages - "ja"
+                    } else {
+                        selectedLanguages + "ja"
+                    }
+                    if (updated.isNotEmpty()) onLanguagesChanged(updated)
+                },
                 modifier = Modifier.weight(1f),
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedLanguage == "ja") PokemonColors.Primary else Color.LightGray
+                    containerColor = if (selectedLanguages.contains("ja")) PokemonColors.Primary else Color.LightGray
                 )
             ) {
-                Text("Japanese")
+                Text(if (selectedLanguages.contains("ja")) "✓ Japanese" else "Japanese")
             }
         }
 
@@ -343,32 +399,103 @@ fun PokemonSelectionCard(
 fun CardDetailView(
     pokemonName: String,
     cards: List<Card>,
-    onCardClick: (String) -> Unit
+    currentPage: Int,
+    hasMorePages: Boolean,
+    pageSize: Int,
+    onCardClick: (Card) -> Unit,
+    onLoadMore: () -> Unit,
+    onPageSizeChange: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "All $pokemonName Cards (${cards.size})",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = PokemonColors.Primary,
-            modifier = Modifier.padding(8.dp)
-        )
+        // Header with card count and pagination controls
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$pokemonName Cards (${cards.size})",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = PokemonColors.Primary
+            )
+            
+            // Page size selector
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Per page:",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                listOf(25, 50, 100).forEach { size ->
+                    OutlinedButton(
+                        onClick = { onPageSizeChange(size) },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (pageSize == size) PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                            contentColor = if (pageSize == size) PokemonColors.Primary else Color.Gray
+                        ),
+                        modifier = Modifier.height(32.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = size.toString(),
+                            fontSize = 12.sp,
+                            fontWeight = if (pageSize == size) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.weight(1f)
         ) {
             items(cards) { card ->
                 CardItem(
                     card = card,
-                    onCardClick = { onCardClick(card.id) },
+                    onCardClick = { onCardClick(card) },
                     onFavoriteToggle = { /* Handle favorite toggle */ }
                 )
             }
+        }
+        
+        // Load More button
+        if (hasMorePages) {
+            Button(
+                onClick = onLoadMore,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PokemonColors.Primary
+                )
+            ) {
+                Text(
+                    text = "Load More Cards (Page ${currentPage + 1})",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        } else if (cards.isNotEmpty()) {
+            Text(
+                text = "All cards loaded (Page $currentPage)",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                textAlign = TextAlign.Center,
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
         }
     }
 }

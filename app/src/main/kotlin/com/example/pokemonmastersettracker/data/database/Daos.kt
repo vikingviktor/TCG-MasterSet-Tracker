@@ -9,6 +9,7 @@ import androidx.room.Update
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
+import com.example.pokemonmastersettracker.data.models.WishlistCard
 import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import kotlinx.coroutines.flow.Flow
@@ -110,6 +111,28 @@ interface FavoritePokemonDao {
 
     @Delete
     suspend fun deleteFavorite(favorite: FavoritePokemon)
+}
+
+@Dao
+interface WishlistCardDao {
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addToWishlist(wishlistCard: WishlistCard)
+    
+    @Query("SELECT * FROM wishlist_cards WHERE userId = :userId")
+    fun getUserWishlist(userId: String): Flow<List<WishlistCard>>
+    
+    @Query("SELECT * FROM wishlist_cards WHERE userId = :userId")
+    suspend fun getUserWishlistSync(userId: String): List<WishlistCard>
+    
+    @Query("SELECT COUNT(*) FROM wishlist_cards WHERE userId = :userId AND cardId = :cardId")
+    suspend fun isInWishlist(userId: String, cardId: String): Int
+    
+    @Query("DELETE FROM wishlist_cards WHERE userId = :userId AND cardId = :cardId")
+    suspend fun removeFromWishlist(userId: String, cardId: String)
+    
+    @Delete
+    suspend fun deleteWishlistCard(wishlistCard: WishlistCard)
 }
 
 @Dao

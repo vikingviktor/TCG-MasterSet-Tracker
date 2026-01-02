@@ -1,6 +1,7 @@
 package com.example.pokemonmastersettracker.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Icon
@@ -39,9 +42,16 @@ fun CardItem(
     onFavoriteToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val borderColor = if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350) // Green for owned, Red for not owned
+    
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .border(
+                width = 3.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(8.dp)
+            )
             .clip(RoundedCornerShape(8.dp))
             .background(PokemonColors.Surface)
             .clickable { onCardClick(card) }
@@ -67,6 +77,25 @@ fun CardItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text("No Image Available")
+                }
+            }
+            
+            // Owned checkmark
+            if (isOwned) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .background(Color(0xFF4CAF50), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Owned",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 
@@ -124,7 +153,7 @@ fun CardItem(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .background(
-                            if (isOwned) PokemonColors.Primary else Color.LightGray
+                            if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350)
                         )
                         .padding(8.dp)
                 ) {
@@ -132,7 +161,7 @@ fun CardItem(
                         text = if (isOwned) "OWNED" else "MISSING",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isOwned) Color.White else Color.DarkGray
+                        color = Color.White
                     )
                 }
             }
