@@ -78,7 +78,7 @@ fun PokemonTrackerAppScreen() {
                 when (currentScreen) {
                     0 -> HomeScreen()
                     1 -> CollectionScreen(userId = "test-user")
-                    2 -> FavoritesScreen(userId = "test-user")
+                    2 -> FavoritesScreen()
                 }
             }
         }
