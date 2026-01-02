@@ -61,7 +61,8 @@ data class FavoritePokemon(
     val id: Long = 0,
     val userId: String,
     val pokemonName: String,
-    val addedAt: Long = System.currentTimeMillis()
+    val addedAt: Long = System.currentTimeMillis(),
+    val totalCards: Int = 0 // Cached total card count for this Pokemon
 )
 
 @Entity(

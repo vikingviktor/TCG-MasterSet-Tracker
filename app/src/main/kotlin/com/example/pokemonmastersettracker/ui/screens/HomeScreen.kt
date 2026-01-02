@@ -87,12 +87,22 @@ fun HomeScreen(
                 refreshTrigger++ // Trigger refresh when dialog closes
             },
             onToggleOwned = {
-                viewModel.toggleCardOwnership(card.id, isCardOwned)
-                isCardOwned = !isCardOwned
+                scope.launch {
+                    viewModel.toggleCardOwnership(card.id, isCardOwned)
+                    // Wait a bit for database operation to complete
+                    delay(100)
+                    // Re-query the actual state from database
+                    isCardOwned = viewModel.isCardOwned(card.id)
+                }
             },
             onToggleWishlist = {
-                viewModel.toggleWishlist(card.id, isCardInWishlist)
-                isCardInWishlist = !isCardInWishlist
+                scope.launch {
+                    viewModel.toggleWishlist(card.id, isCardInWishlist)
+                    // Wait a bit for database operation to complete
+                    delay(100)
+                    // Re-query the actual state from database
+                    isCardInWishlist = viewModel.isInWishlist(card.id)
+                }
             }
         )
     }

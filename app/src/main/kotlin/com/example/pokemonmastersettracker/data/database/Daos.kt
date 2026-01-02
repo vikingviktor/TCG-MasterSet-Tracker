@@ -103,6 +103,9 @@ interface FavoritePokemonDao {
     @Query("SELECT * FROM favorite_pokemon WHERE userId = :userId")
     fun getUserFavorites(userId: String): Flow<List<FavoritePokemon>>
 
+    @Query("SELECT * FROM favorite_pokemon WHERE userId = :userId")
+    suspend fun getUserFavoritesSync(userId: String): List<FavoritePokemon>
+
     @Query("SELECT COUNT(*) FROM favorite_pokemon WHERE userId = :userId AND pokemonName = :pokemonName")
     suspend fun isFavorite(userId: String, pokemonName: String): Int
 

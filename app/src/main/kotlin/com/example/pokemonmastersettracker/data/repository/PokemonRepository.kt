@@ -276,10 +276,22 @@ class PokemonRepository @Inject constructor(
     // Favorite Pokemon Operations
 
     suspend fun addFavoritePokemon(userId: String, pokemonName: String) {
+        // Fetch total card count from API when adding to favorites
+        val totalCards = try {
+            val query = "name:${pokemonName}*"
+            val response = api.searchCards(query = query, pageSize = 1)
+            android.util.Log.d("PokemonRepository", "Cached total cards for $pokemonName: ${response.totalCount}")
+            response.totalCount
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error fetching total cards for $pokemonName: ${e.message}")
+            0
+        }
+        
         favoritePokemonDao.addFavorite(
             FavoritePokemon(
                 userId = userId,
-                pokemonName = pokemonName
+                pokemonName = pokemonName,
+                totalCards = totalCards
             )
         )
     }
@@ -294,6 +306,21 @@ class PokemonRepository @Inject constructor(
 
     suspend fun isFavoritePokemon(userId: String, pokemonName: String): Boolean {
         return favoritePokemonDao.isFavorite(userId, pokemonName) > 0
+    }
+
+    suspend fun getTotalCardsCountForFavoritePokemon(userId: String): Int {
+        return try {
+            val favoritePokemon = favoritePokemonDao.getUserFavoritesSync(userId)
+            
+            // Use cached totalCards from database for faster performance
+            val totalCount = favoritePokemon.sumOf { it.totalCards }
+            
+            android.util.Log.d("PokemonRepository", "Total cards for ${favoritePokemon.size} favorite Pokemon (cached): $totalCount")
+            totalCount
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error getting total cards count: ${e.message}")
+            0
+        }
     }
 
     // User Operations

@@ -42,8 +42,12 @@ class UserCollectionViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getUserCards(userId).collect { userCards ->
                 val ownedCards = userCards.filter { it.isOwned }.size
-                val completionPercentage = if (userCards.isNotEmpty()) {
-                    (ownedCards.toFloat() / userCards.size) * 100
+                
+                // Get total count of cards for all favorite Pokemon
+                val totalCardsForFavorites = repository.getTotalCardsCountForFavoritePokemon(userId)
+                
+                val completionPercentage = if (totalCardsForFavorites > 0) {
+                    (ownedCards.toFloat() / totalCardsForFavorites) * 100
                 } else {
                     0f
                 }
@@ -51,7 +55,7 @@ class UserCollectionViewModel @Inject constructor(
                 _collectionUiState.value = UserCollectionUiState(
                     userCards = userCards,
                     ownedCount = ownedCards,
-                    totalCount = userCards.size,
+                    totalCount = totalCardsForFavorites,
                     completionPercentage = completionPercentage
                 )
             }

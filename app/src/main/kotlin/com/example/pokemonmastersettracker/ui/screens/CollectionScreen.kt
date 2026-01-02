@@ -87,12 +87,22 @@ fun CollectionScreen(
                 refreshTrigger++ // Trigger refresh
             },
             onToggleOwned = {
-                cardViewModel.toggleCardOwnership(card.id, isCardOwned)
-                isCardOwned = !isCardOwned
+                scope.launch {
+                    cardViewModel.toggleCardOwnership(card.id, isCardOwned)
+                    // Wait a bit for database operation to complete
+                    delay(100)
+                    // Re-query the actual state from database
+                    isCardOwned = cardViewModel.isCardOwned(card.id)
+                }
             },
             onToggleWishlist = {
-                cardViewModel.toggleWishlist(card.id, isCardInWishlist)
-                isCardInWishlist = !isCardInWishlist
+                scope.launch {
+                    cardViewModel.toggleWishlist(card.id, isCardInWishlist)
+                    // Wait a bit for database operation to complete
+                    delay(100)
+                    // Re-query the actual state from database
+                    isCardInWishlist = cardViewModel.isInWishlist(card.id)
+                }
             }
         )
     }
@@ -195,11 +205,16 @@ fun CollectionContent(
             }
 
             collectionUiState.userCards.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
+                    onRefresh = onRefresh
                 ) {
-                    Text("No cards in your collection yet")
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No cards in your collection yet")
+                    }
                 }
             }
 
@@ -399,25 +414,30 @@ fun WishlistContent(
             }
             
             else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                SwipeRefresh(
+                    state = rememberSwipeRefreshState(isRefreshing),
+                    onRefresh = onRefresh
                 ) {
-                    items(cards) { card ->
-                        var cardOwned by remember { mutableStateOf(false) }
-                        var cardInWishlist by remember { mutableStateOf(true) }
-                        
-                        LaunchedEffect(card.id) {
-                            cardOwned = cardViewModel.isCardOwned(card.id)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(cards) { card ->
+                            var cardOwned by remember { mutableStateOf(false) }
+                            var cardInWishlist by remember { mutableStateOf(true) }
+                            
+                            LaunchedEffect(card.id, refreshTrigger) {
+                                cardOwned = cardViewModel.isCardOwned(card.id)
+                            }
+                            
+                            CardItem(
+                                card = card,
+                                isOwned = cardOwned,
+                                onCardClick = { onCardClick(card) },
+                                onFavoriteToggle = { /* Handle favorite toggle */ }
+                            )
                         }
-                        
-                        CardItem(
-                            card = card,
-                            isOwned = cardOwned,
-                            onCardClick = { onCardClick(card) },
-                            onFavoriteToggle = { /* Handle favorite toggle */ }
-                        )
                     }
                 }
             }
