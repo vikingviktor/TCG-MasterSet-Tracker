@@ -10,7 +10,32 @@ import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
 import com.example.pokemonmastersettracker.data.models.User
+import com.example.pokemonmastersettracker.data.models.Pokemon
 import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface PokemonDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPokemon(pokemon: Pokemon)
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPokemons(pokemons: List<Pokemon>)
+    
+    @Query("SELECT * FROM pokemon WHERE name LIKE '%' || :query || '%' ORDER BY name ASC")
+    suspend fun searchPokemon(query: String): List<Pokemon>
+    
+    @Query("SELECT * FROM pokemon ORDER BY name ASC")
+    suspend fun getAllPokemon(): List<Pokemon>
+    
+    @Query("SELECT * FROM pokemon WHERE isFavorite = 1 ORDER BY name ASC")
+    suspend fun getFavoritePokemon(): List<Pokemon>
+    
+    @Query("UPDATE pokemon SET isFavorite = :isFavorite WHERE name = :name")
+    suspend fun updateFavoriteStatus(name: String, isFavorite: Boolean)
+    
+    @Query("SELECT COUNT(*) FROM pokemon")
+    suspend fun getPokemonCount(): Int
+}
 
 @Dao
 interface CardDao {

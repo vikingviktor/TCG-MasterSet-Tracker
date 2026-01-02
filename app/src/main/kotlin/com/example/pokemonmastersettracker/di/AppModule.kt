@@ -59,6 +59,12 @@ object AppModule {
 
     @Singleton
     @Provides
+    fun providePokemonDao(database: PokemonTrackerDatabase): PokemonDao {
+        return database.pokemonDao()
+    }
+
+    @Singleton
+    @Provides
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC // Changed from BODY to reduce overhead

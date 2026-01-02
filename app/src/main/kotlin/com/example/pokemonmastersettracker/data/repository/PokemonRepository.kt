@@ -5,10 +5,12 @@ import com.example.pokemonmastersettracker.data.database.CardDao
 import com.example.pokemonmastersettracker.data.database.UserCardDao
 import com.example.pokemonmastersettracker.data.database.FavoritePokemonDao
 import com.example.pokemonmastersettracker.data.database.UserDao
+import com.example.pokemonmastersettracker.data.database.PokemonDao
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
 import com.example.pokemonmastersettracker.data.models.User
+import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -18,29 +20,74 @@ class PokemonRepository @Inject constructor(
     private val cardDao: CardDao,
     private val userCardDao: UserCardDao,
     private val favoritePokemonDao: FavoritePokemonDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val pokemonDao: PokemonDao
 ) {
+    
+    // Pokemon Operations
+    
+    suspend fun searchPokemonLocal(query: String): List<Pokemon> {
+        return pokemonDao.searchPokemon(query)
+    }
+    
+    suspend fun getAllPokemon(): List<Pokemon> {
+        return pokemonDao.getAllPokemon()
+    }
+    
+    suspend fun getFavoritePokemon(): List<Pokemon> {
+        return pokemonDao.getFavoritePokemon()
+    }
+    
+    suspend fun toggleFavorite(pokemonName: String) {
+        val pokemon = pokemonDao.searchPokemon(pokemonName).firstOrNull()
+        pokemon?.let {
+            pokemonDao.updateFavoriteStatus(pokemonName, !it.isFavorite)
+        }
+    }
+    
+    suspend fun seedPopularPokemon() {
+        val count = pokemonDao.getPokemonCount()
+        if (count == 0) {
+            android.util.Log.d("PokemonRepository", "Seeding popular Pokemon...")
+            val popularPokemon = getPopularPokemonList()
+            pokemonDao.insertPokemons(popularPokemon)
+            android.util.Log.d("PokemonRepository", "Seeded ${popularPokemon.size} Pokemon")
+        }
+    }
     
     // Card Operations
     
     suspend fun searchPokemonCards(pokemonName: String, language: String = "en"): List<Card> {
         return try {
+            val startTime = System.currentTimeMillis()
+            
             // First, check database for cached results
             val localCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
             
             // If we have local results, return them immediately for better UX
             if (localCards.isNotEmpty()) {
-                android.util.Log.d("PokemonRepository", "Found ${localCards.size} cards in cache for: $pokemonName")
-                // Still fetch fresh data in background but return cached first
+                val cacheTime = System.currentTimeMillis() - startTime
+                android.util.Log.d("PokemonRepository", "✅ CACHE HIT: ${localCards.size} cards in ${cacheTime}ms for: $pokemonName")
                 return localCards
             }
             
             // No cache, fetch from API
             val query = buildCardQuery(pokemonName, language)
-            android.util.Log.d("PokemonRepository", "Searching API with query: $query")
-            val response = api.searchCards(query = query, pageSize = 25) // Reduced page size for faster response
-            android.util.Log.d("PokemonRepository", "API response: ${response.cards.size} cards found")
+            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: Starting search with query: $query")
+            val apiStartTime = System.currentTimeMillis()
+            
+            val response = api.searchCards(query = query, pageSize = 25)
+            
+            val apiTime = System.currentTimeMillis() - apiStartTime
+            android.util.Log.d("PokemonRepository", "⏱️ API RESPONSE: ${response.cards.size} cards in ${apiTime}ms")
+            
+            val dbStartTime = System.currentTimeMillis()
             cardDao.insertCards(response.cards)
+            val dbTime = System.currentTimeMillis() - dbStartTime
+            
+            val totalTime = System.currentTimeMillis() - startTime
+            android.util.Log.d("PokemonRepository", "📊 TIMING: Total=${totalTime}ms (API=${apiTime}ms, DB=${dbTime}ms)")
+            
             response.cards
         } catch (e: Exception) {
             // On error, try to return cached data as fallback
@@ -199,7 +246,34 @@ class PokemonRepository @Inject constructor(
     // Helper functions
 
     private fun buildCardQuery(pokemonName: String, language: String): String {
-        // Use exact or partial name matching
-        return "name:$pokemonName"
+        // Use wildcard matching for better performance
+        // name:"pikachu*" matches Pikachu, Pikachu-EX, Pikachu V, etc.
+        return "name:\"${pokemonName}*\""
+    }
+    
+    private fun getPopularPokemonList(): List<Pokemon> {
+        return listOf(
+            "Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard",
+            "Squirtle", "Wartortle", "Blastoise", "Pikachu", "Raichu", "Mewtwo", "Mew",
+            "Chikorita", "Cyndaquil", "Totodile", "Lugia", "Ho-Oh", "Celebi",
+            "Treecko", "Torchic", "Mudkip", "Rayquaza", "Kyogre", "Groudon", "Jirachi", "Deoxys",
+            "Turtwig", "Chimchar", "Piplup", "Dialga", "Palkia", "Giratina", "Darkrai", "Arceus",
+            "Snivy", "Tepig", "Oshawott", "Reshiram", "Zekrom", "Kyurem", "Keldeo", "Genesect",
+            "Chespin", "Fennekin", "Froakie", "Xerneas", "Yveltal", "Zygarde", "Diancie",
+            "Rowlet", "Litten", "Popplio", "Solgaleo", "Lunala", "Necrozma", "Marshadow",
+            "Grookey", "Scorbunny", "Sobble", "Zacian", "Zamazenta", "Eternatus",
+            "Sprigatito", "Fuecoco", "Quaxly", "Koraidon", "Miraidon",
+            "Eevee", "Vaporeon", "Jolteon", "Flareon", "Espeon", "Umbreon", "Leafeon", "Glaceon", "Sylveon",
+            "Snorlax", "Dragonite", "Gengar", "Alakazam", "Machamp", "Gyarados", "Lapras",
+            "Articuno", "Zapdos", "Moltres", "Aerodactyl", "Scyther", "Scizor",
+            "Tyranitar", "Ampharos", "Heracross", "Houndoom", "Steelix", "Kingdra",
+            "Blaziken", "Gardevoir", "Aggron", "Salamence", "Metagross", "Latias", "Latios",
+            "Lucario", "Garchomp", "Electivire", "Magmortar", "Togekiss", "Mamoswine", "Gallade",
+            "Serperior", "Emboar", "Samurott", "Excadrill", "Zoroark", "Chandelure", "Haxorus", "Volcarona",
+            "Greninja", "Talonflame", "Aegislash", "Tyrantrum", "Goodra", "Noivern",
+            "Decidueye", "Incineroar", "Primarina", "Lycanroc", "Mimikyu", "Tapu Koko", "Tapu Lele",
+            "Rillaboom", "Cinderace", "Inteleon", "Corviknight", "Toxtricity", "Dragapult",
+            "Meowscarada", "Skeledirge", "Quaquaval", "Tinkaton", "Gholdengo"
+        ).map { Pokemon(name = it) }
     }
 }

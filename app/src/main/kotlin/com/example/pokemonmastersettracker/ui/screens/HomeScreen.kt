@@ -69,7 +69,7 @@ fun HomeScreen(
             onLanguageChanged = { selectedLanguage = it },
             onSearch = {
                 if (searchQuery.isNotEmpty()) {
-                    viewModel.searchPokemonCards(searchQuery, selectedLanguage)
+                    viewModel.searchPokemonLocal(searchQuery) // Changed to local search
                 }
             },
             onBackClick = if (cardUiState.selectedPokemonName != null) {
@@ -119,11 +119,14 @@ fun HomeScreen(
             }
 
             cardUiState.pokemonList.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
-                // Show Pokemon selection view (grouped by name)
+                // Show Pokemon selection view (local search results)
                 PokemonListView(
                     pokemonList = cardUiState.pokemonList,
                     onPokemonSelect = { pokemonName ->
-                        viewModel.selectPokemonCards(pokemonName)
+                        viewModel.selectPokemonCards(pokemonName) // Triggers API call
+                    },
+                    onFavoriteToggle = { pokemonName ->
+                        viewModel.toggleFavorite(pokemonName)
                     }
                 )
             }
@@ -223,8 +226,9 @@ fun SearchSection(
 
 @Composable
 fun PokemonListView(
-    pokemonList: List<com.example.pokemonmastersettracker.viewmodel.PokemonSummary>,
-    onPokemonSelect: (String) -> Unit
+    pokemonList: List<com.example.pokemonmastersettracker.data.models.Pokemon>,
+    onPokemonSelect: (String) -> Unit,
+    onFavoriteToggle: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -236,9 +240,10 @@ fun PokemonListView(
             val pokemon = pokemonList[index]
             PokemonSelectionCard(
                 pokemonName = pokemon.name,
-                cardCount = pokemon.cardCount,
                 imageUrl = pokemon.imageUrl,
-                onClick = { onPokemonSelect(pokemon.name) }
+                isFavorite = pokemon.isFavorite,
+                onClick = { onPokemonSelect(pokemon.name) },
+                onFavoriteClick = { onFavoriteToggle(pokemon.name) }
             )
         }
     }
@@ -247,9 +252,10 @@ fun PokemonListView(
 @Composable
 fun PokemonSelectionCard(
     pokemonName: String,
-    cardCount: Int,
     imageUrl: String?,
-    onClick: () -> Unit
+    isFavorite: Boolean,
+    onClick: () -> Unit,
+    onFavoriteClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -266,30 +272,25 @@ fun PokemonSelectionCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Pokemon image
-            if (imageUrl != null) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = pokemonName,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray)
+            // Pokemon image placeholder
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = pokemonName.first().toString(),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
             
             // Pokemon info
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
@@ -299,9 +300,20 @@ fun PokemonSelectionCard(
                     color = PokemonColors.Primary
                 )
                 Text(
-                    text = "$cardCount card${if (cardCount != 1) "s" else ""} available",
+                    text = "Tap to view all cards",
                     fontSize = 14.sp,
                     color = Color.Gray
+                )
+            }
+
+            // Favorite button
+            androidx.compose.material3.IconButton(
+                onClick = { onFavoriteClick() }
+            ) {
+                Text(
+                    text = if (isFavorite) "★" else "☆",
+                    fontSize = 24.sp,
+                    color = if (isFavorite) PokemonColors.Primary else Color.Gray
                 )
             }
 

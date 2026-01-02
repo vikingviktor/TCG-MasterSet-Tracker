@@ -9,6 +9,7 @@ import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.FavoritePokemon
 import com.example.pokemonmastersettracker.data.models.User
+import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.converters.TypeConverters as RoomTypeConverters
 
 @Database(
@@ -16,9 +17,10 @@ import com.example.pokemonmastersettracker.data.converters.TypeConverters as Roo
         Card::class,
         UserCard::class,
         FavoritePokemon::class,
-        User::class
+        User::class,
+        Pokemon::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)
@@ -28,6 +30,7 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
     abstract fun userCardDao(): UserCardDao
     abstract fun favoritePokemonDao(): FavoritePokemonDao
     abstract fun userDao(): UserDao
+    abstract fun pokemonDao(): PokemonDao
 
     companion object {
         @Volatile
@@ -39,7 +42,9 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
                     context.applicationContext,
                     PokemonTrackerDatabase::class.java,
                     "pokemon_tracker_db"
-                ).build().also { instance = it }
+                )
+                .fallbackToDestructiveMigration() // Allow destructive migration for now
+                .build().also { instance = it }
             }
         }
     }

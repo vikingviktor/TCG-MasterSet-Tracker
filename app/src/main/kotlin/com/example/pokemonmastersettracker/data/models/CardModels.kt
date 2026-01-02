@@ -4,6 +4,15 @@ import com.google.gson.annotations.SerializedName
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+// Pokemon Entity for local search
+@Entity(tableName = "pokemon")
+data class Pokemon(
+    @PrimaryKey
+    val name: String,
+    val imageUrl: String? = null,
+    val isFavorite: Boolean = false
+)
+
 // API Response Models
 data class CardResponse(
     @SerializedName("data")
