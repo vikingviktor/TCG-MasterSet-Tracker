@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import com.example.pokemonmastersettracker.ui.screens.ApiTestScreen
 import com.example.pokemonmastersettracker.ui.screens.CollectionScreen
 import com.example.pokemonmastersettracker.ui.screens.FavoritesScreen
 import com.example.pokemonmastersettracker.ui.screens.HomeScreen
@@ -71,6 +73,12 @@ fun PokemonTrackerAppScreen() {
                         selected = currentScreen == 2,
                         onClick = { currentScreen = 2 }
                     )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = "API Test") },
+                        label = { Text("API Test") },
+                        selected = currentScreen == 3,
+                        onClick = { currentScreen = 3 }
+                    )
                 }
             }
         ) { paddingValues ->
@@ -79,6 +87,7 @@ fun PokemonTrackerAppScreen() {
                     0 -> HomeScreen()
                     1 -> CollectionScreen(userId = "test-user")
                     2 -> FavoritesScreen()
+                    3 -> ApiTestScreen()
                 }
             }
         }

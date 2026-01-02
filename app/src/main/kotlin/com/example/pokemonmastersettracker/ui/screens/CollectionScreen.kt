@@ -65,6 +65,11 @@ fun CollectionScreen(
     var isCardInWishlist by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
+    // Initialize the collection viewModel with userId
+    LaunchedEffect(userId) {
+        viewModel.setCurrentUser(userId)
+    }
+    
     // Show dialog when a card is selected
     selectedCardForDialog?.let { card ->
         CardDetailDialog(

@@ -84,16 +84,35 @@ object AppModule {
             val requestWithApiKey = originalRequest.newBuilder()
                 .header("X-Api-Key", "99c671d7-ddc9-44c8-a843-d128e8596463")
                 .build()
-            android.util.Log.d("OkHttp", "Making request to: ${requestWithApiKey.url}")
+            
+            android.util.Log.d("PokemonAPI", "============================================")
+            android.util.Log.d("PokemonAPI", "REQUEST: ${requestWithApiKey.method} ${requestWithApiKey.url}")
+            android.util.Log.d("PokemonAPI", "Query: ${requestWithApiKey.url.query}")
+            
             val startTime = System.currentTimeMillis()
             try {
                 val response = chain.proceed(requestWithApiKey)
                 val duration = System.currentTimeMillis() - startTime
-                android.util.Log.d("OkHttp", "Request completed in ${duration}ms with code ${response.code}")
+                val responseBody = response.peekBody(Long.MAX_VALUE).string()
+                val size = responseBody.length
+                
+                android.util.Log.d("PokemonAPI", "RESPONSE: ${response.code} in ${duration}ms")
+                android.util.Log.d("PokemonAPI", "Size: ${size} bytes (${size / 1024}KB)")
+                
+                when {
+                    duration > 10000 -> android.util.Log.w("PokemonAPI", "⚠️ VERY SLOW: Response took ${duration}ms (>10s)")
+                    duration > 5000 -> android.util.Log.w("PokemonAPI", "⚠️ SLOW: Response took ${duration}ms (>5s)")
+                    duration > 2000 -> android.util.Log.i("PokemonAPI", "ℹ️ ACCEPTABLE: Response took ${duration}ms")
+                    else -> android.util.Log.d("PokemonAPI", "✓ FAST: Response took ${duration}ms")
+                }
+                android.util.Log.d("PokemonAPI", "============================================")
+                
                 response
             } catch (e: Exception) {
                 val duration = System.currentTimeMillis() - startTime
-                android.util.Log.e("OkHttp", "Request failed after ${duration}ms: ${e.message}")
+                android.util.Log.e("PokemonAPI", "❌ ERROR after ${duration}ms: ${e.javaClass.simpleName}")
+                android.util.Log.e("PokemonAPI", "Message: ${e.message}")
+                android.util.Log.d("PokemonAPI", "============================================")
                 throw e
             }
         }

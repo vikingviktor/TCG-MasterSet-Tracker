@@ -31,10 +31,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +66,7 @@ fun HomeScreen(
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
     var isCardOwned by remember { mutableStateOf(false) }
     var isCardInWishlist by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableIntStateOf(0) } // Trigger for refreshing card states
     val scope = rememberCoroutineScope()
 
     // Show dialog when a card is selected
@@ -72,7 +75,10 @@ fun HomeScreen(
             card = card,
             isOwned = isCardOwned,
             isInWishlist = isCardInWishlist,
-            onDismiss = { selectedCardForDialog = null },
+            onDismiss = { 
+                selectedCardForDialog = null
+                refreshTrigger++ // Trigger refresh when dialog closes
+            },
             onToggleOwned = {
                 viewModel.toggleCardOwnership(card.id, isCardOwned)
                 isCardOwned = !isCardOwned
@@ -148,6 +154,8 @@ fun HomeScreen(
                     currentPage = cardUiState.currentPage,
                     hasMorePages = cardUiState.hasMorePages,
                     pageSize = cardUiState.pageSize,
+                    refreshTrigger = refreshTrigger,
+                    viewModel = viewModel,
                     onCardClick = { card ->
                         selectedCardForDialog = card
                         scope.launch {
@@ -402,6 +410,8 @@ fun CardDetailView(
     currentPage: Int,
     hasMorePages: Boolean,
     pageSize: Int,
+    refreshTrigger: Int,
+    viewModel: CardViewModel,
     onCardClick: (Card) -> Unit,
     onLoadMore: () -> Unit,
     onPageSizeChange: (Int) -> Unit
@@ -462,8 +472,15 @@ fun CardDetailView(
             modifier = Modifier.weight(1f)
         ) {
             items(cards) { card ->
+                var cardOwned by remember { mutableStateOf(false) }
+                
+                LaunchedEffect(card.id, refreshTrigger) {
+                    cardOwned = viewModel.isCardOwned(card.id)
+                }
+                
                 CardItem(
                     card = card,
+                    isOwned = cardOwned,
                     onCardClick = { onCardClick(card) },
                     onFavoriteToggle = { /* Handle favorite toggle */ }
                 )

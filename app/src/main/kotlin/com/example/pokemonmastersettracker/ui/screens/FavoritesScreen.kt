@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,6 +54,7 @@ fun FavoritesScreen(
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
     var isCardOwned by remember { mutableStateOf(false) }
     var isCardInWishlist by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
@@ -66,7 +68,10 @@ fun FavoritesScreen(
             card = card,
             isOwned = isCardOwned,
             isInWishlist = isCardInWishlist,
-            onDismiss = { selectedCardForDialog = null },
+            onDismiss = { 
+                selectedCardForDialog = null
+                refreshTrigger++ // Trigger refresh when dialog closes
+            },
             onToggleOwned = {
                 viewModel.toggleCardOwnership(card.id, isCardOwned)
                 isCardOwned = !isCardOwned
@@ -154,7 +159,7 @@ fun FavoritesScreen(
                         items(cardUiState.cards) { card ->
                             var cardOwned by remember { mutableStateOf(false) }
                             
-                            LaunchedEffect(card.id) {
+                            LaunchedEffect(card.id, refreshTrigger) {
                                 cardOwned = viewModel.isCardOwned(card.id)
                             }
                             

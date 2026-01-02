@@ -40,7 +40,8 @@ class CardViewModel @Inject constructor(
     private val searchCache = mutableMapOf<String, List<Card>>()
     
     // Default user ID (in production, this would come from authentication)
-    private val defaultUserId = "default_user"
+    // This matches the userId used in MainActivity: "test-user"
+    private val defaultUserId = "test-user"
     
     init {
         // Seed Pokemon database on first launch

@@ -202,10 +202,15 @@ class PokemonRepository @Inject constructor(
     }
 
     suspend fun markCardAsOwned(userId: String, cardId: String, condition: CardCondition = CardCondition.NEAR_MINT) {
-        val userCard = userCardDao.getUserCard(userId, cardId) ?: run {
-            UserCard(userId = userId, cardId = cardId, isOwned = true, condition = condition)
+        val userCard = userCardDao.getUserCard(userId, cardId)
+        if (userCard == null) {
+            // Card doesn't exist in collection, insert it as owned
+            val newUserCard = UserCard(userId = userId, cardId = cardId, isOwned = true, condition = condition)
+            userCardDao.insertUserCard(newUserCard)
+        } else {
+            // Card exists, update it
+            userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition))
         }
-        userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition))
     }
 
     suspend fun markCardAsMissing(userId: String, cardId: String) {
