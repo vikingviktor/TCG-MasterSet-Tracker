@@ -131,7 +131,7 @@ fun CollectionScreen(
 
 @Composable
 fun CollectionContent(
-    collectionUiState: com.example.pokemonmastersettracker.viewmodel.CollectionUiState,
+    collectionUiState: com.example.pokemonmastersettracker.viewmodel.UserCollectionUiState,
     onCardClick: (Card) -> Unit
 ) {
     Column(
@@ -171,7 +171,8 @@ fun CollectionContent(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(collectionUiState.userCards) { userCard ->
+                    items(collectionUiState.userCards.size) { index ->
+                        val userCard = collectionUiState.userCards[index]
                         CollectionCardItem(
                             userCard = userCard,
                             onRemove = { /* Handle remove */ }

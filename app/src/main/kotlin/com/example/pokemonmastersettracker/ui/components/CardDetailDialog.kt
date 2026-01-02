@@ -78,7 +78,7 @@ fun CardDetailDialog(
                 
                 // Card Image
                 AsyncImage(
-                    model = card.image.large,
+                    model = card.image?.large,
                     contentDescription = card.name,
                     modifier = Modifier
                         .size(300.dp)
@@ -97,11 +97,13 @@ fun CardDetailDialog(
                 )
                 
                 // Card Set
-                Text(
-                    text = card.cardSet.name,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
+                card.set?.name?.let { setName ->
+                    Text(
+                        text = setName,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
