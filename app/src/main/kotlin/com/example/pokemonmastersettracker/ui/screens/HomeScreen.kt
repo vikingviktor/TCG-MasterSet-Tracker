@@ -217,18 +217,18 @@ fun HomeScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(\"Retry\")
+                            Text("Retry")
                         }
                         
                         // Test query button for debugging
                         OutlinedButton(
                             onClick = {
                                 // Test with Pikachu (very common Pokemon)
-                                viewModel.selectPokemonCards(\"Pikachu\", setOf(\"en\"))
+                                viewModel.selectPokemonCards("Pikachu", setOf("en"))
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(\"Test API\", fontSize = 12.sp)
+                            Text("Test API", fontSize = 12.sp)
                         }
                     }
                 }
