@@ -145,23 +145,4 @@ class CardViewModel @Inject constructor(
             }
         }
     }
-    
-    fun toggleFavorite(pokemonName: String) {
-        viewModelScope.launch {
-            try {
-                repository.toggleFavorite(pokemonName)
-                android.util.Log.d("CardViewModel", "Toggled favorite for: $pokemonName")
-                // Refresh the current list
-                val currentState = _cardUiState.value
-                if (currentState.pokemonList.isNotEmpty()) {
-                    val updatedList = repository.searchPokemonLocal(
-                        currentState.pokemonList.firstOrNull()?.name?.take(3) ?: ""
-                    )
-                    _cardUiState.value = currentState.copy(pokemonList = updatedList)
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error toggling favorite: ${e.message}", e)
-            }
-        }
-    }
 }
