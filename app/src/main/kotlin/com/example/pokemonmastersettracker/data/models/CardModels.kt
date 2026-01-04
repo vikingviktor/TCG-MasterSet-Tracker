@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey
 data class Pokemon(
     @PrimaryKey
     val name: String,
+    val nationalPokedexNumber: Int? = null,  // For multi-language support
     val imageUrl: String? = null,
     val isFavorite: Boolean = false
 )
