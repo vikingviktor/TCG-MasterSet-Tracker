@@ -55,10 +55,12 @@ class PokemonRepository @Inject constructor(
     suspend fun seedPopularPokemon() {
         val count = pokemonDao.getPokemonCount()
         if (count == 0) {
-            android.util.Log.d("PokemonRepository", "Seeding popular Pokemon...")
+            android.util.Log.d("PokemonRepository", "Seeding popular Pokemon with Pokedex numbers...")
             val popularPokemon = getPopularPokemonList()
             pokemonDao.insertPokemons(popularPokemon)
-            android.util.Log.d("PokemonRepository", "Seeded ${popularPokemon.size} Pokemon")
+            android.util.Log.d("PokemonRepository", "✓ Seeded ${popularPokemon.size} Pokemon (Gen 1-3 with Pokedex #1-386)")
+        } else {
+            android.util.Log.d("PokemonRepository", "Pokemon already seeded (count: $count)")
         }
     }
     
@@ -374,9 +376,10 @@ class PokemonRepository @Inject constructor(
         val pokemon = pokemonDao.searchPokemon(pokemonName).firstOrNull()
         
         return if (pokemon?.nationalPokedexNumber != null) {
-            // Use Pokedex number - works for all languages (Pikachu = 25, ピカチュウ = 25)
-            android.util.Log.d("PokemonRepository", "Using nationalPokedexNumber: ${pokemon.nationalPokedexNumber} for $pokemonName")
-            "nationalPokedexNumber:${pokemon.nationalPokedexNumber}"
+            // Use Pokedex number range syntax - works for all languages (Pikachu = 25, ピカチュウ = 25)
+            // Per API docs: nationalPokedexNumbers:[25 TO 25]
+            android.util.Log.d("PokemonRepository", "Using nationalPokedexNumbers:[${pokemon.nationalPokedexNumber} TO ${pokemon.nationalPokedexNumber}] for $pokemonName")
+            "nationalPokedexNumbers:[${pokemon.nationalPokedexNumber} TO ${pokemon.nationalPokedexNumber}]"
         } else {
             // Fallback to name search
             val cleanName = pokemonName.trim()

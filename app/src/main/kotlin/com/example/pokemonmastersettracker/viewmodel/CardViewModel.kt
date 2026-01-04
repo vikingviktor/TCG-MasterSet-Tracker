@@ -112,12 +112,10 @@ class CardViewModel @Inject constructor(
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
     fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25) {
         viewModelScope.launch {
-            // FIXED: Removed asterisk wildcard - API doesn't support it
-            val queryInfo = "name:$pokemonName"
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true, 
                 selectedPokemonName = pokemonName,
-                lastQuery = queryInfo,
+                lastQuery = "Loading...",
                 debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize"
             )
             try {
@@ -171,7 +169,7 @@ class CardViewModel @Inject constructor(
                 _cardUiState.value = _cardUiState.value.copy(
                     error = e.message ?: "Unknown error",
                     loading = false,
-                    debugInfo = "✗ Failed: $errorType | Pokemon: $pokemonName | Query: $queryInfo"
+                    debugInfo = "✗ Failed: $errorType | Pokemon: $pokemonName | Check Logcat for query details"
                 )
             }
         }

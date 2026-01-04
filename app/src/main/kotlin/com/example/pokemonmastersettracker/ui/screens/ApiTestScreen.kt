@@ -151,7 +151,8 @@ fun ApiTestScreen(
                     results.add("Test 5: Testing exact app query format + Total Count")
                     val test5Start = System.currentTimeMillis()
                     try {
-                        results.add("Query: name:Pikachu (no asterisk) | PageSize: 50 | Page: 1")
+                        results.add("Pokemon: Pikachu | PageSize: 50 | Page: 1")
+                        results.add("(Query details in Logcat - will use Pokedex #25 if available)")
                         viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
                         
                         // Wait for loading to complete (max 5 seconds)
