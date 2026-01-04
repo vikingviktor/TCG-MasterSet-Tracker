@@ -56,8 +56,18 @@ class CardViewModel @Inject constructor(
     private val defaultUserId = "test-user"
     
     init {
-        // Seed Pokemon database on first launch
+        // Initialize app on first launch
         viewModelScope.launch {
+            try {
+                // Ensure test user exists in database
+                repository.createUser("test@example.com", "test-user")
+                android.util.Log.d("CardViewModel", "✓ Test user created/verified")
+            } catch (e: Exception) {
+                // User might already exist, that's okay
+                android.util.Log.d("CardViewModel", "Test user already exists or error: ${e.message}")
+            }
+            
+            // Seed Pokemon database
             repository.seedPopularPokemon()
         }
     }
@@ -254,19 +264,24 @@ class CardViewModel @Inject constructor(
     // Collection Management
     
     suspend fun isCardOwned(cardId: String): Boolean {
-        return repository.isCardOwned(defaultUserId, cardId)
+        val result = repository.isCardOwned(defaultUserId, cardId)
+        android.util.Log.d("CardViewModel", "Check owned: cardId=$cardId, result=$result")
+        return result
     }
     
     fun toggleCardOwnership(cardId: String, currentlyOwned: Boolean) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, userId=$defaultUserId")
                 if (currentlyOwned) {
                     repository.markCardAsMissing(defaultUserId, cardId)
+                    android.util.Log.d("CardViewModel", "✓ Removed from collection: $cardId")
                 } else {
                     repository.markCardAsOwned(defaultUserId, cardId)
+                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error toggling ownership: ${e.message}", e)
+                android.util.Log.e("CardViewModel", "❌ Error toggling ownership: ${e.message}", e)
             }
         }
     }
@@ -274,19 +289,24 @@ class CardViewModel @Inject constructor(
     // Wishlist Management
     
     suspend fun isInWishlist(cardId: String): Boolean {
-        return repository.isInWishlist(defaultUserId, cardId)
+        val result = repository.isInWishlist(defaultUserId, cardId)
+        android.util.Log.d("CardViewModel", "Check wishlist: cardId=$cardId, result=$result")
+        return result
     }
     
     fun toggleWishlist(cardId: String, currentlyInWishlist: Boolean) {
         viewModelScope.launch {
             try {
+                android.util.Log.d("CardViewModel", "Toggle wishlist: cardId=$cardId, currentlyInWishlist=$currentlyInWishlist, userId=$defaultUserId")
                 if (currentlyInWishlist) {
                     repository.removeFromWishlist(defaultUserId, cardId)
+                    android.util.Log.d("CardViewModel", "✓ Removed from wishlist: $cardId")
                 } else {
                     repository.addToWishlist(defaultUserId, cardId)
+                    android.util.Log.d("CardViewModel", "✓ Added to wishlist: $cardId")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error toggling wishlist: ${e.message}", e)
+                android.util.Log.e("CardViewModel", "❌ Error toggling wishlist: ${e.message}", e)
             }
         }
     }

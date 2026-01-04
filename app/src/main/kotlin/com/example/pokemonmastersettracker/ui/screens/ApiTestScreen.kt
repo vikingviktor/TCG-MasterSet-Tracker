@@ -153,26 +153,39 @@ fun ApiTestScreen(
                     try {
                         results.add("Query: name:Pikachu (no asterisk) | PageSize: 50 | Page: 1")
                         viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
-                        delay(2000) // Wait longer for response and state update
+                        
+                        // Wait for loading to complete (max 5 seconds)
+                        var waitTime = 0
+                        while (viewModel.cardUiState.value.loading && waitTime < 5000) {
+                            delay(100)
+                            waitTime += 100
+                        }
+                        
                         val test5Time = System.currentTimeMillis() - test5Start
                         results.add("✓ Query completed in ${test5Time}ms")
                         
                         val cardCount = viewModel.cardUiState.value.cards.size
+                        val allCardsCount = viewModel.cardUiState.value.allCards.size
                         val debugInfo = viewModel.cardUiState.value.debugInfo ?: "No debug info"
                         val errorInfo = viewModel.cardUiState.value.error
+                        val isLoading = viewModel.cardUiState.value.loading
+                        val selectedPokemon = viewModel.cardUiState.value.selectedPokemonName
                         
-                        results.add("ℹ Retrieved $cardCount cards on this page")
-                        results.add("ℹ Total cards for Pikachu: (check API response)")
+                        results.add("ℹ Cards in state: $cardCount")
+                        results.add("ℹ All cards: $allCardsCount")
+                        results.add("ℹ Still loading: $isLoading")
+                        results.add("ℹ Selected Pokemon: $selectedPokemon")
                         results.add("ℹ Debug: $debugInfo")
                         
                         if (errorInfo != null) {
                             results.add("⚠ Error occurred: $errorInfo")
+                            results.add("  Check Logcat for full details")
                         } else if (cardCount == 0) {
                             results.add("⚠ WARNING: No cards returned!")
-                            results.add("  This could mean:")
+                            results.add("  Possible issues:")
                             results.add("  • API returned empty results")
-                            results.add("  • Query format is incorrect")
-                            results.add("  • State not updating properly")
+                            results.add("  • Query failed but no error set")
+                            results.add("  • Check Logcat for API logs")
                         } else {
                             results.add("✓ Cards successfully loaded")
                             results.add("  First card: ${viewModel.cardUiState.value.cards.firstOrNull()?.name ?: "N/A"}")
@@ -184,11 +197,7 @@ fun ApiTestScreen(
                         if (errorMsg.contains("504") || errorMsg.contains("timeout")) {
                             results.add("⚠ This is a TIMEOUT error - API took >120s to respond")
                         } else if (errorMsg.contains("404")) {
-                            results.add("⚠ This is a NOT FOUND error - query may be incorrect")
-                            results.add("  Possible causes:")
-                            results.add("  • Wildcard (*) not supported")
-                            results.add("  • URL encoding issue")
-                            results.add("  • Check logs for actual URL")
+                            results.add("⚠ This is a NOT FOUND error")
                         }
                         results.add("")
                     }

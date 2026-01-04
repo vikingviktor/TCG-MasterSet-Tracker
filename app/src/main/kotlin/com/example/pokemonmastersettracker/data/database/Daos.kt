@@ -141,7 +141,7 @@ interface WishlistCardDao {
 @Dao
 interface UserDao {
     
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertUser(user: User)
 
     @Query("SELECT * FROM users WHERE id = :userId")

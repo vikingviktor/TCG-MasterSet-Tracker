@@ -74,14 +74,18 @@ class PokemonRepository @Inject constructor(
             
             val apiTime = System.currentTimeMillis() - apiStartTime
             android.util.Log.d("PokemonRepository", "⏱️ API RESPONSE: ${response.cards.size} cards in ${apiTime}ms")
+            android.util.Log.d("PokemonRepository", "📊 Response details: page=${response.page}, pageSize=${response.pageSize}, count=${response.count}, totalCount=${response.totalCount}")
             
             cardDao.insertCards(response.cards)
+            android.util.Log.d("PokemonRepository", "✓ Cards saved to database")
             response.cards
         } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "❌ API ERROR: ${e.javaClass.simpleName}: ${e.message}")
+            
             // Try to get cached results on error
             val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
             if (cachedCards.isNotEmpty()) {
-                android.util.Log.w("PokemonRepository", "API failed for '$pokemonName', using ${cachedCards.size} cached cards")
+                android.util.Log.w("PokemonRepository", "⚠️ API failed for '$pokemonName', using ${cachedCards.size} cached cards")
                 return cachedCards
             }
             
