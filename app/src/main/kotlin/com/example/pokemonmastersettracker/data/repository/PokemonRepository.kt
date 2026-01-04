@@ -621,41 +621,4 @@ class PokemonRepository @Inject constructor(
             Pokemon(name = name, nationalPokedexNumber = number)
         }
     }
-            "Seedot", "Nuzleaf", "Shiftry", "Taillow", "Swellow",
-            "Wingull", "Pelipper", "Ralts", "Kirlia", "Gardevoir",
-            "Surskit", "Masquerain", "Shroomish", "Breloom", "Slakoth", "Vigoroth", "Slaking",
-            "Nincada", "Ninjask", "Shedinja", "Whismur", "Loudred", "Exploud",
-            "Makuhita", "Hariyama", "Azurill", "Nosepass", "Skitty", "Delcatty",
-            "Sableye", "Mawile", "Aron", "Lairon", "Aggron",
-            "Meditite", "Medicham", "Electrike", "Manectric", "Plusle", "Minun",
-            "Volbeat", "Illumise", "Roselia", "Gulpin", "Swalot",
-            "Carvanha", "Sharpedo", "Wailmer", "Wailord", "Numel", "Camerupt",
-            "Torkoal", "Spoink", "Grumpig", "Spinda", "Trapinch", "Vibrava", "Flygon",
-            "Cacnea", "Cacturne", "Swablu", "Altaria", "Zangoose", "Seviper",
-            "Lunatone", "Solrock", "Barboach", "Whiscash", "Corphish", "Crawdaunt",
-            "Baltoy", "Claydol", "Lileep", "Cradily", "Anorith", "Armaldo",
-            "Feebas", "Milotic", "Castform", "Kecleon", "Shuppet", "Banette",
-            "Duskull", "Dusclops", "Tropius", "Chimecho", "Absol",
-            "Wynaut", "Snorunt", "Glalie", "Spheal", "Sealeo", "Walrein",
-            "Clamperl", "Huntail", "Gorebyss", "Relicanth",
-            "Luvdisc", "Bagon", "Shelgon", "Salamence",
-            "Beldum", "Metang", "Metagross", "Regirock", "Regice", "Registeel",
-            "Latias", "Latios", "Kyogre", "Groudon", "Rayquaza",
-            "Jirachi", "Deoxys",
-            // Gen 4-9 starters and legendaries
-            "Turtwig", "Grotle", "Torterra", "Chimchar", "Monferno", "Infernape",
-            "Piplup", "Prinplup", "Empoleon", "Dialga", "Palkia", "Giratina",
-            "Darkrai", "Arceus", "Lucario", "Garchomp", "Togekiss", "Mamoswine",
-            "Snivy", "Servine", "Serperior", "Tepig", "Pignite", "Emboar",
-            "Oshawott", "Dewott", "Samurott", "Reshiram", "Zekrom", "Kyurem",
-            "Chespin", "Quilladin", "Chesnaught", "Fennekin", "Braixen", "Delphox",
-            "Froakie", "Frogadier", "Greninja", "Xerneas", "Yveltal", "Zygarde",
-            "Rowlet", "Dartrix", "Decidueye", "Litten", "Torracat", "Incineroar",
-            "Popplio", "Brionne", "Primarina", "Solgaleo", "Lunala", "Necrozma",
-            "Grookey", "Thwackey", "Rillaboom", "Scorbunny", "Raboot", "Cinderace",
-            "Sobble", "Drizzile", "Inteleon", "Zacian", "Zamazenta", "Eternatus",
-            "Sprigatito", "Floragato", "Meowscarada", "Fuecoco", "Crocalor", "Skeledirge",
-            "Quaxly", "Quaxwell", "Quaquaval", "Koraidon", "Miraidon"
-        ).map { Pokemon(name = it) }
-    }
 }
