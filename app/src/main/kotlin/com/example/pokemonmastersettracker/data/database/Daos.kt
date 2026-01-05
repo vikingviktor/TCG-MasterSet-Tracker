@@ -83,6 +83,9 @@ interface UserCardDao {
 
     @Query("SELECT * FROM user_cards WHERE userId = :userId")
     fun getUserCards(userId: String): Flow<List<UserCard>>
+    
+    @Query("SELECT * FROM user_cards WHERE userId = :userId")
+    suspend fun getUserCardsSync(userId: String): List<UserCard>
 
     @Query("SELECT * FROM user_cards WHERE userId = :userId AND isOwned = 1")
     fun getUserOwnedCards(userId: String): Flow<List<UserCard>>

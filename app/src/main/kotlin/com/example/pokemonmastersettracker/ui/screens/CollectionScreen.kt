@@ -237,10 +237,11 @@ fun CollectionContent(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(collectionUiState.userCards.size) { index ->
-                            val userCard = collectionUiState.userCards[index]
+                        items(collectionUiState.userCardsWithDetails.size) { index ->
+                            val (userCard, card) = collectionUiState.userCardsWithDetails[index]
                             CollectionCardItem(
                                 userCard = userCard,
+                                card = card,
                                 onRemove = { /* Handle remove */ }
                             )
                         }
@@ -333,6 +334,7 @@ fun CollectionHeader(
 @Composable
 fun CollectionCardItem(
     userCard: com.example.pokemonmastersettracker.data.models.UserCard,
+    card: Card?,
     onRemove: () -> Unit
 ) {
     Card(
@@ -346,7 +348,16 @@ fun CollectionCardItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Card #${userCard.cardId}", fontWeight = FontWeight.Bold)
+                Text(
+                    text = card?.name ?: "Card #${userCard.cardId}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = card?.set?.name ?: "Unknown Set",
+                    fontSize = 14.sp,
+                    color = Color.DarkGray
+                )
                 Text("Condition: ${userCard.condition}", fontSize = 12.sp, color = Color.Gray)
                 if (userCard.isGraded) {
                     Text(
@@ -377,21 +388,12 @@ fun WishlistContent(
     onRefresh: () -> Unit,
     onCardClick: (Card) -> Unit
 ) {
-    // Get wishlist cards from repository
-    var wishlistCardIds by remember { mutableStateOf<List<String>>(emptyList()) }
-    var cards by remember { mutableStateOf<List<Card>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
+    val viewModel: UserCollectionViewModel = hiltViewModel()
+    val wishlistUiState by viewModel.wishlistUiState.collectAsState()
     val scope = rememberCoroutineScope()
     
-    LaunchedEffect(refreshTrigger) {
-        loading = true
-        try {
-            // This would need to be implemented in the ViewModel
-            // For now, we'll show a placeholder
-            loading = false
-        } catch (e: Exception) {
-            loading = false
-        }
+    LaunchedEffect(userId, refreshTrigger) {
+        viewModel.loadWishlist(userId)
     }
     
     Column(
@@ -407,7 +409,7 @@ fun WishlistContent(
         )
         
         when {
-            loading -> {
+            wishlistUiState.loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -416,7 +418,7 @@ fun WishlistContent(
                 }
             }
             
-            cards.isEmpty() -> {
+            wishlistUiState.wishlistCards.isEmpty() -> {
                 SwipeRefresh(
                     state = rememberSwipeRefreshState(isRefreshing),
                     onRefresh = onRefresh
@@ -450,7 +452,7 @@ fun WishlistContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(cards) { card ->
+                        items(wishlistUiState.wishlistCards) { card ->
                             var cardOwned by remember { mutableStateOf(false) }
                             var cardInWishlist by remember { mutableStateOf(true) }
                             

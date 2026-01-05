@@ -393,6 +393,31 @@ class PokemonRepository @Inject constructor(
         return favoritePokemonDao.isFavorite(userId, pokemonName) > 0
     }
 
+    suspend fun getWishlistCardsWithDetails(userId: String): List<Card> {
+        return try {
+            val wishlistCardIds = wishlistCardDao.getUserWishlistSync(userId).map { it.cardId }
+            wishlistCardIds.mapNotNull { cardId ->
+                cardDao.getCardById(cardId)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error getting wishlist cards: ${e.message}")
+            emptyList()
+        }
+    }
+
+    suspend fun getUserCardsWithDetails(userId: String): List<Pair<UserCard, Card?>> {
+        return try {
+            val userCards = userCardDao.getUserCardsSync(userId)
+            userCards.map { userCard ->
+                val card = cardDao.getCardById(userCard.cardId)
+                userCard to card
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error getting user cards with details: ${e.message}")
+            emptyList()
+        }
+    }
+
     suspend fun getTotalCardsCountForFavoritePokemon(userId: String): Int {
         return try {
             val favoritePokemon = favoritePokemonDao.getUserFavoritesSync(userId)

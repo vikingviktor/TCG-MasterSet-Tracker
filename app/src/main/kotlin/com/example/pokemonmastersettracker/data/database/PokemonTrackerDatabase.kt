@@ -46,9 +46,9 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
                     PokemonTrackerDatabase::class.java,
                     "pokemon_tracker_db"
                 )
-                // Use pre-populated database if it exists in assets
+                // Use pre-populated database ONLY on fresh install
                 .createFromAsset("database/pokemon_tracker_prepopulated.db")
-                .fallbackToDestructiveMigration() // Allow destructive migration for now
+                // Don't use fallbackToDestructiveMigration - it wipes pre-populated data
                 .build().also { instance = it }
             }
         }

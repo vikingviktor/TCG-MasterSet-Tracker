@@ -2,6 +2,7 @@ package com.example.pokemonmastersettracker.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.CardCondition
@@ -16,9 +17,16 @@ import javax.inject.Inject
 
 data class UserCollectionUiState(
     val userCards: List<UserCard> = emptyList(),
+    val userCardsWithDetails: List<Pair<UserCard, Card?>> = emptyList(),
     val ownedCount: Int = 0,
     val totalCount: Int = 0,
     val completionPercentage: Float = 0f,
+    val loading: Boolean = false,
+    val error: String? = null
+)
+
+data class WishlistUiState(
+    val wishlistCards: List<Card> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null
 )
@@ -31,6 +39,9 @@ class UserCollectionViewModel @Inject constructor(
     private val _collectionUiState = MutableStateFlow(UserCollectionUiState())
     val collectionUiState: StateFlow<UserCollectionUiState> = _collectionUiState.asStateFlow()
 
+    private val _wishlistUiState = MutableStateFlow(WishlistUiState())
+    val wishlistUiState: StateFlow<WishlistUiState> = _wishlistUiState.asStateFlow()
+
     private val _currentUserId = MutableStateFlow<String?>(null)
 
     fun setCurrentUser(userId: String) {
@@ -40,8 +51,13 @@ class UserCollectionViewModel @Inject constructor(
 
     private fun loadUserCollection(userId: String) {
         viewModelScope.launch {
+            _collectionUiState.value = _collectionUiState.value.copy(loading = true)
+            
             repository.getUserCards(userId).collect { userCards ->
                 val ownedCards = userCards.filter { it.isOwned }.size
+                
+                // Get card details for all user cards
+                val cardsWithDetails = repository.getUserCardsWithDetails(userId)
                 
                 // Get total count of cards for all favorite Pokemon
                 val totalCardsForFavorites = repository.getTotalCardsCountForFavoritePokemon(userId)
@@ -54,9 +70,29 @@ class UserCollectionViewModel @Inject constructor(
 
                 _collectionUiState.value = UserCollectionUiState(
                     userCards = userCards,
+                    userCardsWithDetails = cardsWithDetails,
                     ownedCount = ownedCards,
                     totalCount = totalCardsForFavorites,
-                    completionPercentage = completionPercentage
+                    completionPercentage = completionPercentage,
+                    loading = false
+                )
+            }
+        }
+    }
+
+    fun loadWishlist(userId: String) {
+        viewModelScope.launch {
+            _wishlistUiState.value = _wishlistUiState.value.copy(loading = true)
+            try {
+                val wishlistCards = repository.getWishlistCardsWithDetails(userId)
+                _wishlistUiState.value = WishlistUiState(
+                    wishlistCards = wishlistCards,
+                    loading = false
+                )
+            } catch (e: Exception) {
+                _wishlistUiState.value = WishlistUiState(
+                    loading = false,
+                    error = e.message
                 )
             }
         }
