@@ -82,43 +82,53 @@ class CardViewModel @Inject constructor(
             // Run in background coroutine so it doesn't block app startup
             launch {
                 try {
-                    repository.preFetchPopularPokemonCards()
-                    android.util.Log.d("CardViewModel", "✓ Pre-fetch complete")
+                    val stats = repository.preFetchPopularPokemonCards()
+                    android.util.Log.d("CardViewModel", "✓ Pre-fetch complete: cached=${stats.first}, fetched=${stats.second}, failed=${stats.third}")
                     
                     // Update UI state
                     _cardUiState.value = _cardUiState.value.copy(preFetchComplete = true)
                     
-                    // Show notification that pre-fetch is done
-                    android.widget.Toast.makeText(
-                        context,
-                        "✓ Pre-fetch complete! Exporting database...",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
-                    
-                    // After pre-fetch, export database for bundling with future app versions
-                    android.util.Log.d("CardViewModel", "📦 Exporting database for bundling...")
-                    val exportPath = DatabaseExporter.exportDatabase(context)
-                    if (exportPath != null) {
-                        android.util.Log.d("CardViewModel", "✓ Database exported to: $exportPath")
-                        android.util.Log.d("CardViewModel", "📋 Next steps:")
-                        android.util.Log.d("CardViewModel", "   1. Copy this file from device to: app/src/main/assets/database/")
-                        android.util.Log.d("CardViewModel", "   2. Rename to: pokemon_tracker_prepopulated.db")
-                        android.util.Log.d("CardViewModel", "   3. Rebuild app - it will use pre-populated data!")
-                        
-                        // Update UI state
-                        _cardUiState.value = _cardUiState.value.copy(databaseExported = true)
-                        
-                        // Show success notification
+                    // Only export database if we actually fetched or have cached data
+                    val totalData = stats.first + stats.second
+                    if (totalData > 0) {
+                        // Show notification that pre-fetch is done
                         android.widget.Toast.makeText(
                             context,
-                            "✓ Database exported! Check Android/data/com.mastersettracker.pokemon/files/database_export/",
+                            "✓ Pre-fetch complete! ($totalData Pokemon) Exporting database...",
                             android.widget.Toast.LENGTH_LONG
                         ).show()
+                        
+                        // After pre-fetch, export database for bundling with future app versions
+                        android.util.Log.d("CardViewModel", "📦 Exporting database for bundling...")
+                        val exportPath = DatabaseExporter.exportDatabase(context)
+                        if (exportPath != null) {
+                            android.util.Log.d("CardViewModel", "✓ Database exported to: $exportPath")
+                            android.util.Log.d("CardViewModel", "📋 Next steps:")
+                            android.util.Log.d("CardViewModel", "   1. Copy this file from device to: app/src/main/assets/database/")
+                            android.util.Log.d("CardViewModel", "   2. Rename to: pokemon_tracker_prepopulated.db")
+                            android.util.Log.d("CardViewModel", "   3. Rebuild app - it will use pre-populated data!")
+                            
+                            // Update UI state
+                            _cardUiState.value = _cardUiState.value.copy(databaseExported = true)
+                            
+                            // Show success notification
+                            android.widget.Toast.makeText(
+                                context,
+                                "✓ Database exported! $totalData Pokemon ready for bundling",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            // Show error notification
+                            android.widget.Toast.makeText(
+                                context,
+                                "⚠️ Database export failed - check permissions",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
                     } else {
-                        // Show error notification
                         android.widget.Toast.makeText(
                             context,
-                            "⚠️ Database export failed - check permissions",
+                            "⚠️ Pre-fetch failed - no data cached. API may be having issues.",
                             android.widget.Toast.LENGTH_LONG
                         ).show()
                     }

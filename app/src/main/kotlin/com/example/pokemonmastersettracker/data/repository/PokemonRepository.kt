@@ -65,7 +65,8 @@ class PokemonRepository @Inject constructor(
     }
     
     // Pre-fetch card data for most popular Pokemon to improve performance
-    suspend fun preFetchPopularPokemonCards() {
+    // Returns Triple(cachedCount, successCount, failedCount)
+    suspend fun preFetchPopularPokemonCards(): Triple<Int, Int, Int> {
         val popularPokemon = listOf(
             "Pikachu", "Charizard", "Mewtwo", "Mew", "Eevee",
             "Bulbasaur", "Charmander", "Squirtle", "Gengar", "Dragonite",
@@ -107,6 +108,7 @@ class PokemonRepository @Inject constructor(
         }
         
         android.util.Log.d("PokemonRepository", "📊 Pre-fetch complete: $cachedCount already cached, $successCount fetched, $failedCount failed")
+        return Triple(cachedCount, successCount, failedCount)
     }
     
     // Card Operations
