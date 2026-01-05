@@ -122,10 +122,10 @@ object AppModule {
         return OkHttpClient.Builder()
             .addInterceptor(apiKeyInterceptor)
             .addInterceptor(loggingInterceptor)
-            .callTimeout(120, TimeUnit.SECONDS)     // Increased to 2 minutes
-            .connectTimeout(30, TimeUnit.SECONDS)    // 30 seconds to establish connection
-            .readTimeout(120, TimeUnit.SECONDS)      // 2 minutes to read response
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(180, TimeUnit.SECONDS)      // 3 minutes total
+            .connectTimeout(60, TimeUnit.SECONDS)    // 1 minute to establish connection
+            .readTimeout(180, TimeUnit.SECONDS)      // 3 minutes to read response
+            .writeTimeout(60, TimeUnit.SECONDS)      // 1 minute to write
             .retryOnConnectionFailure(true)          // Auto retry on connection failure
             .build()
     }

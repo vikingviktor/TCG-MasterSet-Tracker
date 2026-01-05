@@ -171,6 +171,10 @@ fun HomeScreen(
                             cardUiState.error!!.contains("404") -> "Pokemon not found. Try a different Pokemon name."
                             cardUiState.error!!.contains("504") || cardUiState.error!!.contains("timeout") -> 
                                 "Server timeout. The Pokemon TCG API is slow right now. Please try again."
+                            cardUiState.error!!.contains("ConnectException") || cardUiState.error!!.contains("Failed to connect") ->
+                                "Unable to connect to Pokemon TCG API. Check your internet connection and try again."
+                            cardUiState.error!!.contains("UnknownHostException") ->
+                                "Cannot reach api.pokemontcg.io. Check your internet connection or DNS settings."
                             else -> "Error: ${cardUiState.error}"
                         },
                         color = PokemonColors.Error.copy(alpha = 0.8f),

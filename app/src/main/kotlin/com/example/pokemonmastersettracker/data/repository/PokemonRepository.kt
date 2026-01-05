@@ -64,9 +64,66 @@ class PokemonRepository @Inject constructor(
         }
     }
     
+    // Pre-fetch card data for most popular Pokemon to improve performance
+    suspend fun preFetchPopularPokemonCards() {
+        val popularPokemon = listOf(
+            "Pikachu", "Charizard", "Mewtwo", "Mew", "Eevee",
+            "Bulbasaur", "Charmander", "Squirtle", "Gengar", "Dragonite",
+            "Gyarados", "Snorlax", "Lucario", "Greninja", "Garchomp",
+            "Rayquaza", "Lugia", "Ho-Oh", "Blastoise", "Venusaur",
+            "Umbreon", "Espeon", "Jolteon", "Vaporeon", "Flareon",
+            "Scyther", "Kabutops", "Nidoking", "Haunter", "Haxorus", "Scizor"
+        )
+        
+        android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon...")
+        android.util.Log.d("PokemonRepository", "💡 This runs in background - you can search immediately!")
+        var successCount = 0
+        var cachedCount = 0
+        var failedCount = 0
+        
+        for (pokemonName in popularPokemon) {
+            try {
+                // Check if already cached
+                val cached = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+                if (cached.isNotEmpty()) {
+                    cachedCount++
+                    android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Already cached (${cached.size} cards)")
+                    continue
+                }
+                
+                // Fetch from API
+                android.util.Log.d("PokemonRepository", "  📥 Fetching $pokemonName...")
+                val cards = searchPokemonCardsWithPagination(pokemonName, "en", 1, 250, forceRefresh = true)
+                successCount++
+                android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Fetched ${cards.size} cards")
+                
+                // Add a small delay to avoid overwhelming the API
+                kotlinx.coroutines.delay(1000) // Increased to 1 second
+            } catch (e: Exception) {
+                failedCount++
+                android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: Failed (${e.message})")
+                // Continue with next Pokemon even if one fails
+            }
+        }
+        
+        android.util.Log.d("PokemonRepository", "📊 Pre-fetch complete: $cachedCount already cached, $successCount fetched, $failedCount failed")
+    }
+    
     // Card Operations
     
-    suspend fun searchPokemonCardsWithPagination(pokemonName: String, language: String = "en", page: Int = 1, pageSize: Int = 25): List<Card> {
+    suspend fun searchPokemonCardsWithPagination(pokemonName: String, language: String = "en", page: Int = 1, pageSize: Int = 25, forceRefresh: Boolean = false): List<Card> {
+        // For first page, check cache first unless force refresh
+        if (page == 1 && !forceRefresh) {
+            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            if (cachedCards.isNotEmpty()) {
+                android.util.Log.d("PokemonRepository", "✅ Using ${cachedCards.size} cached cards for '$pokemonName' (skipping API)")
+                // Return paginated subset from cache
+                val startIndex = 0
+                val endIndex = minOf(pageSize, cachedCards.size)
+                return cachedCards.subList(startIndex, endIndex)
+            }
+        }
+        
         val query = buildCardQuery(pokemonName, language)
         return try {
             android.util.Log.d("PokemonRepository", "🌐 API REQUEST: pokemonName='$pokemonName', query='$query', page=$page, pageSize=$pageSize")
@@ -84,11 +141,17 @@ class PokemonRepository @Inject constructor(
         } catch (e: Exception) {
             android.util.Log.e("PokemonRepository", "❌ API ERROR: ${e.javaClass.simpleName}: ${e.message}")
             
-            // Try to get cached results on error
+            // ALWAYS try to get cached results on error
             val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
             if (cachedCards.isNotEmpty()) {
                 android.util.Log.w("PokemonRepository", "⚠️ API failed for '$pokemonName', using ${cachedCards.size} cached cards")
-                return cachedCards
+                // Return paginated subset from cache
+                val startIndex = (page - 1) * pageSize
+                val endIndex = minOf(startIndex + pageSize, cachedCards.size)
+                if (startIndex < cachedCards.size) {
+                    return cachedCards.subList(startIndex, endIndex)
+                }
+                return emptyList()
             }
             
             val errorDetails = """

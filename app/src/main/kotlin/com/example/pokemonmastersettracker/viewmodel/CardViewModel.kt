@@ -1,12 +1,15 @@
 package com.example.pokemonmastersettracker.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.repository.PokemonRepository
+import com.example.pokemonmastersettracker.utils.DatabaseExporter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +42,8 @@ data class CardUiState(
 
 @HiltViewModel
 class CardViewModel @Inject constructor(
-    private val repository: PokemonRepository
+    private val repository: PokemonRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _cardUiState = MutableStateFlow(CardUiState())
@@ -69,6 +73,31 @@ class CardViewModel @Inject constructor(
             
             // Seed Pokemon database
             repository.seedPopularPokemon()
+            
+            // Pre-fetch popular Pokemon cards in background
+            // This caches data locally for instant searches
+            android.util.Log.d("CardViewModel", "🚀 Starting background pre-fetch of popular Pokemon cards...")
+            // Run in background coroutine so it doesn't block app startup
+            launch {
+                try {
+                    repository.preFetchPopularPokemonCards()
+                    android.util.Log.d("CardViewModel", "✓ Pre-fetch complete")
+                    
+                    // After pre-fetch, export database for bundling with future app versions
+                    android.util.Log.d("CardViewModel", "📦 Exporting database for bundling...")
+                    val exportPath = DatabaseExporter.exportDatabase(context)
+                    if (exportPath != null) {
+                        android.util.Log.d("CardViewModel", "✓ Database exported to: $exportPath")
+                        android.util.Log.d("CardViewModel", "📋 Next steps:")
+                        android.util.Log.d("CardViewModel", "   1. Copy this file from device to: app/src/main/assets/database/")
+                        android.util.Log.d("CardViewModel", "   2. Rename to: pokemon_tracker_prepopulated.db")
+                        android.util.Log.d("CardViewModel", "   3. Rebuild app - it will use pre-populated data!")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("CardViewModel", "⚠️ Pre-fetch failed: ${e.message}")
+                    // Don't crash app if pre-fetch fails
+                }
+            }
         }
     }
 
@@ -110,16 +139,16 @@ class CardViewModel @Inject constructor(
     }
 
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
-    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25) {
+    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25, forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true, 
                 selectedPokemonName = pokemonName,
                 lastQuery = "Loading...",
-                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize"
+                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize | Cache: ${!forceRefresh}"
             )
             try {
-                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize)")
+                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize, forceRefresh: $forceRefresh)")
                 
                 // The Pokemon TCG API returns ALL cards (English, Japanese, etc.) in one query
                 // pageSize controls how many cards per page
@@ -128,7 +157,8 @@ class CardViewModel @Inject constructor(
                     pokemonName, 
                     "en", // Language param is not used by API, but required by signature
                     page, 
-                    pageSize
+                    pageSize,
+                    forceRefresh
                 )
                 
                 android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards for page $page")
