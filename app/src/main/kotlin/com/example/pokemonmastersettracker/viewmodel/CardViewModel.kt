@@ -39,7 +39,13 @@ data class CardUiState(
     val debugInfo: String? = null, // For debugging - shows diagnostic information
     val sortOption: CardSortOption = CardSortOption.NONE,
     val databaseExported: Boolean = false, // Track if database was exported
-    val preFetchComplete: Boolean = false // Track if pre-fetch completed
+    val preFetchComplete: Boolean = false, // Track if pre-fetch completed
+    val preFetchProgress: Int = 0, // Current pokemon being fetched (0-31)
+    val preFetchTotal: Int = 31, // Total pokemon to fetch
+    val preFetchCached: Int = 0, // Already cached
+    val preFetchSuccess: Int = 0, // Successfully fetched
+    val preFetchFailed: Int = 0, // Failed after retries
+    val currentPokemon: String = "" // Name of pokemon currently being fetched
 )
 
 @HiltViewModel
