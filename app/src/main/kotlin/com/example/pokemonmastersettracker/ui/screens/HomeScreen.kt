@@ -116,58 +116,119 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Show database export status at the top
-        if (cardUiState.preFetchComplete || cardUiState.databaseExported) {
+        // Show database export status at the top with live progress
+        if (cardUiState.preFetchProgress > 0 || cardUiState.preFetchComplete || cardUiState.databaseExported) {
+            var showDetailsDialog by remember { mutableStateOf(false) }
+            
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDetailsDialog = true },
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF4CAF50).copy(alpha = 0.2f)
+                    containerColor = if (cardUiState.preFetchComplete) 
+                        Color(0xFF4CAF50).copy(alpha = 0.2f) 
+                    else 
+                        Color(0xFFFFE5B4)
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column {
-                        if (cardUiState.preFetchComplete) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "✓",
-                                    color = Color(0xFF4CAF50),
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Pre-fetch complete",
-                                    fontSize = 14.sp,
-                                    color = Color(0xFF4CAF50)
-                                )
-                            }
-                        }
-                        if (cardUiState.databaseExported) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "✓",
-                                    color = Color(0xFF4CAF50),
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Database exported",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4CAF50)
-                                )
-                            }
+                    if (!cardUiState.preFetchComplete && cardUiState.preFetchProgress > 0) {
+                        Text(
+                            "Pre-fetching Pokemon...",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF856404)
+                        )
+                        Text(
+                            "${cardUiState.preFetchProgress}/${cardUiState.preFetchTotal} - ${cardUiState.currentPokemon}",
+                            fontSize = 14.sp,
+                            color = Color(0xFF856404)
+                        )
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = cardUiState.preFetchProgress.toFloat() / cardUiState.preFetchTotal.toFloat(),
+                            modifier = Modifier.fillMaxWidth(),
+                            color = PokemonColors.Primary
+                        )
+                        Text(
+                            "✓ Cached: ${cardUiState.preFetchCached} | ✓ Fetched: ${cardUiState.preFetchSuccess} | ✗ Failed: ${cardUiState.preFetchFailed}",
+                            fontSize = 12.sp,
+                            color = Color(0xFF856404)
+                        )
+                    } else if (cardUiState.preFetchComplete) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "✓",
+                                color = Color(0xFF4CAF50),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Pre-fetch complete (${cardUiState.preFetchCached + cardUiState.preFetchSuccess}/${cardUiState.preFetchTotal})",
+                                fontSize = 14.sp,
+                                color = Color(0xFF4CAF50)
+                            )
                         }
                     }
+                    if (cardUiState.databaseExported) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "✓",
+                                color = Color(0xFF4CAF50),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Database exported",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+                    }
+                    if (cardUiState.preFetchProgress > 0 || cardUiState.preFetchComplete) {
+                        Text(
+                            "Tap for details",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.align(Alignment.End)
+                        )
+                    }
                 }
+            }
+            
+            // Details dialog
+            if (showDetailsDialog) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showDetailsDialog = false },
+                    title = { Text("Pre-fetch Progress") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Status: ${if (cardUiState.preFetchComplete) \"Complete\" else \"In Progress\"}", fontWeight = FontWeight.Bold)
+                            Text("Progress: ${cardUiState.preFetchProgress}/${cardUiState.preFetchTotal}")
+                            if (cardUiState.currentPokemon.isNotEmpty()) {
+                                Text("Current: ${cardUiState.currentPokemon}")
+                            }
+                            Text("Already Cached: ${cardUiState.preFetchCached}")
+                            Text("Successfully Fetched: ${cardUiState.preFetchSuccess}")
+                            Text("Failed: ${cardUiState.preFetchFailed}")
+                            Text("Total Data: ${cardUiState.preFetchCached + cardUiState.preFetchSuccess} Pokemon")
+                            if (cardUiState.databaseExported) {
+                                Text("\n✓ Database exported and ready for bundling", color = Color(0xFF4CAF50))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = { showDetailsDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
             }
         }
         

@@ -66,7 +66,10 @@ class PokemonRepository @Inject constructor(
     
     // Pre-fetch card data for most popular Pokemon to improve performance
     // Returns Triple(cachedCount, successCount, failedCount)
-    suspend fun preFetchPopularPokemonCards(): Triple<Int, Int, Int> {
+    // onProgress callback: (current, total, pokemonName, cached, success, failed) -> Unit
+    suspend fun preFetchPopularPokemonCards(
+        onProgress: ((Int, Int, String, Int, Int, Int) -> Unit)? = null
+    ): Triple<Int, Int, Int> {
         val popularPokemon = listOf(
             "Pikachu", "Charizard", "Mewtwo", "Mew", "Eevee",
             "Bulbasaur", "Charmander", "Squirtle", "Gengar", "Dragonite",
@@ -76,38 +79,72 @@ class PokemonRepository @Inject constructor(
             "Scyther", "Kabutops", "Nidoking", "Haunter", "Haxorus", "Scizor"
         )
         
-        android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon...")
-        android.util.Log.d("PokemonRepository", "💡 This runs in background - you can search immediately!")
+        android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon with retry logic...")
+        android.util.Log.d("PokemonRepository", "💡 This may take a while due to API issues - will retry on failures!")
         var successCount = 0
         var cachedCount = 0
         var failedCount = 0
         
-        for (pokemonName in popularPokemon) {
-            try {
-                // Check if already cached
-                val cached = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-                if (cached.isNotEmpty()) {
-                    cachedCount++
-                    android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Already cached (${cached.size} cards)")
-                    continue
+        for ((index, pokemonName) in popularPokemon.withIndex()) {
+            // Emit progress update
+            onProgress?.invoke(index + 1, popularPokemon.size, pokemonName, cachedCount, successCount, failedCount)
+            
+            // Check if already cached
+            val cached = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            if (cached.isNotEmpty()) {
+                cachedCount++
+                android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Already cached (${cached.size} cards)")
+                continue
+            }
+            
+            // Fetch with retry logic
+            var retryCount = 0
+            val maxRetries = 5
+            var success = false
+            
+            while (retryCount < maxRetries && !success) {
+                try {
+                    val delayMs = if (retryCount == 0) 2000L else (2000L * (retryCount + 1)) // 2s, 4s, 6s, 8s, 10s
+                    if (retryCount > 0) {
+                        android.util.Log.d("PokemonRepository", "  🔄 $pokemonName: Retry $retryCount/$maxRetries after ${delayMs}ms delay...")
+                        kotlinx.coroutines.delay(delayMs)
+                    } else {
+                        android.util.Log.d("PokemonRepository", "  📥 Fetching $pokemonName...")
+                    }
+                    
+                    val cards = searchPokemonCardsWithPagination(pokemonName, "en", 1, 250, forceRefresh = true)
+                    
+                    if (cards.isNotEmpty()) {
+                        successCount++
+                        success = true
+                        android.util.Log.d("PokemonRepository", "  ✅ $pokemonName: SUCCESS! Fetched ${cards.size} cards")
+                    } else {
+                        android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: API returned 0 cards, will retry...")
+                        retryCount++
+                    }
+                } catch (e: Exception) {
+                    retryCount++
+                    val errorType = when {
+                        e.message?.contains("404") == true -> "404 Not Found"
+                        e.message?.contains("504") == true -> "504 Gateway Timeout"
+                        e.message?.contains("timeout") == true -> "Timeout"
+                        else -> e.javaClass.simpleName
+                    }
+                    
+                    if (retryCount < maxRetries) {
+                        android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: $errorType - will retry ($retryCount/$maxRetries)")
+                    } else {
+                        android.util.Log.e("PokemonRepository", "  ❌ $pokemonName: FAILED after $maxRetries retries ($errorType)")
+                    }
                 }
-                
-                // Fetch from API
-                android.util.Log.d("PokemonRepository", "  📥 Fetching $pokemonName...")
-                val cards = searchPokemonCardsWithPagination(pokemonName, "en", 1, 250, forceRefresh = true)
-                successCount++
-                android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Fetched ${cards.size} cards")
-                
-                // Add a small delay to avoid overwhelming the API
-                kotlinx.coroutines.delay(1000) // Increased to 1 second
-            } catch (e: Exception) {
+            }
+            
+            if (!success) {
                 failedCount++
-                android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: Failed (${e.message})")
-                // Continue with next Pokemon even if one fails
             }
         }
         
-        android.util.Log.d("PokemonRepository", "📊 Pre-fetch complete: $cachedCount already cached, $successCount fetched, $failedCount failed")
+        android.util.Log.d("PokemonRepository", "📊 Pre-fetch complete: $cachedCount already cached, $successCount fetched, $failedCount failed permanently")
         return Triple(cachedCount, successCount, failedCount)
     }
     

@@ -82,7 +82,18 @@ class CardViewModel @Inject constructor(
             // Run in background coroutine so it doesn't block app startup
             launch {
                 try {
-                    val stats = repository.preFetchPopularPokemonCards()
+                    val stats = repository.preFetchPopularPokemonCards(
+                        onProgress = { current, total, pokemonName, cached, success, failed ->
+                            _cardUiState.value = _cardUiState.value.copy(
+                                preFetchProgress = current,
+                                preFetchTotal = total,
+                                currentPokemon = pokemonName,
+                                preFetchCached = cached,
+                                preFetchSuccess = success,
+                                preFetchFailed = failed
+                            )
+                        }
+                    )
                     android.util.Log.d("CardViewModel", "✓ Pre-fetch complete: cached=${stats.first}, fetched=${stats.second}, failed=${stats.third}")
                     
                     // Update UI state
