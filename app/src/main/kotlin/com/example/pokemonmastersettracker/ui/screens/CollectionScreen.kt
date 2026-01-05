@@ -212,7 +212,7 @@ fun CollectionContent(
                 }
             }
 
-            collectionUiState.userCards.isEmpty() -> {
+            collectionUiState.userCardsWithDetails.isEmpty() -> {
                 SwipeRefresh(
                     state = rememberSwipeRefreshState(isRefreshing),
                     onRefresh = onRefresh

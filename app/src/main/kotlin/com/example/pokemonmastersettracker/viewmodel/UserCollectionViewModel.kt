@@ -57,7 +57,10 @@ class UserCollectionViewModel @Inject constructor(
                 val ownedCards = userCards.filter { it.isOwned }.size
                 
                 // Get card details for all user cards
-                val cardsWithDetails = repository.getUserCardsWithDetails(userId)
+                val allCardsWithDetails = repository.getUserCardsWithDetails(userId)
+                
+                // Filter to only show owned cards in the collection list
+                val ownedCardsWithDetails = allCardsWithDetails.filter { it.first.isOwned }
                 
                 // Get total count of cards for all favorite Pokemon
                 val totalCardsForFavorites = repository.getTotalCardsCountForFavoritePokemon(userId)
@@ -70,7 +73,7 @@ class UserCollectionViewModel @Inject constructor(
 
                 _collectionUiState.value = UserCollectionUiState(
                     userCards = userCards,
-                    userCardsWithDetails = cardsWithDetails,
+                    userCardsWithDetails = ownedCardsWithDetails,
                     ownedCount = ownedCards,
                     totalCount = totalCardsForFavorites,
                     completionPercentage = completionPercentage,
