@@ -37,7 +37,9 @@ data class CardUiState(
     val pageSize: Int = 25,
     val lastQuery: String? = null, // For debugging - shows the actual query used
     val debugInfo: String? = null, // For debugging - shows diagnostic information
-    val sortOption: CardSortOption = CardSortOption.NONE
+    val sortOption: CardSortOption = CardSortOption.NONE,
+    val databaseExported: Boolean = false, // Track if database was exported
+    val preFetchComplete: Boolean = false // Track if pre-fetch completed
 )
 
 @HiltViewModel
@@ -83,6 +85,16 @@ class CardViewModel @Inject constructor(
                     repository.preFetchPopularPokemonCards()
                     android.util.Log.d("CardViewModel", "✓ Pre-fetch complete")
                     
+                    // Update UI state
+                    _cardUiState.value = _cardUiState.value.copy(preFetchComplete = true)
+                    
+                    // Show notification that pre-fetch is done
+                    android.widget.Toast.makeText(
+                        context,
+                        "✓ Pre-fetch complete! Exporting database...",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                    
                     // After pre-fetch, export database for bundling with future app versions
                     android.util.Log.d("CardViewModel", "📦 Exporting database for bundling...")
                     val exportPath = DatabaseExporter.exportDatabase(context)
@@ -92,10 +104,32 @@ class CardViewModel @Inject constructor(
                         android.util.Log.d("CardViewModel", "   1. Copy this file from device to: app/src/main/assets/database/")
                         android.util.Log.d("CardViewModel", "   2. Rename to: pokemon_tracker_prepopulated.db")
                         android.util.Log.d("CardViewModel", "   3. Rebuild app - it will use pre-populated data!")
+                        
+                        // Update UI state
+                        _cardUiState.value = _cardUiState.value.copy(databaseExported = true)
+                        
+                        // Show success notification
+                        android.widget.Toast.makeText(
+                            context,
+                            "✓ Database exported! Check Android/data/com.mastersettracker.pokemon/files/database_export/",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        // Show error notification
+                        android.widget.Toast.makeText(
+                            context,
+                            "⚠️ Database export failed - check permissions",
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("CardViewModel", "⚠️ Pre-fetch failed: ${e.message}")
-                    // Don't crash app if pre-fetch fails
+                    // Show error notification
+                    android.widget.Toast.makeText(
+                        context,
+                        "⚠️ Pre-fetch failed: ${e.message}",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
