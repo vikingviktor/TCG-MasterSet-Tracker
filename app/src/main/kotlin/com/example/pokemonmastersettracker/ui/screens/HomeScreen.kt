@@ -209,7 +209,8 @@ fun HomeScreen(
                     title = { Text("Pre-fetch Progress") },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Status: ${if (cardUiState.preFetchComplete) \"Complete\" else \"In Progress\"}", fontWeight = FontWeight.Bold)
+                            val statusText = if (cardUiState.preFetchComplete) "Complete" else "In Progress"
+                            Text("Status: $statusText", fontWeight = FontWeight.Bold)
                             Text("Progress: ${cardUiState.preFetchProgress}/${cardUiState.preFetchTotal}")
                             if (cardUiState.currentPokemon.isNotEmpty()) {
                                 Text("Current: ${cardUiState.currentPokemon}")
@@ -217,9 +218,14 @@ fun HomeScreen(
                             Text("Already Cached: ${cardUiState.preFetchCached}")
                             Text("Successfully Fetched: ${cardUiState.preFetchSuccess}")
                             Text("Failed: ${cardUiState.preFetchFailed}")
-                            Text("Total Data: ${cardUiState.preFetchCached + cardUiState.preFetchSuccess} Pokemon")
+                            val totalData = cardUiState.preFetchCached + cardUiState.preFetchSuccess
+                            Text("Total Data: $totalData Pokemon")
                             if (cardUiState.databaseExported) {
-                                Text("\n✓ Database exported and ready for bundling", color = Color(0xFF4CAF50))
+                                Text(
+                                    text = "✓ Database exported and ready for bundling",
+                                    color = Color(0xFF4CAF50),
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
                             }
                         }
                     },
