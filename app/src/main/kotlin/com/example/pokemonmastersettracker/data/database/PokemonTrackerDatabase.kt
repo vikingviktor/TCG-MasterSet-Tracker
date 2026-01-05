@@ -22,7 +22,7 @@ import com.example.pokemonmastersettracker.data.converters.TypeConverters as Roo
         User::class,
         Pokemon::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(RoomTypeConverters::class)

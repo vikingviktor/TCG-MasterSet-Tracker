@@ -153,6 +153,7 @@ class CardViewModel @Inject constructor(
                     cards = allCards,
                     allCards = allCards,
                     loading = false,
+                    error = null,
                     selectedPokemonName = pokemonName,
                     currentPage = page,
                     hasMorePages = hasMore,

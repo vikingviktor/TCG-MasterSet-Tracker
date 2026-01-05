@@ -286,7 +286,7 @@ fun HomeScreen(
                 }
             }
 
-            cardUiState.pokemonList.isEmpty() && searchQuery.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
+            cardUiState.pokemonList.isEmpty() && searchQuery.isNotEmpty() && cardUiState.selectedPokemonName == null && !cardUiState.loading && cardUiState.lastQuery.isNotEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center

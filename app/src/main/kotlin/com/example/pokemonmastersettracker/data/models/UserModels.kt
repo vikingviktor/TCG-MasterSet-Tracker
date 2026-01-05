@@ -2,7 +2,6 @@ package com.example.pokemonmastersettracker.data.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.ForeignKey
 
 @Entity(tableName = "users")
 data class User(
@@ -13,23 +12,7 @@ data class User(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-@Entity(
-    tableName = "user_cards",
-    foreignKeys = [
-        ForeignKey(
-            entity = User::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Card::class,
-            parentColumns = ["id"],
-            childColumns = ["cardId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "user_cards")
 data class UserCard(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -45,17 +28,7 @@ data class UserCard(
     val addedAt: Long = System.currentTimeMillis()
 )
 
-@Entity(
-    tableName = "favorite_pokemon",
-    foreignKeys = [
-        ForeignKey(
-            entity = User::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "favorite_pokemon")
 data class FavoritePokemon(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -65,23 +38,7 @@ data class FavoritePokemon(
     val totalCards: Int = 0 // Cached total card count for this Pokemon
 )
 
-@Entity(
-    tableName = "wishlist_cards",
-    foreignKeys = [
-        ForeignKey(
-            entity = User::class,
-            parentColumns = ["id"],
-            childColumns = ["userId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Card::class,
-            parentColumns = ["id"],
-            childColumns = ["cardId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
-)
+@Entity(tableName = "wishlist_cards")
 data class WishlistCard(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
