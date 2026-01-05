@@ -197,7 +197,8 @@ fun CollectionContent(
         CollectionHeader(
             ownedCount = collectionUiState.ownedCount,
             totalCount = collectionUiState.totalCount,
-            completionPercentage = collectionUiState.completionPercentage
+            completionPercentage = collectionUiState.completionPercentage,
+            onRefresh = onRefresh
         )
 
         // Card list
@@ -254,7 +255,8 @@ fun CollectionContent(
 fun CollectionHeader(
     ownedCount: Int,
     totalCount: Int,
-    completionPercentage: Float
+    completionPercentage: Float,
+    onRefresh: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -267,11 +269,29 @@ fun CollectionHeader(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Your Collection",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Your Collection",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Refresh button
+                onRefresh?.let {
+                    Button(
+                        onClick = it,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text("Refresh", fontSize = 12.sp)
+                    }
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
