@@ -14,7 +14,7 @@ object DatabaseExporter {
      */
     fun exportDatabase(context: Context): String? {
         return try {
-            val currentDBPath = context.getDatabasePath("pokemon_tracker_db")
+            val currentDBPath = context.getDatabasePath("pokemon_tracker_v6.db")
             
             if (!currentDBPath.exists()) {
                 Log.e("DatabaseExporter", "Database file does not exist at: ${currentDBPath.absolutePath}")

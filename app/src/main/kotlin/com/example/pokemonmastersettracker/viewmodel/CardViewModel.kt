@@ -369,6 +369,14 @@ class CardViewModel @Inject constructor(
                 } else {
                     repository.markCardAsOwned(defaultUserId, cardId)
                     android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId")
+                    
+                    // Auto-favorite the Pokemon when adding a card to collection
+                    _cardUiState.value.selectedPokemonName?.let { pokemonName ->
+                        if (!repository.isFavoritePokemon(defaultUserId, pokemonName)) {
+                            repository.addFavoritePokemon(defaultUserId, pokemonName)
+                            android.util.Log.d("CardViewModel", "✓ Auto-favorited Pokemon: $pokemonName")
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "❌ Error toggling ownership: ${e.message}", e)

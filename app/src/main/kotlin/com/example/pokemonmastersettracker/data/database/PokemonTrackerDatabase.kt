@@ -44,10 +44,10 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     PokemonTrackerDatabase::class.java,
-                    "pokemon_tracker_v6.db"  // Changed name to force fresh start
+                    "pokemon_tracker_v6.db"
                 )
+                .createFromAsset("database/pokemon_tracker_prepopulated.db")
                 .fallbackToDestructiveMigration()
-                .fallbackToDestructiveMigrationOnDowngrade()
                 .build().also { instance = it }
             }
         }
