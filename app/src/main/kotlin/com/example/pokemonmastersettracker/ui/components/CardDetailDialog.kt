@@ -25,7 +25,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,9 +51,12 @@ fun CardDetailDialog(
     isOwned: Boolean,
     isInWishlist: Boolean,
     onDismiss: () -> Unit,
-    onToggleOwned: () -> Unit,
+    onToggleOwned: (com.example.pokemonmastersettracker.data.models.CardCondition) -> Unit,
     onToggleWishlist: () -> Unit
 ) {
+    var selectedCondition by remember { mutableStateOf(com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) }
+    var showConditionMenu by remember { mutableStateOf(false) }
+    
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
@@ -131,7 +140,37 @@ fun CardDetailDialog(
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Condition Selector (only show when not owned)
+                if (!isOwned) {
+                    OutlinedButton(
+                        onClick = { showConditionMenu = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Condition: ${selectedCondition.name.replace("_", " ")}",
+                            fontSize = 14.sp
+                        )
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showConditionMenu,
+                        onDismissRequest = { showConditionMenu = false }
+                    ) {
+                        com.example.pokemonmastersettracker.data.models.CardCondition.values().forEach { condition ->
+                            DropdownMenuItem(
+                                text = { Text(condition.name.replace("_", " ")) },
+                                onClick = {
+                                    selectedCondition = condition
+                                    showConditionMenu = false
+                                }
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 
                 // Action Buttons
                 Row(
@@ -140,7 +179,7 @@ fun CardDetailDialog(
                 ) {
                     // Collection Button
                     Button(
-                        onClick = onToggleOwned,
+                        onClick = { onToggleOwned(selectedCondition) },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isOwned) Color(0xFF4CAF50) else PokemonColors.Primary

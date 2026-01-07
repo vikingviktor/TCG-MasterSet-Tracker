@@ -415,9 +415,14 @@ class PokemonRepository @Inject constructor(
             android.util.Log.d("PokemonRepository", "Fetched total cards for $pokemonName: $count (query: $query)")
             count
         } catch (e: Exception) {
-            android.util.Log.w("PokemonRepository", "Could not fetch total cards for $pokemonName (${e.message}), will use default")
-            // Fallback: Use 0 so it doesn't show incorrect data
-            0
+            android.util.Log.w("PokemonRepository", "Could not fetch total cards for $pokemonName (${e.message}), will use cached count if available")
+            // Fallback: Try to get count from cached cards in database
+            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            if (cachedCards.isNotEmpty()) {
+                cachedCards.size
+            } else {
+                50 // Reasonable default - most Pokemon have 20-100 cards
+            }
         }
         
         // Update with the actual count
@@ -481,6 +486,24 @@ class PokemonRepository @Inject constructor(
             totalCount
         } catch (e: Exception) {
             android.util.Log.e("PokemonRepository", "Error getting total cards count: ${e.message}")
+            0
+        }
+    }
+    
+    suspend fun getOwnedCardsCountForPokemon(userId: String, pokemonName: String): Int {
+        return try {
+            // Get all cards for this Pokemon from database
+            val allCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            val cardIds = allCards.map { it.id }
+            
+            // Count how many of these cards the user owns
+            val userCards = userCardDao.getUserCardsSync(userId)
+            val ownedCount = userCards.count { it.isOwned && it.cardId in cardIds }
+            
+            android.util.Log.d("PokemonRepository", "Owned cards for $pokemonName: $ownedCount")
+            ownedCount
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error getting owned cards count: ${e.message}")
             0
         }
     }

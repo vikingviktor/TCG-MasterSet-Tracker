@@ -93,9 +93,9 @@ fun CollectionScreen(
                 selectedCardForDialog = null
                 refreshTrigger++ // Trigger refresh
             },
-            onToggleOwned = {
+            onToggleOwned = { condition ->
                 scope.launch {
-                    cardViewModel.toggleCardOwnership(card.id, isCardOwned)
+                    cardViewModel.toggleCardOwnership(card.id, isCardOwned, condition)
                     // Wait a bit for database operation to complete
                     delay(100)
                     // Re-query the actual state from database

@@ -11,8 +11,16 @@ data class Pokemon(
     val name: String,
     val nationalPokedexNumber: Int? = null,  // For multi-language support
     val imageUrl: String? = null,
-    val isFavorite: Boolean = false
-)
+    val isFavorite: Boolean = false,
+    @androidx.room.Ignore
+    val ownedCount: Int = 0,  // Not stored in DB, calculated at runtime
+    @androidx.room.Ignore
+    val totalCards: Int = 0   // Not stored in DB, loaded from FavoritePokemon
+) {
+    // Secondary constructor for Room (without @Ignore fields)
+    constructor(name: String, nationalPokedexNumber: Int?, imageUrl: String?, isFavorite: Boolean) :
+        this(name, nationalPokedexNumber, imageUrl, isFavorite, 0, 0)
+}
 
 // API Response Models
 data class CardResponse(

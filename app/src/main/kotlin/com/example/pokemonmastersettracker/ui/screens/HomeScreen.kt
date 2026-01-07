@@ -88,9 +88,9 @@ fun HomeScreen(
                 selectedCardForDialog = null
                 refreshTrigger++ // Trigger refresh when dialog closes
             },
-            onToggleOwned = {
+            onToggleOwned = { condition ->
                 scope.launch {
-                    viewModel.toggleCardOwnership(card.id, isCardOwned)
+                    viewModel.toggleCardOwnership(card.id, isCardOwned, condition)
                     // Wait a bit for database operation to complete
                     delay(100)
                     // Re-query the actual state from database

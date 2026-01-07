@@ -342,9 +342,25 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
-                val favorites = repository.getFavoritePokemon()
-                android.util.Log.d("CardViewModel", "Loaded ${favorites.size} favorite Pokemon")
-                _cardUiState.value = CardUiState(pokemonList = favorites)
+                repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
+                    // Convert FavoritePokemon to Pokemon with counts
+                    val pokemonWithCounts = favoritePokemon.map { fav ->
+                        val pokemon = repository.getPokemonByName(fav.pokemonName).firstOrNull()
+                        val ownedCount = repository.getOwnedCardsCountForPokemon(defaultUserId, fav.pokemonName)
+                        
+                        Pokemon(
+                            name = fav.pokemonName,
+                            nationalPokedexNumber = pokemon?.nationalPokedexNumber,
+                            imageUrl = pokemon?.imageUrl,
+                            isFavorite = true,
+                            ownedCount = ownedCount,
+                            totalCards = fav.totalCards
+                        )
+                    }
+                    
+                    android.util.Log.d("CardViewModel", "Loaded ${pokemonWithCounts.size} favorite Pokemon with counts")
+                    _cardUiState.value = CardUiState(pokemonList = pokemonWithCounts)
+                }
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error loading favorites: ${e.message}", e)
                 _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
@@ -360,16 +376,16 @@ class CardViewModel @Inject constructor(
         return result
     }
     
-    fun toggleCardOwnership(cardId: String, currentlyOwned: Boolean) {
+    fun toggleCardOwnership(cardId: String, currentlyOwned: Boolean, condition: com.example.pokemonmastersettracker.data.models.CardCondition = com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, userId=$defaultUserId")
+                android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, condition=$condition, userId=$defaultUserId")
                 if (currentlyOwned) {
                     repository.markCardAsMissing(defaultUserId, cardId)
                     android.util.Log.d("CardViewModel", "✓ Removed from collection: $cardId")
                 } else {
-                    repository.markCardAsOwned(defaultUserId, cardId)
-                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId")
+                    repository.markCardAsOwned(defaultUserId, cardId, condition)
+                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition")
                     
                     // Auto-favorite the Pokemon when adding a card to collection
                     _cardUiState.value.selectedPokemonName?.let { pokemonName ->

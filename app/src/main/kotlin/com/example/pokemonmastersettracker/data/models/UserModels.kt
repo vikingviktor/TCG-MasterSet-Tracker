@@ -50,11 +50,11 @@ data class WishlistCard(
 enum class CardCondition {
     MINT,
     NEAR_MINT,
-    LIGHTLY_PLAYED,
-    MODERATELY_PLAYED,
-    HEAVILY_PLAYED,
-    DAMAGED,
-    UNKNOWN
+    EXCELLENT,
+    GOOD,
+    LIGHT_PLAYED,
+    PLAYED,
+    POOR
 }
 
 data class PokemonSetCompletion(

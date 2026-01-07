@@ -37,8 +37,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,6 +53,7 @@ import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import com.example.pokemonmastersettracker.viewmodel.CardSortOption
 import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
@@ -297,8 +301,7 @@ fun FavoritesScreen(
                         items(cardUiState.pokemonList.size) { index ->
                             val pokemon = cardUiState.pokemonList[index]
                             FavoritePokemonCard(
-                                pokemonName = pokemon.name,
-                                imageUrl = pokemon.imageUrl,
+                                pokemon = pokemon,
                                 onRemove = {
                                     viewModel.toggleFavorite(pokemon.name)
                                     viewModel.loadFavorites() // Refresh list
@@ -317,49 +320,78 @@ fun FavoritesScreen(
 
 @Composable
 fun FavoritePokemonCard(
-    pokemonName: String,
-    imageUrl: String?,
+    pokemon: com.example.pokemonmastersettracker.data.models.Pokemon,
     onRemove: () -> Unit,
     onViewCards: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = pokemonName,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+            // Pokemon Image
+            AsyncImage(
+                model = pokemon.imageUrl,
+                contentDescription = pokemon.name,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
             )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            
+            // Pokemon name and count
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Button(
-                    onClick = onViewCards,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PokemonColors.Primary
+                Text(
+                    text = pokemon.name,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Show owned/total count
+                if (pokemon.totalCards > 0) {
+                    Text(
+                        text = "(${pokemon.ownedCount}/${pokemon.totalCards})",
+                        fontSize = 14.sp,
+                        color = if (pokemon.ownedCount == pokemon.totalCards) 
+                            Color(0xFF4CAF50) else Color.Gray
                     )
-                ) {
-                    Text("View Cards")
                 }
+            }
+        }
+        
+        // Buttons row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onViewCards,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PokemonColors.Primary
+                )
+            ) {
+                Text("View Cards")
+            }
 
-                Button(
-                    onClick = onRemove,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PokemonColors.Error
-                    )
-                ) {
-                    Text("Remove")
-                }
+            Button(
+                onClick = onRemove,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PokemonColors.Error
+                )
+            ) {
+                Text("Remove")
             }
         }
     }
