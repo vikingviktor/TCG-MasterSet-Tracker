@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -342,15 +343,17 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
-                repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
-                    // Refresh total cards for favorites that have 0 (old data)
-                    favoritePokemon.forEach { fav ->
-                        if (fav.totalCards == 0) {
-                            android.util.Log.d("CardViewModel", "🔄 Refreshing total for ${fav.pokemonName} (currently 0)")
-                            repository.refreshFavoritePokemonTotalCards(defaultUserId, fav.pokemonName)
-                        }
+                // First, get the current favorites and refresh any with 0 total (only once)
+                val currentFavorites = repository.getUserFavoritePokemon(defaultUserId).first()
+                currentFavorites.forEach { fav ->
+                    if (fav.totalCards == 0) {
+                        android.util.Log.d("CardViewModel", "🔄 Refreshing total for ${fav.pokemonName} (currently 0)")
+                        repository.refreshFavoritePokemonTotalCards(defaultUserId, fav.pokemonName)
                     }
-                    
+                }
+                
+                // Now collect the updated favorites
+                repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
                     // Convert FavoritePokemon to Pokemon with counts
                     val pokemonWithCounts = favoritePokemon.map { fav ->
                         val pokemon = repository.searchPokemonLocal(fav.pokemonName).firstOrNull()
