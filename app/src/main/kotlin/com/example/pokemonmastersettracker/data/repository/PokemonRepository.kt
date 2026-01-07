@@ -15,6 +15,7 @@ import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class PokemonRepository @Inject constructor(
@@ -474,7 +475,7 @@ class PokemonRepository @Inject constructor(
     // JOIN query does ALL the work - no additional queries in map = no infinite loop
     fun getUserFavoritePokemonWithDetails(userId: String): Flow<List<Pokemon>> {
         return favoritePokemonDao.getUserFavoritesWithDetails(userId)
-            .kotlinx.coroutines.flow.map { detailsList ->
+            .map { detailsList ->
                 android.util.Log.d("PokemonRepository", "🔄 Transforming ${detailsList.size} favorites from JOIN query")
                 detailsList.map { details ->
                     android.util.Log.d("PokemonRepository", "  ✓ ${details.pokemonName}: ${details.ownedCount}/${details.totalCards} cards")
