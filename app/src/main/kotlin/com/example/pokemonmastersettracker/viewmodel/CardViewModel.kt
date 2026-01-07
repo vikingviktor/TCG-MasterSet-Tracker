@@ -345,7 +345,7 @@ class CardViewModel @Inject constructor(
                 repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
                     // Convert FavoritePokemon to Pokemon with counts
                     val pokemonWithCounts = favoritePokemon.map { fav ->
-                        val pokemon = repository.getPokemonByName(fav.pokemonName).firstOrNull()
+                        val pokemon = repository.searchPokemonLocal(fav.pokemonName).firstOrNull()
                         val ownedCount = repository.getOwnedCardsCountForPokemon(defaultUserId, fav.pokemonName)
                         
                         Pokemon(
