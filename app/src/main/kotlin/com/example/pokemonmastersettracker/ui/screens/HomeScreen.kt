@@ -69,7 +69,7 @@ fun HomeScreen(
     onCardClick: (String) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedLanguages by remember { mutableStateOf(setOf("en")) } // Changed to Set for multi-select
+    var selectedLanguages by remember { mutableStateOf(setOf("en", "ja")) } // Both languages selected by default
     val cardUiState by viewModel.cardUiState.collectAsState()
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
     var isCardOwned by remember { mutableStateOf(false) }

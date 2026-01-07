@@ -105,8 +105,33 @@ data class CardSet(
     val series: String?,
     
     @SerializedName("total")
-    val total: Int?
-)
+    val total: Int?,
+    
+    @SerializedName("printedTotal")
+    val printedTotal: Int? = null,
+    
+    @SerializedName("ptcgoCode")
+    val ptcgoCode: String? = null
+) {
+    // Helper to determine if this is a Japanese set
+    // Japanese sets typically have specific characteristics:
+    // - Set IDs often contain patterns like "sm12a", "xy-p", etc.
+    // - Set names might be in Japanese characters
+    // - Series names might indicate Japanese origin
+    val isJapanese: Boolean
+        get() = id.contains("-jp", ignoreCase = true) || 
+                name?.let { containsJapanese(it) } == true ||
+                series?.let { containsJapanese(it) } == true
+    
+    private fun containsJapanese(text: String): Boolean {
+        // Check for Japanese characters (Hiragana, Katakana, Kanji)
+        return text.any { char ->
+            char in '\u3040'..'\u309F' || // Hiragana
+            char in '\u30A0'..'\u30FF' || // Katakana  
+            char in '\u4E00'..'\u9FAF'    // Kanji
+        }
+    }
+}
 
 data class TCGPlayerData(
     @SerializedName("url")

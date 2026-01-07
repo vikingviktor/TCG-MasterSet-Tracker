@@ -34,7 +34,7 @@ data class CardUiState(
     val selectedPokemonName: String? = null,
     val currentPage: Int = 1,
     val hasMorePages: Boolean = false,
-    val pageSize: Int = 25,
+    val pageSize: Int = 250,
     val lastQuery: String? = null, // For debugging - shows the actual query used
     val debugInfo: String? = null, // For debugging - shows diagnostic information
     val sortOption: CardSortOption = CardSortOption.NONE,
@@ -200,7 +200,7 @@ class CardViewModel @Inject constructor(
     }
 
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
-    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 25, forceRefresh: Boolean = false) {
+    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en", "ja"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true, 
@@ -209,14 +209,15 @@ class CardViewModel @Inject constructor(
                 debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize | Cache: ${!forceRefresh}"
             )
             try {
-                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize, forceRefresh: $forceRefresh)")
+                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize, languages: $languages, forceRefresh: $forceRefresh)")
                 
                 // The Pokemon TCG API returns ALL cards (English, Japanese, etc.) in one query
+                // The repository filters by language after fetching
                 // pageSize controls how many cards per page
                 // page controls which page of results to fetch
                 val cards = repository.searchPokemonCardsWithPagination(
                     pokemonName, 
-                    "en", // Language param is not used by API, but required by signature
+                    languages, // Pass Set<String> of selected languages
                     page, 
                     pageSize,
                     forceRefresh
