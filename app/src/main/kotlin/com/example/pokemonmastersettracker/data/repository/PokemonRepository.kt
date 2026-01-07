@@ -112,7 +112,7 @@ class PokemonRepository @Inject constructor(
                         android.util.Log.d("PokemonRepository", "  📥 Fetching $pokemonName...")
                     }
                     
-                    val cards = searchPokemonCardsWithPagination(pokemonName, "en", 1, 250, forceRefresh = true)
+                    val cards = searchPokemonCardsWithPagination(pokemonName, setOf("en", "ja"), 1, 250, forceRefresh = true)
                     
                     if (cards.isNotEmpty()) {
                         successCount++
