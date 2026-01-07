@@ -38,6 +38,15 @@ data class FavoritePokemon(
     val totalCards: Int = 0 // Cached total card count for this Pokemon
 )
 
+// Non-entity class for DAO JOIN query results
+data class FavoritePokemonWithDetails(
+    val pokemonName: String,
+    val pokedexNumber: Int?,
+    val imageUrl: String?,
+    val totalCards: Int,
+    val ownedCount: Int
+)
+
 @Entity(tableName = "wishlist_cards")
 data class WishlistCard(
     @PrimaryKey(autoGenerate = true)

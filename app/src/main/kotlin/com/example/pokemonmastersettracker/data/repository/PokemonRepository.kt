@@ -469,6 +469,26 @@ class PokemonRepository @Inject constructor(
     fun getUserFavoritePokemon(userId: String): Flow<List<FavoritePokemon>> {
         return favoritePokemonDao.getUserFavorites(userId)
     }
+    
+    // Returns Flow that emits fully-populated Pokemon objects
+    // JOIN query does ALL the work - no additional queries in map = no infinite loop
+    fun getUserFavoritePokemonWithDetails(userId: String): Flow<List<Pokemon>> {
+        return favoritePokemonDao.getUserFavoritesWithDetails(userId)
+            .kotlinx.coroutines.flow.map { detailsList ->
+                android.util.Log.d("PokemonRepository", "🔄 Transforming ${detailsList.size} favorites from JOIN query")
+                detailsList.map { details ->
+                    android.util.Log.d("PokemonRepository", "  ✓ ${details.pokemonName}: ${details.ownedCount}/${details.totalCards} cards")
+                    Pokemon(
+                        name = details.pokemonName,
+                        nationalPokedexNumber = details.pokedexNumber,
+                        imageUrl = details.imageUrl,
+                        isFavorite = true,
+                        ownedCount = details.ownedCount,
+                        totalCards = details.totalCards
+                    )
+                }
+            }
+    }
 
     suspend fun isFavoritePokemon(userId: String, pokemonName: String): Boolean {
         return favoritePokemonDao.isFavorite(userId, pokemonName) > 0

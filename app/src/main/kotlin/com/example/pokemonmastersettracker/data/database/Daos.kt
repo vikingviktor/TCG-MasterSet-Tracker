@@ -117,6 +117,27 @@ interface FavoritePokemonDao {
 
     @Delete
     suspend fun deleteFavorite(favorite: FavoritePokemon)
+    
+    // Single query that gets all favorite Pokemon with details via JOINs
+    // Counts owned cards by joining with cards table and filtering by Pokemon name match
+    @Query("""
+        SELECT 
+            fp.pokemonName as pokemonName,
+            p.nationalPokedexNumber as pokedexNumber,
+            p.imageUrl as imageUrl,
+            fp.totalCards as totalCards,
+            COUNT(DISTINCT CASE 
+                WHEN c.name LIKE '%' || fp.pokemonName || '%' THEN uc.cardId 
+                ELSE NULL 
+            END) as ownedCount
+        FROM favorite_pokemon fp
+        LEFT JOIN pokemon p ON fp.pokemonName = p.name
+        LEFT JOIN user_cards uc ON uc.userId = fp.userId
+        LEFT JOIN cards c ON c.id = uc.cardId
+        WHERE fp.userId = :userId
+        GROUP BY fp.pokemonName, p.nationalPokedexNumber, p.imageUrl, fp.totalCards
+    """)
+    fun getUserFavoritesWithDetails(userId: String): Flow<List<com.example.pokemonmastersettracker.data.models.FavoritePokemonWithDetails>>
 }
 
 @Dao

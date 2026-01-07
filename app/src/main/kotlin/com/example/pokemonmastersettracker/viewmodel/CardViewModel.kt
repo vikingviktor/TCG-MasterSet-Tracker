@@ -343,28 +343,13 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
-                // Simply collect and display favorites - no refresh logic in the loop
-                repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
-                    // Convert FavoritePokemon to Pokemon with counts
-                    val pokemonWithCounts = favoritePokemon.map { fav ->
-                        val pokemon = repository.searchPokemonLocal(fav.pokemonName).firstOrNull()
-                        val ownedCount = repository.getOwnedCardsCountForPokemon(defaultUserId, fav.pokemonName)
-                        
-                        Pokemon(
-                            name = fav.pokemonName,
-                            nationalPokedexNumber = pokemon?.nationalPokedexNumber,
-                            imageUrl = pokemon?.imageUrl,
-                            isFavorite = true,
-                            ownedCount = ownedCount,
-                            totalCards = fav.totalCards
-                        )
-                    }
-                    
-                    android.util.Log.d("CardViewModel", "Loaded ${pokemonWithCounts.size} favorite Pokemon with counts")
-                    _cardUiState.value = CardUiState(pokemonList = pokemonWithCounts)
+                // Use single JOIN query Flow - NO database queries inside collect prevents infinite loop
+                repository.getUserFavoritePokemonWithDetails(defaultUserId).collect { pokemonList ->
+                    android.util.Log.d("CardViewModel", "✓ Loaded ${pokemonList.size} favorite Pokemon with details (single query)")
+                    _cardUiState.value = CardUiState(pokemonList = pokemonList)
                 }
             } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error loading favorites: ${e.message}", e)
+                android.util.Log.e("CardViewModel", "❌ Error loading favorites: ${e.message}", e)
                 _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
             }
         }
