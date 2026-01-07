@@ -46,7 +46,8 @@ data class CardUiState(
     val preFetchCached: Int = 0, // Already cached
     val preFetchSuccess: Int = 0, // Successfully fetched
     val preFetchFailed: Int = 0, // Failed after retries
-    val currentPokemon: String = "" // Name of pokemon currently being fetched
+    val currentPokemon: String = "", // Name of pokemon currently being fetched
+    val showTrackingDialog: String? = null // Pokemon name to show tracking dialog for
 )
 
 @HiltViewModel
@@ -183,21 +184,70 @@ class CardViewModel @Inject constructor(
     fun toggleFavorite(pokemonName: String) {
         viewModelScope.launch {
             try {
-                repository.toggleFavorite(pokemonName)
-                // Refresh the current search results
-                val currentState = _cardUiState.value
-                if (currentState.pokemonList.isNotEmpty()) {
-                    val updated = currentState.pokemonList.map { pokemon ->
-                        if (pokemon.name == pokemonName) {
-                            pokemon.copy(isFavorite = !pokemon.isFavorite)
-                        } else pokemon
+                // Check current favorite status
+                val pokemon = repository.searchPokemonLocal(pokemonName).firstOrNull()
+                val isFavorited = pokemon?.isFavorite == true
+                
+                if (!isFavorited) {
+                    // Favoriting - show tracking dialog
+                    _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = pokemonName)
+                } else {
+                    // Unfavoriting - remove from both pokemon and favorite_pokemon
+                    repository.toggleFavorite(pokemonName)
+                    repository.removeFavoritePokemon(defaultUserId, pokemonName)
+                    
+                    // Refresh the current search results
+                    val currentState = _cardUiState.value
+                    if (currentState.pokemonList.isNotEmpty()) {
+                        val updated = currentState.pokemonList.map { p ->
+                            if (p.name == pokemonName) p.copy(isFavorite = false) else p
+                        }
+                        _cardUiState.value = currentState.copy(pokemonList = updated)
                     }
-                    _cardUiState.value = currentState.copy(pokemonList = updated)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Toggle favorite error: ${e.message}")
             }
         }
+    }
+    
+    // Handle user's choice on collection tracking
+    fun updateFavoriteWithTracking(pokemonName: String, enableTracking: Boolean) {
+        viewModelScope.launch {
+            try {
+                // Always set as favorite in pokemon table
+                repository.setFavoriteStatus(pokemonName, true)
+                
+                if (enableTracking) {
+                    // Add to favorite_pokemon for collection tracking
+                    repository.addFavoritePokemon(defaultUserId, pokemonName)
+                    android.util.Log.d("CardViewModel", "✓ Added $pokemonName with collection tracking")
+                } else {
+                    android.util.Log.d("CardViewModel", "✓ Favorited $pokemonName without collection tracking")
+                }
+                
+                // Refresh the current search results
+                val currentState = _cardUiState.value
+                if (currentState.pokemonList.isNotEmpty()) {
+                    val updated = currentState.pokemonList.map { p ->
+                        if (p.name == pokemonName) p.copy(isFavorite = true) else p
+                    }
+                    _cardUiState.value = currentState.copy(
+                        pokemonList = updated,
+                        showTrackingDialog = null
+                    )
+                } else {
+                    _cardUiState.value = currentState.copy(showTrackingDialog = null)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Update favorite error: ${e.message}")
+                _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
+            }
+        }
+    }
+    
+    fun dismissTrackingDialog() {
+        _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
     }
 
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support

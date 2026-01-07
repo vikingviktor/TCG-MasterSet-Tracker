@@ -59,6 +59,8 @@ import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
@@ -104,6 +106,50 @@ fun HomeScreen(
                     delay(100)
                     // Re-query the actual state from database
                     isCardInWishlist = viewModel.isInWishlist(card.id)
+                }
+            }
+        )
+    }
+    
+    // Show collection tracking confirmation dialog
+    cardUiState.showTrackingDialog?.let { pokemonName ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissTrackingDialog() },
+            title = {
+                Text("Track $pokemonName in your Collection?")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "This will track your progress collecting all $pokemonName cards.",
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        "You can change this later by unfavoriting and favoriting again.",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        viewModel.updateFavoriteWithTracking(pokemonName, enableTracking = true)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PokemonColors.Primary
+                    )
+                ) {
+                    Text("Yes, Track It")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        viewModel.updateFavoriteWithTracking(pokemonName, enableTracking = false)
+                    }
+                ) {
+                    Text("No, Just Favorite")
                 }
             }
         )

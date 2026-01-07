@@ -49,6 +49,10 @@ class PokemonRepository @Inject constructor(
         }
     }
     
+    suspend fun setFavoriteStatus(pokemonName: String, isFavorite: Boolean) {
+        pokemonDao.updateFavoriteStatus(pokemonName, isFavorite)
+    }
+    
     suspend fun updatePokemonImage(pokemonName: String, imageUrl: String) {
         pokemonDao.updatePokemonImage(pokemonName, imageUrl)
     }
