@@ -343,16 +343,7 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             _cardUiState.value = CardUiState(loading = true)
             try {
-                // First, get the current favorites and refresh any with 0 total (only once)
-                val currentFavorites = repository.getUserFavoritePokemon(defaultUserId).first()
-                currentFavorites.forEach { fav ->
-                    if (fav.totalCards == 0) {
-                        android.util.Log.d("CardViewModel", "🔄 Refreshing total for ${fav.pokemonName} (currently 0)")
-                        repository.refreshFavoritePokemonTotalCards(defaultUserId, fav.pokemonName)
-                    }
-                }
-                
-                // Now collect the updated favorites
+                // Simply collect and display favorites - no refresh logic in the loop
                 repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
                     // Convert FavoritePokemon to Pokemon with counts
                     val pokemonWithCounts = favoritePokemon.map { fav ->
@@ -398,11 +389,15 @@ class CardViewModel @Inject constructor(
                     repository.markCardAsOwned(defaultUserId, cardId, condition)
                     android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition")
                     
-                    // Auto-favorite the Pokemon when adding a card to collection
+                    // Auto-favorite the Pokemon when adding a card to collection (only if not already favorited)
                     _cardUiState.value.selectedPokemonName?.let { pokemonName ->
-                        if (!repository.isFavoritePokemon(defaultUserId, pokemonName)) {
+                        // Check synchronously to avoid race conditions
+                        val alreadyFavorited = repository.isFavoritePokemon(defaultUserId, pokemonName)
+                        if (!alreadyFavorited) {
+                            android.util.Log.d("CardViewModel", "⚡ Auto-favoriting Pokemon: $pokemonName")
                             repository.addFavoritePokemon(defaultUserId, pokemonName)
-                            android.util.Log.d("CardViewModel", "✓ Auto-favorited Pokemon: $pokemonName")
+                        } else {
+                            android.util.Log.d("CardViewModel", "ℹ️ $pokemonName already favorited, skipping")
                         }
                     }
                 }
