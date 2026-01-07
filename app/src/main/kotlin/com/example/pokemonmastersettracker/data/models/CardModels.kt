@@ -119,17 +119,32 @@ data class CardSet(
     val printedTotal: Int? = null,
     
     @SerializedName("ptcgoCode")
-    val ptcgoCode: String? = null
+    val ptcgoCode: String? = null,
+    
+    @SerializedName("releaseDate")
+    val releaseDate: String? = null
 ) {
     // Helper to determine if this is a Japanese set
-    // Japanese sets typically have specific characteristics:
-    // - Set IDs often contain patterns like "sm12a", "xy-p", etc.
-    // - Set names might be in Japanese characters
-    // - Series names might indicate Japanese origin
+    // According to Pokemon TCG API documentation:
+    // - Japanese sets have Japanese characters in name/series
+    // - Japanese set IDs follow patterns like: sm12a, sm11b, xy12a, etc. (no language suffix)
+    // - English/International sets often have different ID patterns
+    // - Set names in Japanese use Hiragana/Katakana/Kanji
     val isJapanese: Boolean
-        get() = id.contains("-jp", ignoreCase = true) || 
-                name?.let { containsJapanese(it) } == true ||
-                series?.let { containsJapanese(it) } == true
+        get() {
+            // Check for Japanese characters in name or series
+            val hasJapaneseText = name?.let { containsJapanese(it) } == true ||
+                                  series?.let { containsJapanese(it) } == true
+            
+            // Also check for common Japanese set ID patterns
+            // Japanese sets from Sun & Moon era: sm1-sm12 with letters (sm12a)
+            // Japanese sets from XY era: xy1-xy12 with letters
+            // Japanese sets from Sword & Shield: s1-s12 with letters
+            val japaneseIdPattern = Regex("^(sm|xy|s|bw)\\d+[a-z]$", RegexOption.IGNORE_CASE)
+            val hasJapaneseIdPattern = japaneseIdPattern.matches(id)
+            
+            return hasJapaneseText || hasJapaneseIdPattern
+        }
     
     private fun containsJapanese(text: String): Boolean {
         // Check for Japanese characters (Hiragana, Katakana, Kanji)

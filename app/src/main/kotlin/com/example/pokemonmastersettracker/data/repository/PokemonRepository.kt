@@ -425,21 +425,45 @@ class PokemonRepository @Inject constructor(
             }
         }
         
-        // Update with the actual count
-        if (totalCards > 0) {
-            favoritePokemonDao.addFavorite(
-                FavoritePokemon(
-                    userId = userId,
-                    pokemonName = pokemonName,
-                    totalCards = totalCards
-                )
+        // Always update with the count (even if 0 temporarily)
+        favoritePokemonDao.addFavorite(
+            FavoritePokemon(
+                userId = userId,
+                pokemonName = pokemonName,
+                totalCards = totalCards
             )
-            android.util.Log.d("PokemonRepository", "Updated total cards for $pokemonName: $totalCards")
-        }
+        )
+        android.util.Log.d("PokemonRepository", "✓ Updated favorite $pokemonName with totalCards: $totalCards")
     }
 
     suspend fun removeFavoritePokemon(userId: String, pokemonName: String) {
         favoritePokemonDao.removeFavorite(userId, pokemonName)
+    }
+    
+    suspend fun refreshFavoritePokemonTotalCards(userId: String, pokemonName: String) {
+        // Re-fetch the total count for an existing favorite Pokemon
+        val totalCards = try {
+            val query = buildCardQuery(pokemonName)
+            val response = api.searchCards(query = query, pageSize = 1)
+            val count = response.totalCount
+            android.util.Log.d("PokemonRepository", "🔄 Refreshed total cards for $pokemonName: $count")
+            count
+        } catch (e: Exception) {
+            // Fallback to cached count
+            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            val count = if (cachedCards.isNotEmpty()) cachedCards.size else 50
+            android.util.Log.w("PokemonRepository", "API failed, using cached/default count for $pokemonName: $count")
+            count
+        }
+        
+        // Update the favorite with new count
+        favoritePokemonDao.addFavorite(
+            FavoritePokemon(
+                userId = userId,
+                pokemonName = pokemonName,
+                totalCards = totalCards
+            )
+        )
     }
 
     fun getUserFavoritePokemon(userId: String): Flow<List<FavoritePokemon>> {
@@ -478,11 +502,16 @@ class PokemonRepository @Inject constructor(
     suspend fun getTotalCardsCountForFavoritePokemon(userId: String): Int {
         return try {
             val favoritePokemon = favoritePokemonDao.getUserFavoritesSync(userId)
+            android.util.Log.d("PokemonRepository", "Found ${favoritePokemon.size} favorite Pokemon for user $userId")
+            
+            favoritePokemon.forEach { fav ->
+                android.util.Log.d("PokemonRepository", "  - ${fav.pokemonName}: ${fav.totalCards} cards")
+            }
             
             // Use cached totalCards from database for faster performance
             val totalCount = favoritePokemon.sumOf { it.totalCards }
             
-            android.util.Log.d("PokemonRepository", "Total cards for ${favoritePokemon.size} favorite Pokemon (cached): $totalCount")
+            android.util.Log.d("PokemonRepository", "✓ Total cards for ${favoritePokemon.size} favorite Pokemon: $totalCount")
             totalCount
         } catch (e: Exception) {
             android.util.Log.e("PokemonRepository", "Error getting total cards count: ${e.message}")
@@ -494,16 +523,18 @@ class PokemonRepository @Inject constructor(
         return try {
             // Get all cards for this Pokemon from database
             val allCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+            android.util.Log.d("PokemonRepository", "Found ${allCards.size} total cards in DB for $pokemonName")
+            
             val cardIds = allCards.map { it.id }
             
             // Count how many of these cards the user owns
             val userCards = userCardDao.getUserCardsSync(userId)
             val ownedCount = userCards.count { it.isOwned && it.cardId in cardIds }
             
-            android.util.Log.d("PokemonRepository", "Owned cards for $pokemonName: $ownedCount")
+            android.util.Log.d("PokemonRepository", "✓ Owned cards for $pokemonName: $ownedCount (of ${allCards.size} total in DB)")
             ownedCount
         } catch (e: Exception) {
-            android.util.Log.e("PokemonRepository", "Error getting owned cards count: ${e.message}")
+            android.util.Log.e("PokemonRepository", "Error getting owned cards count for $pokemonName: ${e.message}")
             0
         }
     }

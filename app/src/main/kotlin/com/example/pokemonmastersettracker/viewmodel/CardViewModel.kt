@@ -343,6 +343,14 @@ class CardViewModel @Inject constructor(
             _cardUiState.value = CardUiState(loading = true)
             try {
                 repository.getUserFavoritePokemon(defaultUserId).collect { favoritePokemon ->
+                    // Refresh total cards for favorites that have 0 (old data)
+                    favoritePokemon.forEach { fav ->
+                        if (fav.totalCards == 0) {
+                            android.util.Log.d("CardViewModel", "🔄 Refreshing total for ${fav.pokemonName} (currently 0)")
+                            repository.refreshFavoritePokemonTotalCards(defaultUserId, fav.pokemonName)
+                        }
+                    }
+                    
                     // Convert FavoritePokemon to Pokemon with counts
                     val pokemonWithCounts = favoritePokemon.map { fav ->
                         val pokemon = repository.searchPokemonLocal(fav.pokemonName).firstOrNull()
