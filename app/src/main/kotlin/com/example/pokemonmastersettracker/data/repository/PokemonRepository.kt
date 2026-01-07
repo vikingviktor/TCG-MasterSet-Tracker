@@ -548,9 +548,6 @@ class PokemonRepository @Inject constructor(
             }
         }
     }
-            "name:$cleanName"
-        }
-    }
     
     private fun getPopularPokemonList(): List<Pokemon> {
         // Complete Pokedex mapping for all generations
