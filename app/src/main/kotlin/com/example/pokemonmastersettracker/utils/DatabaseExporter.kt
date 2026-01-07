@@ -14,10 +14,18 @@ object DatabaseExporter {
      */
     fun exportDatabase(context: Context): String? {
         return try {
-            val currentDBPath = context.getDatabasePath("pokemon_tracker_v6.db")
+            // Export the current active database (v7)
+            val currentDBPath = context.getDatabasePath("pokemon_tracker_v7.db")
             
             if (!currentDBPath.exists()) {
                 Log.e("DatabaseExporter", "Database file does not exist at: ${currentDBPath.absolutePath}")
+                return null
+            }
+            
+            // Check if database has data
+            val dbSize = currentDBPath.length()
+            if (dbSize < 1024) { // Less than 1KB means empty/corrupt
+                Log.e("DatabaseExporter", "Database is too small (${dbSize} bytes) - likely empty!")
                 return null
             }
             
