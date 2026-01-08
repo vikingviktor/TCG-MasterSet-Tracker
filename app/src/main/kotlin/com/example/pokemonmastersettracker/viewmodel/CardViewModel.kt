@@ -226,7 +226,7 @@ class CardViewModel @Inject constructor(
                     android.util.Log.d("CardViewModel", "✓ Favorited $pokemonName without collection tracking")
                 }
                 
-                // Refresh the current search results
+                // Update only the pokemonList and dialog state, preserve everything else
                 val currentState = _cardUiState.value
                 if (currentState.pokemonList.isNotEmpty()) {
                     val updated = currentState.pokemonList.map { p ->
@@ -247,17 +247,20 @@ class CardViewModel @Inject constructor(
     }
     
     fun dismissTrackingDialog() {
+        android.util.Log.d("CardViewModel", "❌ Tracking dialog dismissed without action")
         _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
     }
 
     // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
     fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en", "ja"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false) {
         viewModelScope.launch {
+            android.util.Log.d("CardViewModel", "🎯 selectPokemonCards called for: $pokemonName")
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true, 
                 selectedPokemonName = pokemonName,
                 lastQuery = "Loading...",
-                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize | Cache: ${!forceRefresh}"
+                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize | Cache: ${!forceRefresh}",
+                showTrackingDialog = null // Clear any dialog when selecting cards
             )
             try {
                 android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize, languages: $languages, forceRefresh: $forceRefresh)")
