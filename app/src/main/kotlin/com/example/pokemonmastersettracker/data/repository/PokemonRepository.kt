@@ -101,7 +101,8 @@ class PokemonRepository @Inject constructor(
         )
         
         android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon with retry logic...")
-        android.util.Log.d("PokemonRepository", "💡 This may take a while due to API issues - will retry on failures!")
+        android.util.Log.d("PokemonRepository", "� List contains: ${popularPokemon.joinToString(", ")}")
+        android.util.Log.d("PokemonRepository", "�💡 This may take a while due to API issues - will retry on failures!")
         var successCount = 0
         var cachedCount = 0
         var failedCount = 0
