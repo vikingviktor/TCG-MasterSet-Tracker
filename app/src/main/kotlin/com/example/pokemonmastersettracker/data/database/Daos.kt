@@ -100,7 +100,7 @@ interface UserCardDao {
 @Dao
 interface FavoritePokemonDao {
     
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addFavorite(favorite: FavoritePokemon)
 
     @Query("SELECT * FROM favorite_pokemon WHERE userId = :userId")

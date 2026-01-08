@@ -28,7 +28,10 @@ data class UserCard(
     val addedAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "favorite_pokemon")
+@Entity(
+    tableName = "favorite_pokemon",
+    indices = [androidx.room.Index(value = ["userId", "pokemonName"], unique = true)]
+)
 data class FavoritePokemon(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

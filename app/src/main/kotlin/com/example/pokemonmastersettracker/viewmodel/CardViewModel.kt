@@ -226,7 +226,7 @@ class CardViewModel @Inject constructor(
                     android.util.Log.d("CardViewModel", "✓ Favorited $pokemonName without collection tracking")
                 }
                 
-                // Update only the pokemonList and dialog state, preserve everything else
+                // Update pokemonList and clear dialog, but preserve selectedPokemonName and cards
                 val currentState = _cardUiState.value
                 if (currentState.pokemonList.isNotEmpty()) {
                     val updated = currentState.pokemonList.map { p ->
@@ -235,10 +235,15 @@ class CardViewModel @Inject constructor(
                     _cardUiState.value = currentState.copy(
                         pokemonList = updated,
                         showTrackingDialog = null
+                        // Preserve: selectedPokemonName, cards, allCards, loading, error, etc.
                     )
                 } else {
-                    _cardUiState.value = currentState.copy(showTrackingDialog = null)
+                    _cardUiState.value = currentState.copy(
+                        showTrackingDialog = null
+                        // Preserve all other state
+                    )
                 }
+                android.util.Log.d("CardViewModel", "State after favorite update - selectedPokemon: ${_cardUiState.value.selectedPokemonName}, cards: ${_cardUiState.value.cards.size}")
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Update favorite error: ${e.message}")
                 _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
