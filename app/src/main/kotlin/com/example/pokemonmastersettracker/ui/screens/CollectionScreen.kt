@@ -1,6 +1,7 @@
 package com.example.pokemonmastersettracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -242,7 +243,8 @@ fun CollectionContent(
                             CollectionCardItem(
                                 userCard = userCard,
                                 card = card,
-                                onRemove = { /* Handle remove */ }
+                                onRemove = { /* Handle remove */ },
+                                onClick = { card?.let { onCardClick(it) } }
                             )
                         }
                     }
@@ -335,10 +337,13 @@ fun CollectionHeader(
 fun CollectionCardItem(
     userCard: com.example.pokemonmastersettracker.data.models.UserCard,
     card: Card?,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier
