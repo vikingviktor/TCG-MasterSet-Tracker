@@ -132,38 +132,41 @@ fun CardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    card.number?.let {
-                        Text(
-                            text = "No. $it",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                    }
-                    card.rarity?.let {
-                        Text(
-                            text = "Rarity: $it",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(
-                            if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350)
-                        )
-                        .padding(8.dp)
-                ) {
+                card.number?.let {
                     Text(
-                        text = if (isOwned) "OWNED" else "MISSING",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = "No. $it",
+                        fontSize = 12.sp,
+                        color = Color.Gray
                     )
                 }
+                card.rarity?.let {
+                    Text(
+                        text = "Rarity: $it",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        maxLines = 1
+                    )
+                }
+            }
+            
+            // Status banner at bottom - horizontal
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350)
+                    )
+                    .padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isOwned) "OWNED" else "MISSING",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
         }
     }

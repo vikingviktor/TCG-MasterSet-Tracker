@@ -100,8 +100,11 @@ interface UserCardDao {
 @Dao
 interface FavoritePokemonDao {
     
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addFavorite(favorite: FavoritePokemon)
+    
+    @Query("UPDATE favorite_pokemon SET totalCards = :totalCards WHERE userId = :userId AND pokemonName = :pokemonName")
+    suspend fun updateTotalCards(userId: String, pokemonName: String, totalCards: Int)
 
     @Query("SELECT * FROM favorite_pokemon WHERE userId = :userId")
     fun getUserFavorites(userId: String): Flow<List<FavoritePokemon>>

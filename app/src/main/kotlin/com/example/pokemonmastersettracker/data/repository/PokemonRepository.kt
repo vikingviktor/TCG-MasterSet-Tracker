@@ -418,44 +418,33 @@ class PokemonRepository @Inject constructor(
     // Favorite Pokemon Operations
 
     suspend fun addFavoritePokemon(userId: String, pokemonName: String) {
-        // First, add the favorite immediately so it shows up in the list
+        android.util.Log.d("PokemonRepository", "Adding favorite: $pokemonName for user: $userId")
+        
+        // First, insert the favorite with 0 total (IGNORE if already exists)
         favoritePokemonDao.addFavorite(
             FavoritePokemon(
                 userId = userId,
                 pokemonName = pokemonName,
-                totalCards = 0 // Start with 0, will update
+                totalCards = 0 // Will update next
             )
         )
         
-        // Then try to fetch total card count from API in the background
+        // Then fetch the actual total card count from API
         val totalCards = try {
-            // Use the same query building logic for consistency
             val query = buildCardQuery(pokemonName)
-            // Use pageSize=1 to minimize data transfer, we only need the totalCount
             val response = api.searchCards(query = query, pageSize = 1)
-            val count = response.totalCount // Use the totalCount field from API response
-            android.util.Log.d("PokemonRepository", "Fetched total cards for $pokemonName: $count (query: $query)")
+            val count = response.totalCount
+            android.util.Log.d("PokemonRepository", "📊 Fetched total for $pokemonName: $count")
             count
         } catch (e: Exception) {
-            android.util.Log.w("PokemonRepository", "Could not fetch total cards for $pokemonName (${e.message}), will use cached count if available")
-            // Fallback: Try to get count from cached cards in database
+            android.util.Log.w("PokemonRepository", "⚠️ API failed for $pokemonName, using cached count")
             val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cachedCards.isNotEmpty()) {
-                cachedCards.size
-            } else {
-                50 // Reasonable default - most Pokemon have 20-100 cards
-            }
+            if (cachedCards.isNotEmpty()) cachedCards.size else 50
         }
         
-        // Always update with the count (even if 0 temporarily)
-        favoritePokemonDao.addFavorite(
-            FavoritePokemon(
-                userId = userId,
-                pokemonName = pokemonName,
-                totalCards = totalCards
-            )
-        )
-        android.util.Log.d("PokemonRepository", "✓ Updated favorite $pokemonName with totalCards: $totalCards")
+        // Update the totalCards for this favorite (keeps same id)
+        favoritePokemonDao.updateTotalCards(userId, pokemonName, totalCards)
+        android.util.Log.d("PokemonRepository", "✓ Updated $pokemonName totalCards: $totalCards")
     }
 
     suspend fun removeFavoritePokemon(userId: String, pokemonName: String) {
