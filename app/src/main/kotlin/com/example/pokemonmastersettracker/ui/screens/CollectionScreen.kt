@@ -137,6 +137,7 @@ fun CollectionScreen(
         // Content based on selected tab
         when (selectedTab) {
             0 -> CollectionContent(
+                viewModel = viewModel,
                 collectionUiState = collectionUiState,
                 isRefreshing = isRefreshing,
                 refreshTrigger = refreshTrigger,
@@ -185,6 +186,7 @@ fun CollectionScreen(
 
 @Composable
 fun CollectionContent(
+    viewModel: UserCollectionViewModel,
     collectionUiState: com.example.pokemonmastersettracker.viewmodel.UserCollectionUiState,
     isRefreshing: Boolean,
     refreshTrigger: Int,
@@ -243,7 +245,10 @@ fun CollectionContent(
                             CollectionCardItem(
                                 userCard = userCard,
                                 card = card,
-                                onRemove = { /* Handle remove */ },
+                                onRemove = {
+                                    viewModel.markCardAsMissing(userCard.cardId)
+                                    onRefresh()
+                                },
                                 onClick = { card?.let { onCardClick(it) } }
                             )
                         }
