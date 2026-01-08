@@ -76,12 +76,28 @@ class PokemonRepository @Inject constructor(
         onProgress: ((Int, Int, String, Int, Int, Int) -> Unit)? = null
     ): Triple<Int, Int, Int> {
         val popularPokemon = listOf(
+            // Gen 1 - Starters & Evolutions
             "Pikachu", "Charizard", "Mewtwo", "Mew", "Eevee",
             "Bulbasaur", "Charmander", "Squirtle", "Gengar", "Dragonite",
-            "Gyarados", "Snorlax", "Lucario", "Greninja", "Garchomp",
-            "Rayquaza", "Lugia", "Ho-Oh", "Blastoise", "Venusaur",
+            "Gyarados", "Snorlax", "Blastoise", "Venusaur",
+            "Scyther", "Kabutops", "Nidoking", "Haunter", "Scizor",
+            "Alakazam", "Machamp", "Articuno", "Zapdos", "Moltres",
+            
+            // Eeveelutions
             "Umbreon", "Espeon", "Jolteon", "Vaporeon", "Flareon",
-            "Scyther", "Kabutops", "Nidoking", "Haunter", "Haxorus", "Scizor"
+            "Leafeon", "Glaceon", "Sylveon",
+            
+            // Gen 2
+            "Typhlosion", "Feraligatr", "Meganium", "Lugia", "Ho-Oh",
+            "Tyranitar", "Ampharos", "Heracross",
+            
+            // Gen 3
+            "Blaziken", "Swampert", "Sceptile", "Rayquaza", "Kyogre", "Groudon",
+            "Gardevoir", "Aggron", "Salamence",
+            
+            // Gen 4+
+            "Lucario", "Garchomp", "Dialga", "Palkia", "Giratina",
+            "Greninja", "Haxorus"
         )
         
         android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon with retry logic...")

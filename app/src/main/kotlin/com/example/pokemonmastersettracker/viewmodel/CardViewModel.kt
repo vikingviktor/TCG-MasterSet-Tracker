@@ -41,8 +41,8 @@ data class CardUiState(
     val sortOption: CardSortOption = CardSortOption.NONE,
     val databaseExported: Boolean = false, // Track if database was exported
     val preFetchComplete: Boolean = false, // Track if pre-fetch completed
-    val preFetchProgress: Int = 0, // Current pokemon being fetched (0-31)
-    val preFetchTotal: Int = 31, // Total pokemon to fetch
+    val preFetchProgress: Int = 0, // Current pokemon being fetched (0-56)
+    val preFetchTotal: Int = 56, // Total pokemon to fetch (expanded from 31 to 56)
     val preFetchCached: Int = 0, // Already cached
     val preFetchSuccess: Int = 0, // Successfully fetched
     val preFetchFailed: Int = 0, // Failed after retries
@@ -399,16 +399,23 @@ class CardViewModel @Inject constructor(
     
     fun loadFavorites() {
         viewModelScope.launch {
-            _cardUiState.value = CardUiState(loading = true)
+            _cardUiState.value = _cardUiState.value.copy(loading = true)
             try {
                 // Use single JOIN query Flow - NO database queries inside collect prevents infinite loop
                 repository.getUserFavoritePokemonWithDetails(defaultUserId).collect { pokemonList ->
                     android.util.Log.d("CardViewModel", "✓ Loaded ${pokemonList.size} favorite Pokemon with details (single query)")
-                    _cardUiState.value = CardUiState(pokemonList = pokemonList)
+                    // Preserve selectedPokemonName and cards when updating favorites list
+                    _cardUiState.value = _cardUiState.value.copy(
+                        pokemonList = pokemonList,
+                        loading = false
+                    )
                 }
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "❌ Error loading favorites: ${e.message}", e)
-                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
+                _cardUiState.value = _cardUiState.value.copy(
+                    error = e.message ?: "Unknown error",
+                    loading = false
+                )
             }
         }
     }
