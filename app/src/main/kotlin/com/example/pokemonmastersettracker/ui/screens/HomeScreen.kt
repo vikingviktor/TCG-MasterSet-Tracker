@@ -71,7 +71,6 @@ fun HomeScreen(
     onCardClick: (String) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedLanguages by remember { mutableStateOf(setOf("en", "ja")) } // Both languages selected by default
     val cardUiState by viewModel.cardUiState.collectAsState()
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
     var isCardOwned by remember { mutableStateOf(false) }
@@ -289,8 +288,6 @@ fun HomeScreen(
             SearchSection(
                 searchQuery = searchQuery,
                 onSearchQueryChanged = { searchQuery = it },
-                selectedLanguages = selectedLanguages,
-                onLanguagesChanged = { selectedLanguages = it },
                 onSearch = {
                     if (searchQuery.isNotEmpty()) {
                         viewModel.searchPokemonLocal(searchQuery)
@@ -385,7 +382,7 @@ fun HomeScreen(
                         Button(
                             onClick = {
                                 cardUiState.selectedPokemonName?.let { pokemonName ->
-                                    viewModel.selectPokemonCards(pokemonName, selectedLanguages)
+                                    viewModel.selectPokemonCards(pokemonName, setOf("en"))
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary),
@@ -454,8 +451,8 @@ fun HomeScreen(
                                 isCardInWishlist = viewModel.isInWishlist(card.id)
                             }
                         },
-                        onLoadMore = { viewModel.loadMoreCards(selectedLanguages) },
-                        onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, selectedLanguages) }
+                        onLoadMore = { viewModel.loadMoreCards(setOf("en")) },
+                        onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, setOf("en")) }
                     )
                 }
             }
@@ -474,7 +471,7 @@ fun HomeScreen(
                 PokemonListView(
                     pokemonList = cardUiState.pokemonList,
                     onPokemonSelect = { pokemonName ->
-                        viewModel.selectPokemonCards(pokemonName, selectedLanguages) // Pass selected languages
+                        viewModel.selectPokemonCards(pokemonName, setOf("en"))
                     },
                     onFavoriteToggle = { pokemonName ->
                         viewModel.toggleFavorite(pokemonName)
@@ -498,8 +495,6 @@ fun HomeScreen(
 fun SearchSection(
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
-    selectedLanguages: Set<String>,
-    onLanguagesChanged: (Set<String>) -> Unit,
     onSearch: () -> Unit
 ) {
     Column(
@@ -522,51 +517,6 @@ fun SearchSection(
             },
             singleLine = true
         )
-
-        // Multi-Language Selection
-        Text(
-            text = "Languages (select one or both):",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    val updated = if (selectedLanguages.contains("en")) {
-                        selectedLanguages - "en"
-                    } else {
-                        selectedLanguages + "en"
-                    }
-                    if (updated.isNotEmpty()) onLanguagesChanged(updated)
-                },
-                modifier = Modifier.weight(1f),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedLanguages.contains("en")) PokemonColors.Primary else Color.LightGray
-                )
-            ) {
-                Text(if (selectedLanguages.contains("en")) "✓ English" else "English")
-            }
-
-            Button(
-                onClick = {
-                    val updated = if (selectedLanguages.contains("ja")) {
-                        selectedLanguages - "ja"
-                    } else {
-                        selectedLanguages + "ja"
-                    }
-                    if (updated.isNotEmpty()) onLanguagesChanged(updated)
-                },
-                modifier = Modifier.weight(1f),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedLanguages.contains("ja")) PokemonColors.Primary else Color.LightGray
-                )
-            ) {
-                Text(if (selectedLanguages.contains("ja")) "✓ Japanese" else "Japanese")
-            }
-        }
 
         Button(
             onClick = onSearch,

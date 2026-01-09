@@ -256,8 +256,8 @@ class CardViewModel @Inject constructor(
         _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
     }
 
-    // MODIFIED: Now loads cards from API when Pokemon is clicked with multi-language support
-    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en", "ja"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false) {
+    // MODIFIED: Now loads cards from API when Pokemon is clicked (English only, as API doesn't have Japanese card data)
+    fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false) {
         viewModelScope.launch {
             android.util.Log.d("CardViewModel", "🎯 selectPokemonCards called for: $pokemonName")
             _cardUiState.value = _cardUiState.value.copy(
