@@ -247,7 +247,8 @@ fun ApiTestScreen(
                     results.add("")
                     
                     // Test 1: English cards
-                    results.add("Test 1: Fetching Scyther cards in English")
+                    results.add("Test 1: Fetching Scyther* cards in English")
+                    results.add("(Using wildcard to get all variants)")
                     val test1Start = System.currentTimeMillis()
                     try {
                         viewModel.loadCardsFromTCGdex("Scyther", "en")
@@ -278,7 +279,8 @@ fun ApiTestScreen(
                     testResults = results.toList()
                     
                     // Test 2: Japanese cards
-                    results.add("Test 2: Fetching Scyther cards in Japanese")
+                    results.add("Test 2: Fetching Scyther* cards in Japanese")
+                    results.add("(Using wildcard to get all variants)")
                     val test2Start = System.currentTimeMillis()
                     try {
                         viewModel.loadCardsFromTCGdex("Scyther", "ja")
@@ -309,7 +311,8 @@ fun ApiTestScreen(
                     testResults = results.toList()
                     
                     // Test 3: Try another Pokemon - Pikachu
-                    results.add("Test 3: Fetching Pikachu cards in English")
+                    results.add("Test 3: Fetching Pikachu* cards in English")
+                    results.add("(Using wildcard to get all variants)")
                     val test3Start = System.currentTimeMillis()
                     try {
                         viewModel.loadCardsFromTCGdex("Pikachu", "en")

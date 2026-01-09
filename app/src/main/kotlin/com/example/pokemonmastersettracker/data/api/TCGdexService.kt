@@ -86,28 +86,40 @@ class TCGdexService {
         try {
             Log.d("TCGdexService", "🔍 Searching TCGdex for '$pokemonName' in language: $language")
             
-            // Try the pokemon endpoint first - this returns ALL variants of the Pokemon
-            val pokemonId = pokemonName.lowercase()
-            Log.d("TCGdexService", "📡 URL: https://api.tcgdex.net/v2/$language/pokemon/$pokemonId")
+            // Use wildcard to match all variants (e.g., "Scyther", "Rocket's Scyther", "Scyther ex")
+            val searchQuery = "${pokemonName.lowercase()}*"
+            Log.d("TCGdexService", "📡 URL: https://api.tcgdex.net/v2/$language/cards?name=$searchQuery")
             
-            val pokemonResponse = api.getPokemonCards(language, pokemonId)
-            val cards = pokemonResponse.cards ?: emptyList()
+            val response = try {
+                api.searchCards(language, searchQuery)
+            } catch (e: Exception) {
+                Log.e("TCGdexService", "API call failed: ${e.message}", e)
+                emptyList()
+            }
             
-            Log.d("TCGdexService", "✓ TCGdex Pokemon endpoint returned ${cards.size} cards for $pokemonName")
-            if (cards.isNotEmpty()) {
-                Log.d("TCGdexService", "📋 First card: ${cards.first().name} (${cards.first().id})")
-                Log.d("TCGdexService", "🖼️  Image URL: ${cards.first().image}")
+            Log.d("TCGdexService", "✓ TCGdex returned ${response.size} cards")
+            if (response.isNotEmpty()) {
+                Log.d("TCGdexService", "📋 Cards: ${response.take(5).joinToString { it.name }}")
+                Log.d("TCGdexService", "🖼️  First image: ${response.first().image}")
+            } else {
+                Log.w("TCGdexService", "⚠️ No cards found for '$pokemonName' in language '$language'")
             }
             
             // Convert TCGdex cards to our Card model
-            val convertedCards = cards.mapNotNull { tcgdexCard ->
-                convertTCGdexCard(tcgdexCard, language)
+            val convertedCards = response.mapNotNull { tcgdexCard ->
+                try {
+                    convertTCGdexCard(tcgdexCard, language)
+                } catch (e: Exception) {
+                    Log.e("TCGdexService", "Failed to convert card ${tcgdexCard.id}: ${e.message}")
+                    null
+                }
             }
             
-            Log.d("TCGdexService", "✓ Successfully converted ${convertedCards.size} cards")
+            Log.d("TCGdexService", "✓ Converted ${convertedCards.size} cards")
             convertedCards
         } catch (e: Exception) {
-            Log.e("TCGdexService", "❌ Error searching cards: ${e.message}", e)
+            Log.e("TCGdexService", "❌ Error: ${e.message}", e)
+            e.printStackTrace()
             emptyList()
         }
     }
