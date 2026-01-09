@@ -375,8 +375,10 @@ fun FavoritesScreen(
                                     viewModel.loadFavorites() // Refresh list
                                 },
                                 onViewCards = {
+                                    android.util.Log.d("FavoritesScreen", "View Cards clicked for: ${pokemon.name}")
                                     selectedPokemonForLanguage = pokemon.name
                                     showLanguageDialog = true
+                                    android.util.Log.d("FavoritesScreen", "Language dialog should show: $showLanguageDialog")
                                 }
                             )
                         }
