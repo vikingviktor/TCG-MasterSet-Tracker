@@ -268,7 +268,7 @@ fun ApiTestScreen(
                             val firstCard = viewModel.cardUiState.value.cards.first()
                             results.add("ℹ First card: ${firstCard.name}")
                             results.add("ℹ Set: ${firstCard.set.name}")
-                            results.add("ℹ Image: ${if (firstCard.image.small != null) "✓" else "✗ Missing"}")
+                            results.add("ℹ Image: ${if (firstCard.image?.small != null) "✓" else "✗ Missing"}")
                         }
                         results.add("")
                     } catch (e: Exception) {
@@ -299,7 +299,7 @@ fun ApiTestScreen(
                             val firstCard = viewModel.cardUiState.value.cards.first()
                             results.add("ℹ First card: ${firstCard.name}")
                             results.add("ℹ Set: ${firstCard.set.name}")
-                            results.add("ℹ Image: ${if (firstCard.image.small != null) "✓" else "✗ Missing"}")
+                            results.add("ℹ Image: ${if (firstCard.image?.small != null) "✓" else "✗ Missing"}")
                         }
                         results.add("")
                     } catch (e: Exception) {
