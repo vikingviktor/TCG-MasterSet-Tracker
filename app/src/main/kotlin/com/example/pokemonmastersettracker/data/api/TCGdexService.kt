@@ -3,19 +3,62 @@ package com.example.pokemonmastersettracker.data.api
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.tcgdex.sdk.TCGdex
-import net.tcgdex.sdk.model.Card as TCGdexCard
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardSet
 
 /**
- * Service wrapper for TCGdex API
+ * TCGdex REST API interface
+ * API Documentation: https://tcgdex.dev/rest
+ */
+interface TCGdexApi {
+    @GET("{language}/cards")
+    suspend fun searchCards(
+        @Path("language") language: String,
+        @Query("name") name: String
+    ): List<TCGdexCardResponse>
+}
+
+/**
+ * Response model from TCGdex API
+ */
+data class TCGdexCardResponse(
+    val id: String,
+    val localId: String?,
+    val name: String,
+    val image: String?,
+    val category: String?,
+    val hp: String?,
+    val types: List<String>?,
+    val evolveFrom: String?,
+    val level: String?,
+    val dexId: List<Int>?,
+    val rarity: String?,
+    val illustrator: String?,
+    val set: TCGdexSetInfo?
+)
+
+data class TCGdexSetInfo(
+    val id: String,
+    val name: String,
+    val releaseDate: String?
+)
+
+/**
+ * Service wrapper for TCGdex REST API
  * Used specifically for fetching Japanese cards in Favorites section
  */
 class TCGdexService {
     
-    private val tcgdexEN = TCGdex("en")
-    private val tcgdexJA = TCGdex("ja")
+    private val api: TCGdexApi = Retrofit.Builder()
+        .baseUrl("https://api.tcgdex.net/v2/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(TCGdexApi::class.java)
     
     /**
      * Search for Pokemon cards by name in specified language
@@ -25,17 +68,15 @@ class TCGdexService {
      */
     suspend fun searchCardsByPokemon(pokemonName: String, language: String = "en"): List<Card> = withContext(Dispatchers.IO) {
         try {
-            val tcgdex = if (language == "ja") tcgdexJA else tcgdexEN
-            
             Log.d("TCGdexService", "Searching for $pokemonName in language: $language")
             
-            // Search for cards
-            val cards = tcgdex.findCards(pokemonName)
+            // Search for cards via REST API
+            val response = api.searchCards(language, pokemonName)
             
-            Log.d("TCGdexService", "Found ${cards.size} cards for $pokemonName")
+            Log.d("TCGdexService", "Found ${response.size} cards for $pokemonName")
             
             // Convert TCGdex cards to our Card model
-            cards.mapNotNull { tcgdexCard ->
+            response.mapNotNull { tcgdexCard ->
                 convertTCGdexCard(tcgdexCard, language)
             }
         } catch (e: Exception) {
@@ -45,24 +86,24 @@ class TCGdexService {
     }
     
     /**
-     * Convert TCGdex Card model to our app's Card model
+     * Convert TCGdex Card response to our app's Card model
      */
-    private fun convertTCGdexCard(tcgdexCard: TCGdexCard, language: String): Card? {
+    private fun convertTCGdexCard(tcgdexCard: TCGdexCardResponse, language: String): Card? {
         return try {
             Card(
-                id = tcgdexCard.id ?: return null,
-                name = tcgdexCard.name ?: "Unknown",
-                supertype = "Pokémon", // TCGdex doesn't have supertype in same format
-                subtypes = listOf(tcgdexCard.category ?: ""),
+                id = tcgdexCard.id,
+                name = tcgdexCard.name,
+                supertype = "Pokémon",
+                subtypes = listOfNotNull(tcgdexCard.category),
                 level = tcgdexCard.level,
                 hp = tcgdexCard.hp,
                 types = tcgdexCard.types ?: emptyList(),
                 evolvesFrom = tcgdexCard.evolveFrom,
-                abilities = emptyList(), // TCGdex has different structure
-                attacks = emptyList(), // TCGdex has different structure
-                weaknesses = emptyList(), // TCGdex has different structure
-                resistances = emptyList(), // TCGdex has different structure
-                retreatCost = emptyList(), // TCGdex has different structure
+                abilities = emptyList(),
+                attacks = emptyList(),
+                weaknesses = emptyList(),
+                resistances = emptyList(),
+                retreatCost = emptyList(),
                 convertedRetreatCost = null,
                 set = CardSet(
                     id = tcgdexCard.set?.id ?: "",
@@ -80,7 +121,7 @@ class TCGdexService {
                 artist = tcgdexCard.illustrator,
                 rarity = tcgdexCard.rarity ?: "",
                 flavorText = null,
-                nationalPokedexNumbers = listOfNotNull(tcgdexCard.dexId?.firstOrNull()),
+                nationalPokedexNumbers = tcgdexCard.dexId ?: emptyList(),
                 legalities = emptyMap(),
                 images = mapOf(
                     "small" to (tcgdexCard.image ?: ""),

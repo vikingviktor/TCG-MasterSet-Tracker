@@ -139,9 +139,6 @@ dependencies {
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
     
-    // TCGdex SDK for Japanese card support (via JitPack)
-    implementation("com.github.tcgdex:kotlin-sdk:2.1.0")
-    
     // Accompanist for SwipeRefresh
     implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
 
