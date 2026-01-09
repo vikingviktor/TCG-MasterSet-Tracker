@@ -60,6 +60,7 @@ fun ApiTestScreen(
             color = Color.Gray
         )
 
+        // Pokemon TCG API Test Button
         Button(
             onClick = {
                 scope.launch {
@@ -67,7 +68,7 @@ fun ApiTestScreen(
                     testResults = emptyList()
                     
                     val results = mutableListOf<String>()
-                    results.add("=== API Test Started ===\n")
+                    results.add("=== Pokemon TCG API Test Started ===\n")
                     
                     // Test 0: Direct API call to verify endpoint
                     results.add("Test 0: Direct API endpoint check")
@@ -232,6 +233,133 @@ fun ApiTestScreen(
                 )
             }
             Text(if (isLoading) "Testing..." else "Run API Tests")
+        }
+
+        // TCGdex API Test Button
+        Button(
+            onClick = {
+                scope.launch {
+                    isLoading = true
+                    testResults = emptyList()
+                    
+                    val results = mutableListOf<String>()
+                    results.add("=== TCGdex API Test Started ===")
+                    results.add("")
+                    
+                    // Test 1: English cards
+                    results.add("Test 1: Fetching Scyther cards in English")
+                    val test1Start = System.currentTimeMillis()
+                    try {
+                        viewModel.loadCardsFromTCGdex("Scyther", "en")
+                        
+                        // Wait for loading to complete
+                        var waitTime = 0
+                        while (viewModel.cardUiState.value.loading && waitTime < 10000) {
+                            delay(100)
+                            waitTime += 100
+                        }
+                        
+                        val test1Time = System.currentTimeMillis() - test1Start
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ English cards loaded in ${test1Time}ms")
+                        results.add("ℹ Cards found: $cardCount")
+                        
+                        if (cardCount > 0) {
+                            val firstCard = viewModel.cardUiState.value.cards.first()
+                            results.add("ℹ First card: ${firstCard.name}")
+                            results.add("ℹ Set: ${firstCard.set.name}")
+                            results.add("ℹ Image: ${if (firstCard.image.small != null) "✓" else "✗ Missing"}")
+                        }
+                        results.add("")
+                    } catch (e: Exception) {
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
+                    // Test 2: Japanese cards
+                    results.add("Test 2: Fetching Scyther cards in Japanese")
+                    val test2Start = System.currentTimeMillis()
+                    try {
+                        viewModel.loadCardsFromTCGdex("Scyther", "ja")
+                        
+                        // Wait for loading to complete
+                        var waitTime = 0
+                        while (viewModel.cardUiState.value.loading && waitTime < 10000) {
+                            delay(100)
+                            waitTime += 100
+                        }
+                        
+                        val test2Time = System.currentTimeMillis() - test2Start
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ Japanese cards loaded in ${test2Time}ms")
+                        results.add("ℹ Cards found: $cardCount")
+                        
+                        if (cardCount > 0) {
+                            val firstCard = viewModel.cardUiState.value.cards.first()
+                            results.add("ℹ First card: ${firstCard.name}")
+                            results.add("ℹ Set: ${firstCard.set.name}")
+                            results.add("ℹ Image: ${if (firstCard.image.small != null) "✓" else "✗ Missing"}")
+                        }
+                        results.add("")
+                    } catch (e: Exception) {
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
+                    // Test 3: Try another Pokemon - Pikachu
+                    results.add("Test 3: Fetching Pikachu cards in English")
+                    val test3Start = System.currentTimeMillis()
+                    try {
+                        viewModel.loadCardsFromTCGdex("Pikachu", "en")
+                        
+                        var waitTime = 0
+                        while (viewModel.cardUiState.value.loading && waitTime < 10000) {
+                            delay(100)
+                            waitTime += 100
+                        }
+                        
+                        val test3Time = System.currentTimeMillis() - test3Start
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ Pikachu cards loaded in ${test3Time}ms")
+                        results.add("ℹ Cards found: $cardCount")
+                        results.add("")
+                    } catch (e: Exception) {
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
+                    results.add("=== TCGdex Test Complete ===")
+                    results.add("")
+                    results.add("Diagnostic Info:")
+                    results.add("• API: https://api.tcgdex.net/v2/")
+                    results.add("• Languages: en (English), ja (Japanese)")
+                    results.add("• Used for Japanese card support only")
+                    results.add("")
+                    results.add("Notes:")
+                    results.add("• TCGdex has fewer cards than Pokemon TCG API")
+                    results.add("• Some cards may not have images immediately")
+                    results.add("• Check Logcat for detailed API responses")
+                    
+                    testResults = results.toList()
+                    isLoading = false
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF9C27B0) // Purple to differentiate from main API test
+            ),
+            enabled = !isLoading
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(end = 8.dp),
+                    color = Color.White
+                )
+            }
+            Text(if (isLoading) "Testing..." else "Run TCGdex API Tests")
         }
 
         // Results display

@@ -514,9 +514,21 @@ class CardViewModel @Inject constructor(
                 
                 android.util.Log.d("CardViewModel", "✓ TCGdex returned ${cards.size} cards")
                 
+                // Check ownership status for loaded cards
+                val userCards = repository.getUserCards(currentUserId).first()
+                val ownedCardIds = userCards.filter { it.isOwned }.map { it.cardId }.toSet()
+                
+                // Mark cards as owned if user has them
+                val cardsWithOwnership = cards.map { card ->
+                    card.copy(isOwned = ownedCardIds.contains(card.id))
+                }
+                
+                val ownedCount = cardsWithOwnership.count { it.isOwned }
+                android.util.Log.d("CardViewModel", "✓ Ownership check: $ownedCount owned out of ${cards.size} cards")
+                
                 _cardUiState.value = _cardUiState.value.copy(
-                    cards = cards,
-                    allCards = cards,
+                    cards = cardsWithOwnership,
+                    allCards = cardsWithOwnership,
                     loading = false,
                     error = if (cards.isEmpty()) "No cards found" else null
                 )

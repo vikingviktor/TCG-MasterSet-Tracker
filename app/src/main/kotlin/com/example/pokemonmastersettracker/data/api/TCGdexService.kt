@@ -69,19 +69,27 @@ class TCGdexService {
      */
     suspend fun searchCardsByPokemon(pokemonName: String, language: String = "en"): List<Card> = withContext(Dispatchers.IO) {
         try {
-            Log.d("TCGdexService", "Searching for $pokemonName in language: $language")
+            Log.d("TCGdexService", "🔍 Searching TCGdex for '$pokemonName' in language: $language")
+            Log.d("TCGdexService", "📡 URL: https://api.tcgdex.net/v2/$language/cards?name=$pokemonName")
             
             // Search for cards via REST API
             val response = api.searchCards(language, pokemonName)
             
-            Log.d("TCGdexService", "Found ${response.size} cards for $pokemonName")
+            Log.d("TCGdexService", "✓ TCGdex API returned ${response.size} cards for $pokemonName")
+            if (response.isNotEmpty()) {
+                Log.d("TCGdexService", "📋 First card: ${response.first().name} (${response.first().id})")
+                Log.d("TCGdexService", "🖼️  Image URL: ${response.first().image}")
+            }
             
             // Convert TCGdex cards to our Card model
-            response.mapNotNull { tcgdexCard ->
+            val convertedCards = response.mapNotNull { tcgdexCard ->
                 convertTCGdexCard(tcgdexCard, language)
             }
+            
+            Log.d("TCGdexService", "✓ Successfully converted ${convertedCards.size} cards")
+            convertedCards
         } catch (e: Exception) {
-            Log.e("TCGdexService", "Error searching cards: ${e.message}", e)
+            Log.e("TCGdexService", "❌ Error searching cards: ${e.message}", e)
             emptyList()
         }
     }
