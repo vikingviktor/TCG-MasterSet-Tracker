@@ -11,7 +11,6 @@ import retrofit2.http.Query
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.CardImage
-import com.example.pokemonmastersettracker.data.models.SetImages
 
 /**
  * TCGdex REST API interface
@@ -104,13 +103,10 @@ class TCGdexService {
                     id = tcgdexCard.set?.id ?: "",
                     name = tcgdexCard.set?.name ?: "Unknown Set",
                     series = "",
-                    printedTotal = 0,
                     total = 0,
-                    releaseDate = tcgdexCard.set?.releaseDate ?: "",
-                    images = SetImages(
-                        symbol = null,
-                        logo = null
-                    )
+                    printedTotal = 0,
+                    ptcgoCode = null,
+                    releaseDate = tcgdexCard.set?.releaseDate
                 ),
                 image = CardImage(
                     small = tcgdexCard.image,
