@@ -10,6 +10,8 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardSet
+import com.example.pokemonmastersettracker.data.models.CardImage
+import com.example.pokemonmastersettracker.data.models.SetImages
 
 /**
  * TCGdex REST API interface
@@ -95,41 +97,28 @@ class TCGdexService {
                 name = tcgdexCard.name,
                 supertype = "Pokémon",
                 subtypes = listOfNotNull(tcgdexCard.category),
-                level = tcgdexCard.level,
                 hp = tcgdexCard.hp,
-                types = tcgdexCard.types ?: emptyList(),
-                evolvesFrom = tcgdexCard.evolveFrom,
-                abilities = emptyList(),
-                attacks = emptyList(),
-                weaknesses = emptyList(),
-                resistances = emptyList(),
-                retreatCost = emptyList(),
-                convertedRetreatCost = null,
+                types = tcgdexCard.types,
+                rarity = tcgdexCard.rarity,
                 set = CardSet(
                     id = tcgdexCard.set?.id ?: "",
                     name = tcgdexCard.set?.name ?: "Unknown Set",
                     series = "",
                     printedTotal = 0,
                     total = 0,
-                    legalities = emptyMap(),
-                    ptcgoCode = null,
                     releaseDate = tcgdexCard.set?.releaseDate ?: "",
-                    updatedAt = "",
-                    images = emptyMap()
+                    images = SetImages(
+                        symbol = null,
+                        logo = null
+                    )
                 ),
-                number = tcgdexCard.localId ?: "",
+                image = CardImage(
+                    small = tcgdexCard.image,
+                    large = tcgdexCard.image
+                ),
+                number = tcgdexCard.localId,
                 artist = tcgdexCard.illustrator,
-                rarity = tcgdexCard.rarity ?: "",
-                flavorText = null,
-                nationalPokedexNumbers = tcgdexCard.dexId ?: emptyList(),
-                legalities = emptyMap(),
-                images = mapOf(
-                    "small" to (tcgdexCard.image ?: ""),
-                    "large" to (tcgdexCard.image ?: "")
-                ),
-                tcgplayer = null,
-                cardmarket = null,
-                language = language
+                tcgplayer = null
             )
         } catch (e: Exception) {
             Log.e("TCGdexService", "Error converting card: ${e.message}", e)
