@@ -8,6 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.CardImage
@@ -15,21 +17,42 @@ import com.example.pokemonmastersettracker.data.models.CardImage
 /**
  * TCGdex REST API interface
  * API Documentation: https://tcgdex.dev/rest
+ * 
+ * NOTE: TCGdex may not support all languages. Testing showed:
+ * - "en" works
+ * - "ja" may not have data or may not be supported
  */
 interface TCGdexApi {
+    /**
+     * Search cards by name
+     * Example: /en/cards?name=furret
+     */
     @GET("{language}/cards")
     suspend fun searchCards(
         @Path("language") language: String,
         @Query("name") name: String
     ): List<TCGdexCardResponse>
     
-    // Get all cards for a specific Pokemon using the pokemon endpoint
-    // This should return ALL variants including "Rocket's Scyther", "Scyther ex", etc.
-    @GET("{language}/pokemon/{pokemonId}")
-    suspend fun getPokemonCards(
+    /**
+     * Search cards by Pokedex ID (returns cards from ALL languages for that endpoint)
+     * Example: /en/cards?dexId=162 returns English Furret cards
+     *          /ja/cards?dexId=162 returns Japanese Furret cards
+     */
+    @GET("{language}/cards")
+    suspend fun searchCardsByDexId(
         @Path("language") language: String,
-        @Path("pokemonId") pokemonId: String
-    ): TCGdexPokemonResponse
+        @Query("dexId") dexId: Int
+    ): List<TCGdexCardResponse>
+    
+    /**
+     * Get a specific card by ID
+     * Example: /en/cards/swsh3-136
+     */
+    @GET("{language}/cards/{cardId}")
+    suspend fun getCard(
+        @Path("language") language: String,
+        @Path("cardId") cardId: String
+    ): TCGdexCardResponse
 }
 
 /**
@@ -72,6 +95,13 @@ class TCGdexService {
     
     private val api: TCGdexApi = Retrofit.Builder()
         .baseUrl("https://api.tcgdex.net/v2/")
+        .client(
+            OkHttpClient.Builder()
+                .addInterceptor(HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                })
+                .build()
+        )
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(TCGdexApi::class.java)
@@ -79,30 +109,41 @@ class TCGdexService {
     /**
      * Search for Pokemon cards by name in specified language
      * @param pokemonName Name of the Pokemon (e.g., "Pikachu")
-     * @param language "en" for English or "ja" for Japanese
-     * @return List of cards matching the Pokemon name
+     * @param language "en" for English (currently searches by Pokedex ID which returns ALL languages)
+     * @return List of cards matching the Pokemon
      */
     suspend fun searchCardsByPokemon(pokemonName: String, language: String = "en"): List<Card> = withContext(Dispatchers.IO) {
         try {
             Log.d("TCGdexService", "🔍 Searching TCGdex for '$pokemonName' in language: $language")
             
-            // Use wildcard to match all variants (e.g., "Scyther", "Rocket's Scyther", "Scyther ex")
-            val searchQuery = "${pokemonName.lowercase()}*"
-            Log.d("TCGdexService", "📡 URL: https://api.tcgdex.net/v2/$language/cards?name=$searchQuery")
+            // Search by Pokedex ID - this returns cards from ALL languages
+            val dexId = getPokedexNumber(pokemonName)
+            if (dexId <= 0) {
+                Log.w("TCGdexService", "⚠️ No Pokedex number found for '$pokemonName'")
+                return@withContext emptyList()
+            }
+            
+            Log.d("TCGdexService", "📡 Searching by Pokedex ID #$dexId: https://api.tcgdex.net/v2/$language/cards?dexId=$dexId")
             
             val response = try {
-                api.searchCards(language, searchQuery)
+                api.searchCardsByDexId(language, dexId)
             } catch (e: Exception) {
-                Log.e("TCGdexService", "API call failed: ${e.message}", e)
+                Log.e("TCGdexService", "❌ API call failed: ${e.javaClass.simpleName} - ${e.message}", e)
+                if (e.cause != null) {
+                    Log.e("TCGdexService", "   Caused by: ${e.cause?.message}")
+                }
                 emptyList()
             }
             
             Log.d("TCGdexService", "✓ TCGdex returned ${response.size} cards")
             if (response.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 Cards: ${response.take(5).joinToString { it.name }}")
+                if (response.size > 5) {
+                    Log.d("TCGdexService", "   ... and ${response.size - 5} more")
+                }
                 Log.d("TCGdexService", "🖼️  First image: ${response.first().image}")
             } else {
-                Log.w("TCGdexService", "⚠️ No cards found for '$pokemonName' in language '$language'")
+                Log.w("TCGdexService", "⚠️ No cards found for Pokedex #$dexId ($pokemonName)")
             }
             
             // Convert TCGdex cards to our Card model
