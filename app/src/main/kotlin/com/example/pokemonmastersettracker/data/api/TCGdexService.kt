@@ -23,7 +23,7 @@ interface TCGdexApi {
         @Query("name") name: String
     ): List<TCGdexCardResponse>
     
-    // Get all cards for a specific Pokemon by iterating through sets
+    // Get all cards for a language
     @GET("{language}/cards")
     suspend fun getAllCards(
         @Path("language") language: String
@@ -77,28 +77,27 @@ class TCGdexService {
         try {
             Log.d("TCGdexService", "🔍 Searching TCGdex for '$pokemonName' in language: $language")
             
-            // TCGdex's name parameter might do exact matching, so let's get all cards
-            // and filter by the Pokemon name (looking at dexId or name contains)
+            // Get Pokedex number for filtering
             val pokedexNumber = getPokedexNumber(pokemonName)
             
             Log.d("TCGdexService", "📡 Fetching all cards for language: $language")
             val allCards = api.getAllCards(language)
             
-            // Convert TCGdex cards to our Card model
-            val convertedCards = filteredCardstered to ${filteredCards.size} cards for $pokemonName (Dex #$pokedexNumber)")
+            Log.d("TCGdexService", "✓ Got ${allCards.size} total cards")
+            
+            // Filter cards by dexId matching the Pokemon's Pokedex number
+            val filteredCards = allCards.filter { card ->
+                card.dexId?.contains(pokedexNumber) == true
+            }
+            
+            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards for $pokemonName (Dex #$pokedexNumber)")
             if (filteredCards.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 First card: ${filteredCards.first().name} (${filteredCards.first().id})")
                 Log.d("TCGdexService", "🖼️  Image URL: ${filteredCards.first().image}")
             }
             
-            Log.d("TCGdexService", "✓ TCGdex API returned ${response.size} cards for $pokemonName")
-            if (response.isNotEmpty()) {
-                Log.d("TCGdexService", "📋 First card: ${response.first().name} (${response.first().id})")
-                Log.d("TCGdexService", "🖼️  Image URL: ${response.first().image}")
-            }
-            
             // Convert TCGdex cards to our Card model
-            val convertedCards = response.mapNotNull { tcgdexCard ->
+            val convertedCards = filteredCards.mapNotNull { tcgdexCard ->
                 convertTCGdexCard(tcgdexCard, language)
             }
             
@@ -147,19 +146,13 @@ class TCGdexService {
     }
     
     /**
-     * Map Pokemon name to Pokedex number for TCGdex API search
-     * TCGdex uses the 'hp' parameter which corresponds to Pokedex numbers
-     */
-    private fun getPokedexNumber(pokemonName: String): String {
-        // Map of Pokemon names to their Pokedex numbers
-        val pokedexMap = mapOf(
-            "Bulbasaur" to "1", "Ivysaur" to "filtering TCGdex results
+     * Map Pokemon name to Pokedex number for filtering TCGdex results
      * Returns the Pokedex number as an Int for matching against dexId
      */
-    private fun getPokedexNumber(pokemonName: String): Inte" to "12",
-            "Weedle" to "13", "Kakuna" to "14", "Beedrill" to "15",
-            "Pidgey" to "16", "Pidgeotto" to "17", "Pidgeot" to "18",
-            "Rattata" to "11, "Ivysaur" to 2, "Venusaur" to 3,
+    private fun getPokedexNumber(pokemonName: String): Int {
+        // Map of Pokemon names to their Pokedex numbers
+        val pokedexMap = mapOf(
+            "Bulbasaur" to 1, "Ivysaur" to 2, "Venusaur" to 3,
             "Charmander" to 4, "Charmeleon" to 5, "Charizard" to 6,
             "Squirtle" to 7, "Wartortle" to 8, "Blastoise" to 9,
             "Caterpie" to 10, "Metapod" to 11, "Butterfree" to 12,
@@ -212,4 +205,6 @@ class TCGdexService {
             "Mew" to 151
         )
         
-        return pokedexMap[pokemonName] ?: 25
+        return pokedexMap[pokemonName] ?: 25 // Default to Pikachu if not found
+    }
+}
