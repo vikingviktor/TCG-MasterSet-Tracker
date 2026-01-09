@@ -23,12 +23,21 @@ interface TCGdexApi {
         @Query("name") name: String
     ): List<TCGdexCardResponse>
     
-    // Get all cards for a language
-    @GET("{language}/cards")
-    suspend fun getAllCards(
-        @Path("language") language: String
-    ): List<TCGdexCardResponse>
+    // Get all cards for a specific Pokemon using the pokemon endpoint
+    // This should return ALL variants including "Rocket's Scyther", "Scyther ex", etc.
+    @GET("{language}/pokemon/{pokemonId}")
+    suspend fun getPokemonCards(
+        @Path("language") language: String,
+        @Path("pokemonId") pokemonId: String
+    ): TCGdexPokemonResponse
 }
+
+/**
+ * Response from the Pokemon endpoint - contains all cards for that Pokemon
+ */
+data class TCGdexPokemonResponse(
+    val cards: List<TCGdexCardResponse>?
+)
 
 /**
  * Response model from TCGdex API
@@ -77,27 +86,21 @@ class TCGdexService {
         try {
             Log.d("TCGdexService", "🔍 Searching TCGdex for '$pokemonName' in language: $language")
             
-            // Get Pokedex number for filtering
-            val pokedexNumber = getPokedexNumber(pokemonName)
+            // Try the pokemon endpoint first - this returns ALL variants of the Pokemon
+            val pokemonId = pokemonName.lowercase()
+            Log.d("TCGdexService", "📡 URL: https://api.tcgdex.net/v2/$language/pokemon/$pokemonId")
             
-            Log.d("TCGdexService", "📡 Fetching all cards for language: $language")
-            val allCards = api.getAllCards(language)
+            val pokemonResponse = api.getPokemonCards(language, pokemonId)
+            val cards = pokemonResponse.cards ?: emptyList()
             
-            Log.d("TCGdexService", "✓ Got ${allCards.size} total cards")
-            
-            // Filter cards by dexId matching the Pokemon's Pokedex number
-            val filteredCards = allCards.filter { card ->
-                card.dexId?.contains(pokedexNumber) == true
-            }
-            
-            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards for $pokemonName (Dex #$pokedexNumber)")
-            if (filteredCards.isNotEmpty()) {
-                Log.d("TCGdexService", "📋 First card: ${filteredCards.first().name} (${filteredCards.first().id})")
-                Log.d("TCGdexService", "🖼️  Image URL: ${filteredCards.first().image}")
+            Log.d("TCGdexService", "✓ TCGdex Pokemon endpoint returned ${cards.size} cards for $pokemonName")
+            if (cards.isNotEmpty()) {
+                Log.d("TCGdexService", "📋 First card: ${cards.first().name} (${cards.first().id})")
+                Log.d("TCGdexService", "🖼️  Image URL: ${cards.first().image}")
             }
             
             // Convert TCGdex cards to our Card model
-            val convertedCards = filteredCards.mapNotNull { tcgdexCard ->
+            val convertedCards = cards.mapNotNull { tcgdexCard ->
                 convertTCGdexCard(tcgdexCard, language)
             }
             
