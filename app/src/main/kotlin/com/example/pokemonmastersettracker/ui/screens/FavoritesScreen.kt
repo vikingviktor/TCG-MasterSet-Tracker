@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,11 +70,77 @@ fun FavoritesScreen(
     var isCardInWishlist by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableIntStateOf(0) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var selectedPokemonForLanguage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
     LaunchedEffect(Unit) {
         viewModel.loadFavorites()
+    }
+    
+    // Language selection dialog for TCGdex
+    if (showLanguageDialog && selectedPokemonForLanguage != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showLanguageDialog = false
+                selectedPokemonForLanguage = null
+            },
+            title = {
+                Text("Select Language")
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Choose which language cards to view for ${selectedPokemonForLanguage}:",
+                        fontSize = 14.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            selectedPokemonForLanguage?.let {
+                                viewModel.loadCardsFromTCGdex(it, "en")
+                            }
+                            showLanguageDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text("English Cards")
+                    }
+                    Button(
+                        onClick = {
+                            selectedPokemonForLanguage?.let {
+                                viewModel.loadCardsFromTCGdex(it, "ja")
+                            }
+                            showLanguageDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text("Japanese Cards (日本語)")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showLanguageDialog = false
+                    selectedPokemonForLanguage = null
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     // Show dialog when a card is selected
@@ -307,7 +375,8 @@ fun FavoritesScreen(
                                     viewModel.loadFavorites() // Refresh list
                                 },
                                 onViewCards = {
-                                    viewModel.selectPokemonCards(pokemon.name)
+                                    selectedPokemonForLanguage = pokemon.name
+                                    showLanguageDialog = true
                                 }
                             )
                         }

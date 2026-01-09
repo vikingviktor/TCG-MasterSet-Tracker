@@ -13,8 +13,8 @@ android {
         applicationId = "com.mastersettracker.pokemon"
         minSdk = 24
         targetSdk = 35
-        versionCode = 53
-        versionName = "2.1.9"
+        versionCode = 54
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -138,6 +138,9 @@ dependencies {
 
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // TCGdex SDK for Japanese card support
+    implementation("net.tcgdex:tcgdex-sdk:2.1.0")
     
     // Accompanist for SwipeRefresh
     implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")

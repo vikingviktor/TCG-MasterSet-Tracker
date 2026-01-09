@@ -7,6 +7,7 @@ import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.repository.PokemonRepository
+import com.example.pokemonmastersettracker.data.api.TCGdexService
 import com.example.pokemonmastersettracker.utils.DatabaseExporter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -64,6 +65,9 @@ class CardViewModel @Inject constructor(
     
     // Cache recent searches to avoid duplicate API calls
     private val searchCache = mutableMapOf<String, List<Card>>()
+    
+    // TCGdex service for Japanese card support
+    private val tcgdexService = TCGdexService()
     
     // Default user ID (in production, this would come from authentication)
     // This matches the userId used in MainActivity: "test-user"
@@ -489,6 +493,40 @@ class CardViewModel @Inject constructor(
             "SUCCESS: Retrieved ${cards.size} cards"
         } catch (e: Exception) {
             "ERROR: ${e.message}"
+        }
+    }
+    
+    /**
+     * Load Pokemon cards from TCGdex API with language selection
+     * Used in Favorites screen for English/Japanese card support
+     */
+    fun loadCardsFromTCGdex(pokemonName: String, language: String = "en") {
+        viewModelScope.launch {
+            android.util.Log.d("CardViewModel", "🌏 Loading cards from TCGdex: $pokemonName (language: $language)")
+            _cardUiState.value = _cardUiState.value.copy(
+                loading = true,
+                selectedPokemonName = pokemonName,
+                showTrackingDialog = null
+            )
+            
+            try {
+                val cards = tcgdexService.searchCardsByPokemon(pokemonName, language)
+                
+                android.util.Log.d("CardViewModel", "✓ TCGdex returned ${cards.size} cards")
+                
+                _cardUiState.value = _cardUiState.value.copy(
+                    cards = cards,
+                    allCards = cards,
+                    loading = false,
+                    error = if (cards.isEmpty()) "No cards found" else null
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "❌ Error loading TCGdex cards: ${e.message}", e)
+                _cardUiState.value = _cardUiState.value.copy(
+                    loading = false,
+                    error = "Error loading cards: ${e.message}"
+                )
+            }
         }
     }
 }
