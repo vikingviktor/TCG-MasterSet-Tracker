@@ -84,7 +84,13 @@ data class TCGdexCardResponse(
 data class TCGdexSetInfo(
     val id: String,
     val name: String,
-    val releaseDate: String?
+    val releaseDate: String?,
+    val cardCount: TCGdexCardCount?
+)
+
+data class TCGdexCardCount(
+    val total: Int?,
+    val official: Int?
 )
 
 /**
@@ -170,6 +176,11 @@ class TCGdexService {
      */
     private fun convertTCGdexCard(tcgdexCard: TCGdexCardResponse, language: String): Card? {
         return try {
+            // Reconstruct image URLs - TCGdex returns base URL without extension
+            // Format: https://assets.tcgdex.net/en/swsh/swsh3/136/high.webp
+            val smallImageUrl = tcgdexCard.image?.let { "$it/low.webp" }
+            val largeImageUrl = tcgdexCard.image?.let { "$it/high.webp" }
+            
             Card(
                 id = tcgdexCard.id,
                 name = tcgdexCard.name,
@@ -182,14 +193,14 @@ class TCGdexService {
                     id = tcgdexCard.set?.id ?: "",
                     name = tcgdexCard.set?.name ?: "Unknown Set",
                     series = "",
-                    total = 0,
-                    printedTotal = 0,
+                    total = tcgdexCard.set?.cardCount?.total ?: 0,
+                    printedTotal = tcgdexCard.set?.cardCount?.official ?: 0,
                     ptcgoCode = null,
                     releaseDate = tcgdexCard.set?.releaseDate
                 ),
                 image = CardImage(
-                    small = tcgdexCard.image,
-                    large = tcgdexCard.image
+                    small = smallImageUrl,
+                    large = largeImageUrl
                 ),
                 number = tcgdexCard.localId,
                 artist = tcgdexCard.illustrator,
