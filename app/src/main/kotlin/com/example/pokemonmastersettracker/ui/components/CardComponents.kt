@@ -99,18 +99,6 @@ fun CardItem(
                 }
             }
 
-            IconButton(
-                onClick = onFavoriteToggle,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-            ) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = if (isFavorite) Color.Red else Color.White
-                )
-            }
         }
 
         Column(

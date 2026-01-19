@@ -176,10 +176,19 @@ class TCGdexService {
      */
     private fun convertTCGdexCard(tcgdexCard: TCGdexCardResponse, language: String): Card? {
         return try {
+            // Log raw data for debugging
+            Log.d("TCGdexService", "Converting card: ${tcgdexCard.name}")
+            Log.d("TCGdexService", "  Set ID: ${tcgdexCard.set?.id}")
+            Log.d("TCGdexService", "  Set Name: ${tcgdexCard.set?.name}")
+            Log.d("TCGdexService", "  Image URL: ${tcgdexCard.image}")
+            
             // Reconstruct image URLs - TCGdex returns base URL without extension
             // Format: https://assets.tcgdex.net/en/swsh/swsh3/136/high.webp
             val smallImageUrl = tcgdexCard.image?.let { "$it/low.webp" }
             val largeImageUrl = tcgdexCard.image?.let { "$it/high.webp" }
+            
+            Log.d("TCGdexService", "  Reconstructed small: $smallImageUrl")
+            Log.d("TCGdexService", "  Reconstructed large: $largeImageUrl")
             
             Card(
                 id = tcgdexCard.id,
