@@ -382,7 +382,7 @@ fun HomeScreen(
                         Button(
                             onClick = {
                                 cardUiState.selectedPokemonName?.let { pokemonName ->
-                                    viewModel.selectPokemonCards(pokemonName, setOf("en"))
+                                    viewModel.loadCardsFromTCGdex(pokemonName, "en")
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PokemonColors.Primary),
@@ -395,7 +395,7 @@ fun HomeScreen(
                         OutlinedButton(
                             onClick = {
                                 // Test with Pikachu (very common Pokemon)
-                                viewModel.selectPokemonCards("Pikachu", setOf("en"))
+                                viewModel.loadCardsFromTCGdex("Pikachu", "en")
                             },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -471,7 +471,7 @@ fun HomeScreen(
                 PokemonListView(
                     pokemonList = cardUiState.pokemonList,
                     onPokemonSelect = { pokemonName ->
-                        viewModel.selectPokemonCards(pokemonName, setOf("en"))
+                        viewModel.loadCardsFromTCGdex(pokemonName, "en")
                     },
                     onFavoriteToggle = { pokemonName ->
                         viewModel.toggleFavorite(pokemonName)

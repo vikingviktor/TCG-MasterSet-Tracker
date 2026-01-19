@@ -506,7 +506,10 @@ class CardViewModel @Inject constructor(
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true,
                 selectedPokemonName = pokemonName,
-                showTrackingDialog = null
+                showTrackingDialog = null,
+                // Clear existing cards to prevent mixing with previous search
+                cards = emptyList(),
+                allCards = emptyList()
             )
             
             try {

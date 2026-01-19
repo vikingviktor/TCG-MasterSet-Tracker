@@ -196,9 +196,14 @@ class TCGdexService {
             Log.d("TCGdexService", "  Image URL: ${tcgdexCard.image}")
             
             // Reconstruct image URLs - TCGdex returns base URL without extension
-            // Format: https://assets.tcgdex.net/en/swsh/swsh3/136/high.webp
-            val smallImageUrl = tcgdexCard.image?.let { "$it/low.webp" }
-            val largeImageUrl = tcgdexCard.image?.let { "$it/high.webp" }
+            // Some older cards may not have high/low quality versions, so use base as fallback
+            val smallImageUrl = tcgdexCard.image?.let { baseUrl ->
+                "$baseUrl/low.webp"
+            }
+            val largeImageUrl = tcgdexCard.image?.let { baseUrl ->
+                // Try high quality first, will fallback to base URL if not available
+                "$baseUrl/high.webp"
+            }
             
             Log.d("TCGdexService", "  Reconstructed small: $smallImageUrl")
             Log.d("TCGdexService", "  Reconstructed large: $largeImageUrl")
