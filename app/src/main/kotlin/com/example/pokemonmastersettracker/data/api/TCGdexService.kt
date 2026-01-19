@@ -152,8 +152,21 @@ class TCGdexService {
                 Log.w("TCGdexService", "⚠️ No cards found for Pokedex #$dexId ($pokemonName)")
             }
             
+            // The dexId search returns simplified data without set info
+            // Fetch full details for each card to get set names and complete data
+            Log.d("TCGdexService", "📡 Fetching full details for ${response.size} cards...")
+            val detailedCards = response.mapNotNull { simpleCard ->
+                try {
+                    api.getCard(language, simpleCard.id)
+                } catch (e: Exception) {
+                    Log.w("TCGdexService", "⚠️ Could not fetch details for ${simpleCard.id}: ${e.message}")
+                    // Fallback to the simple card data if detail fetch fails
+                    simpleCard
+                }
+            }
+            
             // Convert TCGdex cards to our Card model
-            val convertedCards = response.mapNotNull { tcgdexCard ->
+            val convertedCards = detailedCards.mapNotNull { tcgdexCard ->
                 try {
                     convertTCGdexCard(tcgdexCard, language)
                 } catch (e: Exception) {

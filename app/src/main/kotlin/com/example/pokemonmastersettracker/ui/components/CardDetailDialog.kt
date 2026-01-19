@@ -105,13 +105,25 @@ fun CardDetailDialog(
                     color = PokemonColors.Primary
                 )
                 
-                // Card Set
-                card.set?.name?.let { setName ->
-                    Text(
-                        text = setName,
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+                // Card Set - show name and ID
+                card.set?.let { set ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        set.name?.let { setName ->
+                            Text(
+                                text = setName,
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
+                        // Show set ID below the name for easy reference
+                        Text(
+                            text = set.id,
+                            fontSize = 12.sp,
+                            color = Color.LightGray
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
