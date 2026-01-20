@@ -55,6 +55,12 @@ class PokemonRepository @Inject constructor(
         pokemonDao.updatePokemonImage(pokemonName, imageUrl)
     }
     
+    suspend fun saveCards(cards: List<Card>) {
+        cards.forEach { card ->
+            cardDao.insertCard(card)
+        }
+    }
+    
     suspend fun seedPopularPokemon() {
         val count = pokemonDao.getPokemonCount()
         if (count == 0) {
@@ -178,14 +184,33 @@ class PokemonRepository @Inject constructor(
     suspend fun addFavoritePokemon(userId: String, pokemonName: String) {
         android.util.Log.d("PokemonRepository", "Adding favorite: $pokemonName for user: $userId")
         
-        // First, insert the favorite with 0 total (IGNORE if already exists)
+        // Fetch cards from TCGdex to get image and count
+        val tcgdexService = TCGdexService()
+        val cards = try {
+            tcgdexService.searchCards(pokemonName, "en")
+        } catch (e: Exception) {
+            android.util.Log.w("PokemonRepository", "Failed to fetch TCGdex cards for $pokemonName: ${e.message}")
+            emptyList()
+        }
+        
+        val totalCards = cards.size
+        val imageUrl = cards.firstOrNull()?.image?.small
+        
+        // Update Pokemon table with image if we got one
+        if (imageUrl != null) {
+            updatePokemonImage(pokemonName, imageUrl)
+        }
+        
+        // Add to favorites with total count
         favoritePokemonDao.addFavorite(
             FavoritePokemon(
                 userId = userId,
                 pokemonName = pokemonName,
-                totalCards = 0 // Total cards not available in TCGdex without fetching
+                totalCards = totalCards
             )
         )
+        
+        android.util.Log.d("PokemonRepository", "✓ Added favorite: $pokemonName (${totalCards} cards, image: ${imageUrl != null})")
     }
 
     suspend fun removeFavoritePokemon(userId: String, pokemonName: String) {

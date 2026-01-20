@@ -336,6 +336,17 @@ class CardViewModel @Inject constructor(
                 
                 android.util.Log.d("CardViewModel", "✓ TCGdex returned ${cards.size} cards")
                 
+                // Save cards to database for collection/wishlist functionality
+                if (cards.isNotEmpty()) {
+                    repository.saveCards(cards)
+                    android.util.Log.d("CardViewModel", "✓ Saved ${cards.size} cards to database")
+                    
+                    // Update Pokemon image if we don't have one
+                    cards.firstOrNull()?.image?.small?.let { imageUrl ->
+                        repository.updatePokemonImage(pokemonName, imageUrl)
+                    }
+                }
+                
                 _cardUiState.value = _cardUiState.value.copy(
                     cards = cards,
                     allCards = cards,
