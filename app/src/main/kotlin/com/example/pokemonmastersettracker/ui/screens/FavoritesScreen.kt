@@ -465,7 +465,7 @@ fun FavoritePokemonCard(
  * Card Album View - Displays cards in a horizontal pager with 4 cards per page (2x2 grid)
  * Similar to a physical card binder/album
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun CardAlbumView(
     cards: List<Card>,
