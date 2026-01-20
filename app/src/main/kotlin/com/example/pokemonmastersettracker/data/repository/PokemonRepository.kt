@@ -1,6 +1,5 @@
 package com.example.pokemonmastersettracker.data.repository
 
-import com.example.pokemonmastersettracker.data.api.PokemonTCGApi
 import com.example.pokemonmastersettracker.data.database.CardDao
 import com.example.pokemonmastersettracker.data.database.UserCardDao
 import com.example.pokemonmastersettracker.data.database.FavoritePokemonDao
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class PokemonRepository @Inject constructor(
-    private val api: PokemonTCGApi,
     private val cardDao: CardDao,
     private val userCardDao: UserCardDao,
     private val favoritePokemonDao: FavoritePokemonDao,
@@ -69,240 +67,8 @@ class PokemonRepository @Inject constructor(
         }
     }
     
-    // Pre-fetch card data for most popular Pokemon to improve performance
-    // Returns Triple(cachedCount, successCount, failedCount)
-    // onProgress callback: (current, total, pokemonName, cached, success, failed) -> Unit
-    suspend fun preFetchPopularPokemonCards(
-        onProgress: ((Int, Int, String, Int, Int, Int) -> Unit)? = null
-    ): Triple<Int, Int, Int> {
-        val popularPokemon = listOf(
-            // Gen 1 - Starters & Evolutions
-            "Pikachu", "Charizard", "Mewtwo", "Mew", "Eevee",
-            "Bulbasaur", "Charmander", "Squirtle", "Gengar", "Dragonite",
-            "Gyarados", "Snorlax", "Blastoise", "Venusaur",
-            "Scyther", "Kabutops", "Nidoking", "Haunter", "Scizor",
-            "Alakazam", "Machamp", "Articuno", "Zapdos", "Moltres",
-            
-            // Eeveelutions
-            "Umbreon", "Espeon", "Jolteon", "Vaporeon", "Flareon",
-            "Leafeon", "Glaceon", "Sylveon",
-            
-            // Gen 2
-            "Typhlosion", "Feraligatr", "Meganium", "Lugia", "Ho-Oh",
-            "Tyranitar", "Ampharos", "Heracross",
-            
-            // Gen 3
-            "Blaziken", "Swampert", "Sceptile", "Rayquaza", "Kyogre", "Groudon",
-            "Gardevoir", "Aggron", "Salamence",
-            
-            // Gen 4+
-            "Lucario", "Garchomp", "Dialga", "Palkia", "Giratina",
-            "Greninja", "Haxorus"
-        )
-        
-        android.util.Log.d("PokemonRepository", "🎯 Starting pre-fetch of ${popularPokemon.size} popular Pokemon with retry logic...")
-        android.util.Log.d("PokemonRepository", "� List contains: ${popularPokemon.joinToString(", ")}")
-        android.util.Log.d("PokemonRepository", "�💡 This may take a while due to API issues - will retry on failures!")
-        var successCount = 0
-        var cachedCount = 0
-        var failedCount = 0
-        
-        for ((index, pokemonName) in popularPokemon.withIndex()) {
-            // Emit progress update
-            onProgress?.invoke(index + 1, popularPokemon.size, pokemonName, cachedCount, successCount, failedCount)
-            
-            // Check if already cached
-            val cached = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cached.isNotEmpty()) {
-                cachedCount++
-                android.util.Log.d("PokemonRepository", "  ✓ $pokemonName: Already cached (${cached.size} cards)")
-                continue
-            }
-            
-            // Fetch with retry logic
-            var retryCount = 0
-            val maxRetries = 5
-            var success = false
-            
-            while (retryCount < maxRetries && !success) {
-                try {
-                    val delayMs = if (retryCount == 0) 2000L else (2000L * (retryCount + 1)) // 2s, 4s, 6s, 8s, 10s
-                    if (retryCount > 0) {
-                        android.util.Log.d("PokemonRepository", "  🔄 $pokemonName: Retry $retryCount/$maxRetries after ${delayMs}ms delay...")
-                        kotlinx.coroutines.delay(delayMs)
-                    } else {
-                        android.util.Log.d("PokemonRepository", "  📥 Fetching $pokemonName...")
-                    }
-                    
-                    val cards = searchPokemonCardsWithPagination(pokemonName, setOf("en", "ja"), 1, 250, forceRefresh = true)
-                    
-                    if (cards.isNotEmpty()) {
-                        successCount++
-                        success = true
-                        android.util.Log.d("PokemonRepository", "  ✅ $pokemonName: SUCCESS! Fetched ${cards.size} cards")
-                    } else {
-                        android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: API returned 0 cards, will retry...")
-                        retryCount++
-                    }
-                } catch (e: Exception) {
-                    retryCount++
-                    val errorType = when {
-                        e.message?.contains("404") == true -> "404 Not Found"
-                        e.message?.contains("504") == true -> "504 Gateway Timeout"
-                        e.message?.contains("timeout") == true -> "Timeout"
-                        else -> e.javaClass.simpleName
-                    }
-                    
-                    if (retryCount < maxRetries) {
-                        android.util.Log.w("PokemonRepository", "  ⚠️ $pokemonName: $errorType - will retry ($retryCount/$maxRetries)")
-                    } else {
-                        android.util.Log.e("PokemonRepository", "  ❌ $pokemonName: FAILED after $maxRetries retries ($errorType)")
-                    }
-                }
-            }
-            
-            if (!success) {
-                failedCount++
-            }
-        }
-        
-        android.util.Log.d("PokemonRepository", "📊 Pre-fetch complete: $cachedCount already cached, $successCount fetched, $failedCount failed permanently")
-        return Triple(cachedCount, successCount, failedCount)
-    }
+    // Local card operations
     
-    // Card Operations
-    
-    suspend fun searchPokemonCardsWithPagination(pokemonName: String, languages: Set<String> = setOf("en", "ja"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false): List<Card> {
-        // For first page, check cache first unless force refresh
-        if (page == 1 && !forceRefresh) {
-            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cachedCards.isNotEmpty()) {
-                // Filter cached cards by language
-                val filteredCards = filterCardsByLanguage(cachedCards, languages)
-                android.util.Log.d("PokemonRepository", "✅ Using ${filteredCards.size}/${cachedCards.size} cached cards for '$pokemonName' (languages: $languages)")
-                // Return paginated subset from cache
-                val startIndex = 0
-                val endIndex = minOf(pageSize, filteredCards.size)
-                return filteredCards.subList(startIndex, endIndex)
-            }
-        }
-        
-        val query = buildCardQuery(pokemonName)
-        return try {
-            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: pokemonName='$pokemonName', query='$query', languages=$languages, page=$page, pageSize=$pageSize")
-            val apiStartTime = System.currentTimeMillis()
-            
-            val response = api.searchCards(query = query, pageSize = pageSize, page = page)
-            
-            val apiTime = System.currentTimeMillis() - apiStartTime
-            android.util.Log.d("PokemonRepository", "⏱️ API RESPONSE: ${response.cards.size} cards in ${apiTime}ms")
-            android.util.Log.d("PokemonRepository", "📊 Response details: page=${response.page}, pageSize=${response.pageSize}, count=${response.count}, totalCount=${response.totalCount}")
-            
-            // Filter cards by language before caching
-            val filteredCards = filterCardsByLanguage(response.cards, languages)
-            android.util.Log.d("PokemonRepository", "🔍 Language filter: ${response.cards.size} -> ${filteredCards.size} cards (languages: $languages)")
-            
-            cardDao.insertCards(response.cards) // Cache all cards (unfiltered)
-            android.util.Log.d("PokemonRepository", "✓ Cards saved to database")
-            filteredCards // Return filtered cards
-        } catch (e: Exception) {
-            android.util.Log.e("PokemonRepository", "❌ API ERROR: ${e.javaClass.simpleName}: ${e.message}")
-            
-            // ALWAYS try to get cached results on error
-            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cachedCards.isNotEmpty()) {
-                val filteredCards = filterCardsByLanguage(cachedCards, languages)
-                android.util.Log.w("PokemonRepository", "⚠️ API failed for '$pokemonName', using ${filteredCards.size}/${cachedCards.size} cached cards (languages: $languages)")
-                // Return paginated subset from cache
-                val startIndex = (page - 1) * pageSize
-                val endIndex = minOf(startIndex + pageSize, filteredCards.size)
-                if (startIndex < filteredCards.size) {
-                    return filteredCards.subList(startIndex, endIndex)
-                }
-                return emptyList()
-            }
-            
-            val errorDetails = """
-                Pokemon Name: '$pokemonName'
-                Query Used: '$query'
-                Error Type: ${e.javaClass.simpleName}
-                Message: ${e.message}
-                Cause: ${e.cause?.message}
-            """.trimIndent()
-            android.util.Log.e("PokemonRepository", "❌ Error searching cards:\n$errorDetails")
-            throw Exception("${e.javaClass.simpleName}: ${e.message}\n\nPokemon: $pokemonName\nQuery: $query", e)
-        }
-    }
-    
-    suspend fun searchPokemonCards(pokemonName: String, languages: Set<String> = setOf("en", "ja")): List<Card> {
-        return try {
-            val startTime = System.currentTimeMillis()
-            
-            // First, check database for cached results
-            val localCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            
-            // If we have local results, return them immediately for better UX
-            if (localCards.isNotEmpty()) {
-                val filteredCards = filterCardsByLanguage(localCards, languages)
-                val cacheTime = System.currentTimeMillis() - startTime
-                android.util.Log.d("PokemonRepository", "✅ CACHE HIT: ${filteredCards.size}/${localCards.size} cards in ${cacheTime}ms for: $pokemonName (languages: $languages)")
-                return filteredCards
-            }
-            
-            // No cache, fetch from API
-            val query = buildCardQuery(pokemonName)
-            android.util.Log.d("PokemonRepository", "🌐 API REQUEST: Starting search with query: $query")
-            val apiStartTime = System.currentTimeMillis()
-            
-            val response = api.searchCards(query = query, pageSize = 250)
-            
-            val apiTime = System.currentTimeMillis() - apiStartTime
-            android.util.Log.d("PokemonRepository", "⏱️ API RESPONSE: ${response.cards.size} cards in ${apiTime}ms")
-            
-            val filteredCards = filterCardsByLanguage(response.cards, languages)
-            android.util.Log.d("PokemonRepository", "🔍 Language filter: ${response.cards.size} -> ${filteredCards.size} cards (languages: $languages)")
-            
-            val dbStartTime = System.currentTimeMillis()
-            cardDao.insertCards(response.cards) // Cache all cards
-            val dbTime = System.currentTimeMillis() - dbStartTime
-            
-            val totalTime = System.currentTimeMillis() - startTime
-            android.util.Log.d("PokemonRepository", "📊 TIMING: Total=${totalTime}ms (API=${apiTime}ms, DB=${dbTime}ms)")
-            
-            filteredCards // Return filtered cards
-        } catch (e: Exception) {
-            // On error, try to return cached data as fallback
-            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cachedCards.isNotEmpty()) {
-                val filteredCards = filterCardsByLanguage(cachedCards, languages)
-                android.util.Log.w("PokemonRepository", "API failed, using ${filteredCards.size}/${cachedCards.size} cached cards (languages: $languages)")
-                return filteredCards
-            }
-            
-            val errorDetails = """
-                Error Type: ${e.javaClass.simpleName}
-                Message: ${e.message}
-                Cause: ${e.cause?.message}
-                Stack Trace:
-                ${e.stackTraceToString()}
-            """.trimIndent()
-            android.util.Log.e("PokemonRepository", "Error searching cards:\n$errorDetails")
-            throw Exception("${e.javaClass.simpleName}: ${e.message}\nAt: ${e.stackTrace.firstOrNull()}", e)
-        }
-    }
-
-    suspend fun getCardsByPokemonAndSet(pokemonName: String, setId: String): List<Card> {
-        return try {
-            val query = "name:$pokemonName set.id:$setId"
-            val response = api.searchCards(query = query)
-            cardDao.insertCards(response.cards)
-            response.cards
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-
     fun getLocalCardsByPokemonName(pokemonName: String): Flow<List<Card>> {
         return cardDao.getCardsByPokemonName(pokemonName)
     }
@@ -312,15 +78,7 @@ class PokemonRepository @Inject constructor(
     }
 
     suspend fun getCardById(cardId: String): Card? {
-        return try {
-            val response = api.getCardById(cardId)
-            response.cards.firstOrNull()?.let { card ->
-                cardDao.insertCard(card)
-                card
-            }
-        } catch (e: Exception) {
-            cardDao.getCardById(cardId)
-        }
+        return cardDao.getCardById(cardId)
     }
 
     // User Card Operations
@@ -595,44 +353,6 @@ class PokemonRepository @Inject constructor(
     }
 
     // Helper functions
-
-    private suspend fun buildCardQuery(pokemonName: String): String {
-        // Try to get Pokedex number first for multi-language support
-        val pokemon = pokemonDao.searchPokemon(pokemonName).firstOrNull()
-        
-        return if (pokemon?.nationalPokedexNumber != null) {
-            // Use Pokedex number range syntax - works for all languages (Pikachu = 25, ピカチュウ = 25)
-            // Per API docs: nationalPokedexNumbers:[25 TO 25]
-            android.util.Log.d("PokemonRepository", "Using nationalPokedexNumbers:[${pokemon.nationalPokedexNumber} TO ${pokemon.nationalPokedexNumber}] for $pokemonName")
-            "nationalPokedexNumbers:[${pokemon.nationalPokedexNumber} TO ${pokemon.nationalPokedexNumber}]"
-        } else {
-            // Fallback to name search
-            val cleanName = pokemonName.trim()
-            android.util.Log.d("PokemonRepository", "Using name search: $cleanName (no Pokedex number found)")
-            "name:$cleanName"
-        }
-    }
-    
-    /**
-     * Filter cards by selected languages.
-     * English cards: Set is NOT Japanese (no Japanese characters, no "-jp" in set ID)
-     * Japanese cards: Set IS Japanese (contains Japanese characters or "-jp" in set ID)
-     */
-    private fun filterCardsByLanguage(cards: List<Card>, languages: Set<String>): List<Card> {
-        if (languages.isEmpty() || languages.containsAll(setOf("en", "ja"))) {
-            // Both languages selected or no filter - return all cards
-            return cards
-        }
-        
-        return cards.filter { card ->
-            when {
-                languages.contains("ja") && languages.contains("en") -> true
-                languages.contains("ja") -> card.set?.isJapanese == true
-                languages.contains("en") -> card.set?.isJapanese != true
-                else -> true // Default to showing all if unexpected language value
-            }
-        }
-    }
     
     private fun getPopularPokemonList(): List<Pokemon> {
         // Complete Pokedex mapping for all generations

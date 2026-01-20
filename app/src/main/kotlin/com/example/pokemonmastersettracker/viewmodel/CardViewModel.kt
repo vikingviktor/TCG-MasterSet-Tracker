@@ -40,14 +40,6 @@ data class CardUiState(
     val lastQuery: String? = null, // For debugging - shows the actual query used
     val debugInfo: String? = null, // For debugging - shows diagnostic information
     val sortOption: CardSortOption = CardSortOption.NONE,
-    val databaseExported: Boolean = false, // Track if database was exported
-    val preFetchComplete: Boolean = false, // Track if pre-fetch completed
-    val preFetchProgress: Int = 0, // Current pokemon being fetched (0-56)
-    val preFetchTotal: Int = 56, // Total pokemon to fetch (expanded from 31 to 56)
-    val preFetchCached: Int = 0, // Already cached
-    val preFetchSuccess: Int = 0, // Successfully fetched
-    val preFetchFailed: Int = 0, // Failed after retries
-    val currentPokemon: String = "", // Name of pokemon currently being fetched
     val showTrackingDialog: String? = null // Pokemon name to show tracking dialog for
 )
 
@@ -87,84 +79,6 @@ class CardViewModel @Inject constructor(
             
             // Seed Pokemon database
             repository.seedPopularPokemon()
-            
-            // Pre-fetch popular Pokemon cards in background
-            // This caches data locally for instant searches
-            android.util.Log.d("CardViewModel", "🚀 Starting background pre-fetch of popular Pokemon cards...")
-            // Run in background coroutine so it doesn't block app startup
-            launch {
-                try {
-                    val stats = repository.preFetchPopularPokemonCards(
-                        onProgress = { current, total, pokemonName, cached, success, failed ->
-                            _cardUiState.value = _cardUiState.value.copy(
-                                preFetchProgress = current,
-                                preFetchTotal = total,
-                                currentPokemon = pokemonName,
-                                preFetchCached = cached,
-                                preFetchSuccess = success,
-                                preFetchFailed = failed
-                            )
-                        }
-                    )
-                    android.util.Log.d("CardViewModel", "✓ Pre-fetch complete: cached=${stats.first}, fetched=${stats.second}, failed=${stats.third}")
-                    
-                    // Update UI state
-                    _cardUiState.value = _cardUiState.value.copy(preFetchComplete = true)
-                    
-                    // Only export database if we actually fetched or have cached data
-                    val totalData = stats.first + stats.second
-                    if (totalData > 0) {
-                        // Show notification that pre-fetch is done
-                        android.widget.Toast.makeText(
-                            context,
-                            "✓ Pre-fetch complete! ($totalData Pokemon) Exporting database...",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                        
-                        // After pre-fetch, export database for bundling with future app versions
-                        android.util.Log.d("CardViewModel", "📦 Exporting database for bundling...")
-                        val exportPath = DatabaseExporter.exportDatabase(context)
-                        if (exportPath != null) {
-                            android.util.Log.d("CardViewModel", "✓ Database exported to: $exportPath")
-                            android.util.Log.d("CardViewModel", "📋 Next steps:")
-                            android.util.Log.d("CardViewModel", "   1. Copy this file from device to: app/src/main/assets/database/")
-                            android.util.Log.d("CardViewModel", "   2. Rename to: pokemon_tracker_prepopulated.db")
-                            android.util.Log.d("CardViewModel", "   3. Rebuild app - it will use pre-populated data!")
-                            
-                            // Update UI state
-                            _cardUiState.value = _cardUiState.value.copy(databaseExported = true)
-                            
-                            // Show success notification
-                            android.widget.Toast.makeText(
-                                context,
-                                "✓ Database exported! $totalData Pokemon ready for bundling",
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            // Show error notification
-                            android.widget.Toast.makeText(
-                                context,
-                                "⚠️ Database export failed - check permissions",
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    } else {
-                        android.widget.Toast.makeText(
-                            context,
-                            "⚠️ Pre-fetch failed - no data cached. API may be having issues.",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("CardViewModel", "⚠️ Pre-fetch failed: ${e.message}")
-                    // Show error notification
-                    android.widget.Toast.makeText(
-                        context,
-                        "⚠️ Pre-fetch failed: ${e.message}",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
         }
     }
 
@@ -260,91 +174,14 @@ class CardViewModel @Inject constructor(
         _cardUiState.value = _cardUiState.value.copy(showTrackingDialog = null)
     }
 
-    // MODIFIED: Now loads cards from API when Pokemon is clicked (English only, as API doesn't have Japanese card data)
+    // Wrapper method for compatibility - now uses TCGdex API
     fun selectPokemonCards(pokemonName: String, languages: Set<String> = setOf("en"), page: Int = 1, pageSize: Int = 250, forceRefresh: Boolean = false) {
-        viewModelScope.launch {
-            android.util.Log.d("CardViewModel", "🎯 selectPokemonCards called for: $pokemonName")
-            _cardUiState.value = _cardUiState.value.copy(
-                loading = true, 
-                selectedPokemonName = pokemonName,
-                lastQuery = "Loading...",
-                debugInfo = "Searching: $pokemonName | Page: $page | PageSize: $pageSize | Cache: ${!forceRefresh}",
-                showTrackingDialog = null // Clear any dialog when selecting cards
-            )
-            try {
-                android.util.Log.d("CardViewModel", "Loading cards for: $pokemonName (page: $page, pageSize: $pageSize, languages: $languages, forceRefresh: $forceRefresh)")
-                
-                // The Pokemon TCG API returns ALL cards (English, Japanese, etc.) in one query
-                // The repository filters by language after fetching
-                // pageSize controls how many cards per page
-                // page controls which page of results to fetch
-                val cards = repository.searchPokemonCardsWithPagination(
-                    pokemonName, 
-                    languages, // Pass Set<String> of selected languages
-                    page, 
-                    pageSize,
-                    forceRefresh
-                )
-                
-                android.util.Log.d("CardViewModel", "Loaded ${cards.size} cards for page $page")
-                
-                // Save the first card's image to Pokemon entity for future searches
-                cards.firstOrNull()?.image?.small?.let { imageUrl ->
-                    repository.updatePokemonImage(pokemonName, imageUrl)
-                    android.util.Log.d("CardViewModel", "Saved image for $pokemonName")
-                }
-                
-                // If we got exactly pageSize cards, there might be more
-                val hasMore = cards.size >= pageSize
-                
-                // If loading more pages (page > 1), append to existing cards
-                val allCards = if (page > 1) {
-                    _cardUiState.value.allCards + cards
-                } else {
-                    cards
-                }
-                
-                _cardUiState.value = _cardUiState.value.copy(
-                    cards = allCards,
-                    allCards = allCards,
-                    loading = false,
-                    error = null,
-                    selectedPokemonName = pokemonName,
-                    currentPage = page,
-                    hasMorePages = hasMore,
-                    pageSize = pageSize,
-                    debugInfo = "✓ Loaded ${cards.size} cards for page $page (Total: ${allCards.size})"
-                )
-            } catch (e: Exception) {
-                android.util.Log.e("CardViewModel", "Error loading cards: ${e.message}", e)
-                val errorType = when {
-                    e.message?.contains("404") == true -> "404 Not Found"
-                    e.message?.contains("504") == true -> "504 Timeout"
-                    else -> e.javaClass.simpleName
-                }
-                _cardUiState.value = _cardUiState.value.copy(
-                    error = e.message ?: "Unknown error",
-                    loading = false,
-                    debugInfo = "✗ Failed: $errorType | Pokemon: $pokemonName | Check Logcat for query details"
-                )
-            }
-        }
+        // Use the primary language (TCGdex doesn't support multiple languages in one call)
+        val primaryLanguage = languages.firstOrNull() ?: "en"
+        loadCardsFromTCGdex(pokemonName, primaryLanguage)
     }
     
-    fun loadMoreCards(languages: Set<String> = setOf("en")) {
-        val currentState = _cardUiState.value
-        currentState.selectedPokemonName?.let { pokemonName ->
-            selectPokemonCards(pokemonName, languages, currentState.currentPage + 1, currentState.pageSize)
-        }
-    }
-    
-    fun changePageSize(newPageSize: Int, languages: Set<String> = setOf("en")) {
-        val currentState = _cardUiState.value
-        currentState.selectedPokemonName?.let { pokemonName ->
-            // Reset to page 1 when changing page size
-            selectPokemonCards(pokemonName, languages, 1, newPageSize)
-        }
-    }
+    // Pagination methods removed - TCGdex returns all cards at once
     
     fun setSortOption(sortOption: CardSortOption) {
         val currentCards = _cardUiState.value.allCards
@@ -380,17 +217,7 @@ class CardViewModel @Inject constructor(
         )
     }
 
-    fun getCardsByPokemonAndSet(pokemonName: String, setId: String) {
-        viewModelScope.launch {
-            _cardUiState.value = CardUiState(loading = true)
-            try {
-                val cards = repository.getCardsByPokemonAndSet(pokemonName, setId)
-                _cardUiState.value = CardUiState(cards = cards, selectedPokemonName = pokemonName)
-            } catch (e: Exception) {
-                _cardUiState.value = CardUiState(error = e.message ?: "Unknown error")
-            }
-        }
-    }
+    // getCardsByPokemonAndSet removed - old API method not supported by TCGdex
 
     fun selectCard(card: Card) {
         _selectedCard.value = card
@@ -486,15 +313,7 @@ class CardViewModel @Inject constructor(
         }
     }
 
-    // Test direct API call with simplest possible query
-    suspend fun testDirectApiCall(): String {
-        return try {
-            val cards = repository.searchPokemonCards("Pikachu")
-            "SUCCESS: Retrieved ${cards.size} cards"
-        } catch (e: Exception) {
-            "ERROR: ${e.message}"
-        }
-    }
+    // testDirectApiCall removed - old Pokemon TCG API no longer used
     
     /**
      * Load Pokemon cards from TCGdex API with language selection

@@ -35,7 +35,7 @@ object DatabaseExporter {
                 exportDir.mkdirs()
             }
             
-            val exportFile = File(exportDir, "pokemon_tracker_prepopulated.db")
+            val exportFile = File(exportDir, "pokemon_tracker_export.db")
             
             // Copy database file
             FileInputStream(currentDBPath).use { input ->

@@ -44,9 +44,8 @@ abstract class PokemonTrackerDatabase : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     PokemonTrackerDatabase::class.java,
-                    "pokemon_tracker_v7.db"  // Changed to v7 to force fresh install with prepopulated DB
+                    "pokemon_tracker_v8.db"  // v8: Removed prepopulated DB, data seeded at runtime
                 )
-                .createFromAsset("database/pokemon_tracker_prepopulated.db")
                 .fallbackToDestructiveMigration()
                 .build().also { instance = it }
             }

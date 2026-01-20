@@ -55,12 +55,12 @@ fun ApiTestScreen(
         )
         
         Text(
-            text = "Test the Pokemon TCG API connection speed and reliability",
+            text = "Test the TCGdex API connection speed and reliability",
             fontSize = 14.sp,
             color = Color.Gray
         )
 
-        // Pokemon TCG API Test Button
+        // TCGdex API Test Button
         Button(
             onClick = {
                 scope.launch {
@@ -68,153 +68,103 @@ fun ApiTestScreen(
                     testResults = emptyList()
                     
                     val results = mutableListOf<String>()
-                    results.add("=== Pokemon TCG API Test Started ===\n")
+                    results.add("=== TCGdex API Test Started ===")
+                    results.add("")
                     
-                    // Test 0: Direct API call to verify endpoint
-                    results.add("Test 0: Direct API endpoint check")
-                    val test0Start = System.currentTimeMillis()
-                    try {
-                        // Try the simplest possible query - no parameters
-                        viewModel.testDirectApiCall()
-                        delay(2000)
-                        val test0Time = System.currentTimeMillis() - test0Start
-                        results.add("✓ Base endpoint reachable in ${test0Time}ms\n")
-                    } catch (e: Exception) {
-                        results.add("✗ Base endpoint failed: ${e.message}\n")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 1: Simple search query
-                    results.add("Test 1: Searching for 'Pikachu' (25 cards)")
+                    // Test 1: English cards
+                    results.add("Test 1: Fetching Pikachu cards in English")
                     val test1Start = System.currentTimeMillis()
                     try {
-                        viewModel.searchPokemonLocal("Pikachu")
-                        delay(100) // Give it time to process
+                        viewModel.loadCardsFromTCGdex("Pikachu", "en")
+                        delay(500)
                         val test1Time = System.currentTimeMillis() - test1Start
-                        results.add("✓ Local search completed in ${test1Time}ms\n")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}\n")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 2: Card search with pagination
-                    results.add("Test 2: Fetching Pikachu cards from API (page 1, 25 cards)")
-                    val test2Start = System.currentTimeMillis()
-                    try {
-                        viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 25)
-                        delay(500) // Give API time to respond
-                        val test2Time = System.currentTimeMillis() - test2Start
-                        results.add("✓ API request completed in ${test2Time}ms")
-                        
-                        if (test2Time > 10000) {
-                            results.add("⚠ WARNING: Response took over 10 seconds!")
-                        } else if (test2Time > 5000) {
-                            results.add("⚠ Response is slow (>5s)")
-                        } else if (test2Time > 2000) {
-                            results.add("ℹ Response is acceptable (2-5s)")
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ English cards loaded in ${test1Time}ms")
+                        results.add("  Cards returned: $cardCount")
+                        if (test1Time > 2000) {
+                            results.add("  ⚠ Response is slow (>2s)")
                         } else {
-                            results.add("✓ Response is fast (<2s)")
+                            results.add("  ✓ Response is fast (<2s)")
                         }
                         results.add("")
                     } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}\n")
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
                     }
                     testResults = results.toList()
                     
-                    // Test 3: Large page size
-                    results.add("Test 3: Fetching with larger page size (50 cards)")
+                    // Test 2: Japanese cards
+                    results.add("Test 2: Fetching Charizard cards in Japanese")
+                    val test2Start = System.currentTimeMillis()
+                    try {
+                        viewModel.loadCardsFromTCGdex("Charizard", "ja")
+                        delay(500)
+                        val test2Time = System.currentTimeMillis() - test2Start
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ Japanese cards loaded in ${test2Time}ms")
+                        results.add("  Cards returned: $cardCount")
+                        if (test2Time > 2000) {
+                            results.add("  ⚠ Response is slow (>2s)")
+                        } else {
+                            results.add("  ✓ Response is fast (<2s)")
+                        }
+                        results.add("")
+                    } catch (e: Exception) {
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
+                    // Test 3: Different Pokemon
+                    results.add("Test 3: Fetching Mewtwo cards")
                     val test3Start = System.currentTimeMillis()
                     try {
-                        viewModel.selectPokemonCards("Charizard", setOf("en"), 1, 50)
+                        viewModel.loadCardsFromTCGdex("Mewtwo", "en")
                         delay(500)
                         val test3Time = System.currentTimeMillis() - test3Start
-                        results.add("✓ Large request completed in ${test3Time}ms\n")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}\n")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 4: Multi-language request
-                    results.add("Test 4: Multi-language search (English + Japanese)")
-                    val test4Start = System.currentTimeMillis()
-                    try {
-                        viewModel.selectPokemonCards("Mewtwo", setOf("en", "ja"), 1, 25)
-                        delay(500)
-                        val test4Time = System.currentTimeMillis() - test4Start
-                        results.add("✓ Multi-language completed in ${test4Time}ms")
-                        results.add("ℹ Note: Multi-language makes 2 API calls\n")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}\n")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 5: Exact query format we use in app
-                    results.add("Test 5: Testing exact app query format + Total Count")
-                    val test5Start = System.currentTimeMillis()
-                    try {
-                        results.add("Pokemon: Pikachu | PageSize: 50 | Page: 1")
-                        results.add("(Query details in Logcat - will use Pokedex #25 if available)")
-                        viewModel.selectPokemonCards("Pikachu", setOf("en"), 1, 50)
-                        
-                        // Wait for loading to complete (max 5 seconds)
-                        var waitTime = 0
-                        while (viewModel.cardUiState.value.loading && waitTime < 5000) {
-                            delay(100)
-                            waitTime += 100
-                        }
-                        
-                        val test5Time = System.currentTimeMillis() - test5Start
-                        results.add("✓ Query completed in ${test5Time}ms")
-                        
                         val cardCount = viewModel.cardUiState.value.cards.size
-                        val allCardsCount = viewModel.cardUiState.value.allCards.size
-                        val debugInfo = viewModel.cardUiState.value.debugInfo ?: "No debug info"
-                        val errorInfo = viewModel.cardUiState.value.error
-                        val isLoading = viewModel.cardUiState.value.loading
-                        val selectedPokemon = viewModel.cardUiState.value.selectedPokemonName
-                        
-                        results.add("ℹ Cards in state: $cardCount")
-                        results.add("ℹ All cards: $allCardsCount")
-                        results.add("ℹ Still loading: $isLoading")
-                        results.add("ℹ Selected Pokemon: $selectedPokemon")
-                        results.add("ℹ Debug: $debugInfo")
-                        
-                        if (errorInfo != null) {
-                            results.add("⚠ Error occurred: $errorInfo")
-                            results.add("  Check Logcat for full details")
-                        } else if (cardCount == 0) {
-                            results.add("⚠ WARNING: No cards returned!")
-                            results.add("  Possible issues:")
-                            results.add("  • API returned empty results")
-                            results.add("  • Query failed but no error set")
-                            results.add("  • Check Logcat for API logs")
-                        } else {
-                            results.add("✓ Cards successfully loaded")
+                        results.add("✓ Cards loaded in ${test3Time}ms")
+                        results.add("  Cards returned: $cardCount")
+                        if (cardCount > 0) {
                             results.add("  First card: ${viewModel.cardUiState.value.cards.firstOrNull()?.name ?: "N/A"}")
                         }
                         results.add("")
                     } catch (e: Exception) {
-                        val errorMsg = e.message ?: "Unknown error"
-                        results.add("✗ Failed: $errorMsg")
-                        if (errorMsg.contains("504") || errorMsg.contains("timeout")) {
-                            results.add("⚠ This is a TIMEOUT error - API took >120s to respond")
-                        } else if (errorMsg.contains("404")) {
-                            results.add("⚠ This is a NOT FOUND error")
-                        }
+                        results.add("✗ Failed: ${e.message}")
+                        results.add("")
+                    }
+                    testResults = results.toList()
+                    
+                    // Test 4: Gen 2 Pokemon (Togepi)
+                    results.add("Test 4: Testing Gen 2 Pokemon (Togepi)")
+                    val test4Start = System.currentTimeMillis()
+                    try {
+                        viewModel.loadCardsFromTCGdex("Togepi", "en")
+                        delay(500)
+                        val test4Time = System.currentTimeMillis() - test4Start
+                        val cardCount = viewModel.cardUiState.value.cards.size
+                        results.add("✓ Togepi cards loaded in ${test4Time}ms")
+                        results.add("  Cards returned: $cardCount")
+                        results.add("  ℹ Should be ~30-40 cards, not 587+")
+                        results.add("")
+                    } catch (e: Exception) {
+                        results.add("✗ Failed: ${e.message}")
                         results.add("")
                     }
                     testResults = results.toList()
                     
                     results.add("=== Test Complete ===")
-                    results.add("\nDiagnostic Info:")
-                    results.add("• API: https://api.pokemontcg.io/v2/")
-                    results.add("• Timeout: 120s read, 30s connect")
-                    results.add("• Retry on failure: Enabled")
-                    results.add("\nCommon Issues:")
-                    results.add("• Slow response (>5s): API server may be under load")
-                    results.add("• Timeout errors: Check internet connection")
-                    results.add("• 429 errors: Rate limit exceeded (wait a minute)")
-                    results.add("• 404 errors: Card not found or query incorrect")
+                    results.add("")
+                    results.add("Diagnostic Info:")
+                    results.add("• API: https://api.tcgdex.net/v2/")
+                    results.add("• Supports: Gen 1-9 Pokemon (1025 total)")
+                    results.add("• Languages: en, ja, and 15+ others")
+                    results.add("• Speed: Typically <1s per request")
+                    results.add("")
+                    results.add("Common Issues:")
+                    results.add("• Slow response: Check internet connection")
+                    results.add("• 0 cards returned: Pokemon not in Pokedex map")
+                    results.add("• Too many cards: May need name-based search")
                     
                     testResults = results.toList()
                     isLoading = false
@@ -232,11 +182,10 @@ fun ApiTestScreen(
                     color = Color.White
                 )
             }
-            Text(if (isLoading) "Testing..." else "Run API Tests")
+            Text(if (isLoading) "Testing..." else "Run TCGdex API Tests")
         }
 
-        // TCGdex API Test Button
-        Button(
+        // Old Pokemon TCG API Test Button (REMOVED - API no longer used)
             onClick = {
                 scope.launch {
                     isLoading = true
