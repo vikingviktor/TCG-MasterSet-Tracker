@@ -1,6 +1,7 @@
 package com.example.pokemonmastersettracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -46,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -301,32 +307,19 @@ fun FavoritesScreen(
                             }
                         }
                     ) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(cardUiState.cards) { card ->
-                                var cardOwned by remember { mutableStateOf(false) }
-                                
-                                LaunchedEffect(card.id, refreshTrigger) {
-                                    cardOwned = viewModel.isCardOwned(card.id)
+                        // Card Album View - Horizontal Pager with 4 cards per page (2x2)
+                        CardAlbumView(
+                            cards = cardUiState.cards,
+                            refreshTrigger = refreshTrigger,
+                            onCardClick = { card ->
+                                selectedCardForDialog = card
+                                scope.launch {
+                                    isCardOwned = viewModel.isCardOwned(card.id)
+                                    isCardInWishlist = viewModel.isInWishlist(card.id)
                                 }
-                                
-                                CardItem(
-                                    card = card,
-                                    isOwned = cardOwned,
-                                    onCardClick = {
-                                        selectedCardForDialog = card
-                                        scope.launch {
-                                            isCardOwned = viewModel.isCardOwned(card.id)
-                                            isCardInWishlist = viewModel.isInWishlist(card.id)
-                                        }
-                                    },
-                                    onFavoriteToggle = { /* Handle favorite toggle */ }
-                                )
-                            }
-                        }
+                            },
+                            viewModel = viewModel
+                        )
                     }
                 }
             }
@@ -466,4 +459,188 @@ fun FavoritePokemonCard(
             }
         }
     }
+}
+
+/**
+ * Card Album View - Displays cards in a horizontal pager with 4 cards per page (2x2 grid)
+ * Similar to a physical card binder/album
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CardAlbumView(
+    cards: List<Card>,
+    refreshTrigger: Int,
+    onCardClick: (Card) -> Unit,
+    viewModel: CardViewModel
+) {
+    val cardsPerPage = 4
+    val pageCount = (cards.size + cardsPerPage - 1) / cardsPerPage
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+    
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Page indicator
+        if (pageCount > 1) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Page ${pagerState.currentPage + 1} of $pageCount",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            // Page dots indicator
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(pageCount) { index ->
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == pagerState.currentPage) 
+                                    PokemonColors.Primary 
+                                else 
+                                    Color.Gray.copy(alpha = 0.3f)
+                            )
+                    )
+                }
+            }
+        }
+        
+        // Horizontal Pager for card pages
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+        ) { page ->
+            val startIndex = page * cardsPerPage
+            val endIndex = minOf(startIndex + cardsPerPage, cards.size)
+            val pageCards = cards.subList(startIndex, endIndex)
+            
+            // 2x2 Grid of cards
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
+            ) {
+                // Top row (2 cards)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (pageCards.isNotEmpty()) {
+                        CardAlbumSlot(
+                            card = pageCards[0],
+                            modifier = Modifier.weight(1f),
+                            refreshTrigger = refreshTrigger,
+                            onCardClick = onCardClick,
+                            viewModel = viewModel
+                        )
+                    }
+                    if (pageCards.size > 1) {
+                        CardAlbumSlot(
+                            card = pageCards[1],
+                            modifier = Modifier.weight(1f),
+                            refreshTrigger = refreshTrigger,
+                            onCardClick = onCardClick,
+                            viewModel = viewModel
+                        )
+                    } else {
+                        // Empty slot
+                        Box(modifier = Modifier.weight(1f))
+                    }
+                }
+                
+                // Bottom row (2 cards)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (pageCards.size > 2) {
+                        CardAlbumSlot(
+                            card = pageCards[2],
+                            modifier = Modifier.weight(1f),
+                            refreshTrigger = refreshTrigger,
+                            onCardClick = onCardClick,
+                            viewModel = viewModel
+                        )
+                    } else {
+                        Box(modifier = Modifier.weight(1f))
+                    }
+                    if (pageCards.size > 3) {
+                        CardAlbumSlot(
+                            card = pageCards[3],
+                            modifier = Modifier.weight(1f),
+                            refreshTrigger = refreshTrigger,
+                            onCardClick = onCardClick,
+                            viewModel = viewModel
+                        )
+                    } else {
+                        Box(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        
+        // Swipe hint text
+        if (pageCount > 1) {
+            Text(
+                text = "← Swipe to navigate →",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/**
+ * Single card slot in the album view
+ */
+@Composable
+fun CardAlbumSlot(
+    card: Card,
+    modifier: Modifier = Modifier,
+    refreshTrigger: Int,
+    onCardClick: (Card) -> Unit,
+    viewModel: CardViewModel
+) {
+    var cardOwned by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(card.id, refreshTrigger) {
+        cardOwned = viewModel.isCardOwned(card.id)
+    }
+    
+    CardItem(
+        card = card,
+        isOwned = cardOwned,
+        onCardClick = { onCardClick(card) },
+        onFavoriteToggle = { /* Handle favorite toggle */ },
+        modifier = modifier
+    )
 }
