@@ -143,15 +143,15 @@ class TCGdexService {
             
             Log.d("TCGdexService", "✓ TCGdex returned ${response.size} cards")
             
-            // IMPORTANT: Filter to only cards that actually contain the Pokemon name
-            // AND have the exact dexId (not substring match like 93 in 193)
+            // IMPORTANT: The API query parameter does substring matching (93 matches 193, 293, etc.)
+            // Filter to only cards where the dexId array contains EXACTLY our target dexId
+            // Example: Furret has dexId=[162], Yanma has dexId=[193]
+            // When searching for Haunter (#93), we only want cards with dexId=[93], not [193]
             val filteredCards = response.filter { card ->
-                val nameMatches = card.name.contains(pokemonName, ignoreCase = true)
-                val dexIdMatches = card.dexId?.contains(dexId) == true
-                nameMatches && dexIdMatches
+                card.dexId?.contains(dexId) == true
             }
             
-            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards matching '$pokemonName' with exact dexId #$dexId")
+            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards with exact dexId #$dexId")
             if (filteredCards.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
                 if (filteredCards.size > 5) {
