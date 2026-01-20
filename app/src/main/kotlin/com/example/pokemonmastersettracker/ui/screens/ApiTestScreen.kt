@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.pokemonmastersettracker.data.api.TCGdexService
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import kotlinx.coroutines.delay
@@ -39,6 +40,7 @@ fun ApiTestScreen(
     var testResults by remember { mutableStateOf<List<String>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val tcgdexService = remember { TCGdexService() }
 
     Column(
         modifier = Modifier
@@ -68,103 +70,76 @@ fun ApiTestScreen(
                     testResults = emptyList()
                     
                     val results = mutableListOf<String>()
-                    results.add("=== TCGdex API Test Started ===")
+                    results.add("=== TCGdex API Diagnostic Test ===")
                     results.add("")
                     
-                    // Test 1: English cards
-                    results.add("Test 1: Fetching Pikachu cards in English")
-                    val test1Start = System.currentTimeMillis()
-                    try {
-                        viewModel.loadCardsFromTCGdex("Pikachu", "en")
-                        delay(500)
-                        val test1Time = System.currentTimeMillis() - test1Start
-                        val cardCount = viewModel.cardUiState.value.cards.size
-                        results.add("✓ English cards loaded in ${test1Time}ms")
-                        results.add("  Cards returned: $cardCount")
-                        if (test1Time > 2000) {
-                            results.add("  ⚠ Response is slow (>2s)")
-                        } else {
-                            results.add("  ✓ Response is fast (<2s)")
-                        }
-                        results.add("")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}")
-                        results.add("")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 2: Japanese cards
-                    results.add("Test 2: Fetching Charizard cards in Japanese")
-                    val test2Start = System.currentTimeMillis()
-                    try {
-                        viewModel.loadCardsFromTCGdex("Charizard", "ja")
-                        delay(500)
-                        val test2Time = System.currentTimeMillis() - test2Start
-                        val cardCount = viewModel.cardUiState.value.cards.size
-                        results.add("✓ Japanese cards loaded in ${test2Time}ms")
-                        results.add("  Cards returned: $cardCount")
-                        if (test2Time > 2000) {
-                            results.add("  ⚠ Response is slow (>2s)")
-                        } else {
-                            results.add("  ✓ Response is fast (<2s)")
-                        }
-                        results.add("")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}")
-                        results.add("")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 3: Different Pokemon
-                    results.add("Test 3: Fetching Mewtwo cards")
-                    val test3Start = System.currentTimeMillis()
-                    try {
-                        viewModel.loadCardsFromTCGdex("Mewtwo", "en")
-                        delay(500)
-                        val test3Time = System.currentTimeMillis() - test3Start
-                        val cardCount = viewModel.cardUiState.value.cards.size
-                        results.add("✓ Cards loaded in ${test3Time}ms")
-                        results.add("  Cards returned: $cardCount")
-                        if (cardCount > 0) {
-                            results.add("  First card: ${viewModel.cardUiState.value.cards.firstOrNull()?.name ?: "N/A"}")
-                        }
-                        results.add("")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}")
-                        results.add("")
-                    }
-                    testResults = results.toList()
-                    
-                    // Test 4: Gen 2 Pokemon (Togepi)
-                    results.add("Test 4: Testing Gen 2 Pokemon (Togepi)")
-                    val test4Start = System.currentTimeMillis()
-                    try {
-                        viewModel.loadCardsFromTCGdex("Togepi", "en")
-                        delay(500)
-                        val test4Time = System.currentTimeMillis() - test4Start
-                        val cardCount = viewModel.cardUiState.value.cards.size
-                        results.add("✓ Togepi cards loaded in ${test4Time}ms")
-                        results.add("  Cards returned: $cardCount")
-                        results.add("  ℹ Should be ~30-40 cards, not 587+")
-                        results.add("")
-                    } catch (e: Exception) {
-                        results.add("✗ Failed: ${e.message}")
-                        results.add("")
-                    }
-                    testResults = results.toList()
-                    
-                    results.add("=== Test Complete ===")
+                    // Test 1: Pikachu with detailed diagnostics
+                    results.add("Test 1: Pikachu (English)")
                     results.add("")
-                    results.add("Diagnostic Info:")
-                    results.add("• API: https://api.tcgdex.net/v2/")
-                    results.add("• Supports: Gen 1-9 Pokemon (1025 total)")
-                    results.add("• Languages: en, ja, and 15+ others")
-                    results.add("• Speed: Typically <1s per request")
+                    try {
+                        val diagnostics = tcgdexService.searchCardsByPokemonWithDiagnostics("Pikachu", "en")
+                        results.addAll(diagnostics.diagnostics)
+                        results.add("")
+                        results.add("Final Result: ${diagnostics.cards.size} cards loaded")
+                        if (diagnostics.cards.isNotEmpty()) {
+                            results.add("Sample cards:")
+                            diagnostics.cards.take(3).forEach { card ->
+                                results.add("  • ${card.name} (${card.cardSet})")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        results.add("✗ Exception: ${e.message}")
+                    }
                     results.add("")
-                    results.add("Common Issues:")
-                    results.add("• Slow response: Check internet connection")
-                    results.add("• 0 cards returned: Pokemon not in Pokedex map")
-                    results.add("• Too many cards: May need name-based search")
+                    results.add("═══════════════════════════════")
+                    results.add("")
+                    testResults = results.toList()
+                    
+                    // Test 2: Haunter (was having filter issues)
+                    results.add("Test 2: Haunter (English)")
+                    results.add("")
+                    try {
+                        val diagnostics = tcgdexService.searchCardsByPokemonWithDiagnostics("Haunter", "en")
+                        results.addAll(diagnostics.diagnostics)
+                        results.add("")
+                        results.add("Final Result: ${diagnostics.cards.size} cards loaded")
+                        if (diagnostics.cards.isNotEmpty()) {
+                            results.add("Sample cards:")
+                            diagnostics.cards.take(3).forEach { card ->
+                                results.add("  • ${card.name} (${card.cardSet})")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        results.add("✗ Exception: ${e.message}")
+                    }
+                    results.add("")
+                    results.add("═══════════════════════════════")
+                    results.add("")
+                    testResults = results.toList()
+                    
+                    // Test 3: Scyther (common search)
+                    results.add("Test 3: Scyther (English)")
+                    results.add("")
+                    try {
+                        val diagnostics = tcgdexService.searchCardsByPokemonWithDiagnostics("Scyther", "en")
+                        results.addAll(diagnostics.diagnostics)
+                        results.add("")
+                        results.add("Final Result: ${diagnostics.cards.size} cards loaded")
+                    } catch (e: Exception) {
+                        results.add("✗ Exception: ${e.message}")
+                    }
+                    results.add("")
+                    results.add("═══════════════════════════════")
+                    results.add("")
+                    testResults = results.toList()
+                    
+                    results.add("=== Diagnostic Test Complete ===")
+                    results.add("")
+                    results.add("What to look for:")
+                    results.add("• API should return >0 cards")
+                    results.add("• Check if dexId field is present in API response")
+                    results.add("• See if filtering removes valid cards")
+                    results.add("• Verify final card count matches expectations")
                     
                     testResults = results.toList()
                     isLoading = false
@@ -182,7 +157,7 @@ fun ApiTestScreen(
                     color = Color.White
                 )
             }
-            Text(if (isLoading) "Testing..." else "Run TCGdex API Tests")
+            Text(if (isLoading) "Running Diagnostics..." else "Run Diagnostic Test")
         }
 
         // Results display

@@ -15,6 +15,14 @@ import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.CardImage
 
 /**
+ * Diagnostic information from a search operation
+ */
+data class SearchDiagnostics(
+    val cards: List<Card>,
+    val diagnostics: List<String>
+)
+
+/**
  * TCGdex REST API interface
  * API Documentation: https://tcgdex.dev/rest
  * 
@@ -113,6 +121,89 @@ class TCGdexService {
         .create(TCGdexApi::class.java)
     
     /**
+     * Search for cards with detailed diagnostic info for testing
+     * Returns both the cards and diagnostic information
+     */
+    suspend fun searchCardsByPokemonWithDiagnostics(pokemonName: String, language: String = "en"): SearchDiagnostics = withContext(Dispatchers.IO) {
+        val diagnostics = mutableListOf<String>()
+        
+        try {
+            diagnostics.add("🔍 Searching for '$pokemonName' in language: $language")
+            
+            val dexId = getPokedexNumber(pokemonName)
+            if (dexId <= 0) {
+                diagnostics.add("❌ No Pokedex number found for '$pokemonName'")
+                return@withContext SearchDiagnostics(emptyList(), diagnostics)
+            }
+            
+            diagnostics.add("✓ Found Pokedex #$dexId")
+            diagnostics.add("📡 API: https://api.tcgdex.net/v2/$language/cards?dexId=$dexId")
+            
+            val response = try {
+                api.searchCardsByDexId(language, dexId)
+            } catch (e: Exception) {
+                diagnostics.add("❌ API Error: ${e.message}")
+                return@withContext SearchDiagnostics(emptyList(), diagnostics)
+            }
+            
+            diagnostics.add("✓ API returned ${response.size} cards")
+            
+            if (response.isEmpty()) {
+                diagnostics.add("⚠ No cards returned from API")
+                return@withContext SearchDiagnostics(emptyList(), diagnostics)
+            }
+            
+            diagnostics.add("")
+            diagnostics.add("First 3 cards from API:")
+            response.take(3).forEach { card ->
+                diagnostics.add("  📋 ${card.name} | dexId=${card.dexId} | id=${card.id}")
+            }
+            
+            diagnostics.add("")
+            diagnostics.add("Filtering to exact dexId match...")
+            val filteredCards = response.filter { card ->
+                card.dexId?.contains(dexId) == true
+            }
+            
+            diagnostics.add("✓ ${filteredCards.size} cards match dexId #$dexId")
+            
+            if (filteredCards.size < response.size) {
+                diagnostics.add("")
+                diagnostics.add("Filtered out ${response.size - filteredCards.size} cards:")
+                response.filter { card -> card.dexId?.contains(dexId) != true }.take(5).forEach { card ->
+                    diagnostics.add("  ❌ ${card.name} (dexId=${card.dexId})")
+                }
+            }
+            
+            if (filteredCards.isEmpty()) {
+                diagnostics.add("")
+                diagnostics.add("⚠ All cards filtered out!")
+                return@withContext SearchDiagnostics(emptyList(), diagnostics)
+            }
+            
+            diagnostics.add("")
+            diagnostics.add("Fetching full details for ${filteredCards.size} cards...")
+            val detailedCards = filteredCards.mapNotNull { simpleCard ->
+                try {
+                    val fullCard = api.getCard(language, simpleCard.id)
+                    convertToCard(fullCard)
+                } catch (e: Exception) {
+                    diagnostics.add("  ⚠ Failed to fetch ${simpleCard.id}: ${e.message}")
+                    null
+                }
+            }
+            
+            diagnostics.add("✓ Loaded ${detailedCards.size} complete cards")
+            
+            SearchDiagnostics(detailedCards, diagnostics)
+            
+        } catch (e: Exception) {
+            diagnostics.add("❌ Unexpected error: ${e.message}")
+            SearchDiagnostics(emptyList(), diagnostics)
+        }
+    }
+    
+    /**
      * Search for Pokemon cards by name in specified language
      * @param pokemonName Name of the Pokemon (e.g., "Pikachu")
      * @param language "en" for English (currently searches by Pokedex ID which returns ALL languages)
@@ -143,15 +234,26 @@ class TCGdexService {
             
             Log.d("TCGdexService", "✓ TCGdex returned ${response.size} cards")
             
+            // Debug: Log first few cards to see what we got
+            if (response.isNotEmpty()) {
+                response.take(3).forEach { card ->
+                    Log.d("TCGdexService", "📋 Card: ${card.name} | dexId=${card.dexId} | id=${card.id}")
+                }
+            }
+            
             // IMPORTANT: The API query parameter does substring matching (93 matches 193, 293, etc.)
             // Filter to only cards where the dexId array contains EXACTLY our target dexId
             // Example: Furret has dexId=[162], Yanma has dexId=[193]
             // When searching for Haunter (#93), we only want cards with dexId=[93], not [193]
             val filteredCards = response.filter { card ->
-                card.dexId?.contains(dexId) == true
+                val matches = card.dexId?.contains(dexId) == true
+                if (!matches && response.size < 10) {
+                    Log.d("TCGdexService", "❌ Filtered out: ${card.name} (dexId=${card.dexId}, looking for $dexId)")
+                }
+                matches
             }
             
-            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards with exact dexId #$dexId")
+            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards with exact dexId #$dexId (from ${response.size} total)")
             if (filteredCards.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
                 if (filteredCards.size > 5) {
