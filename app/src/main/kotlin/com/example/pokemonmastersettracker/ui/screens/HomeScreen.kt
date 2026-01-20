@@ -530,9 +530,7 @@ fun CardDetailView(
     pageSize: Int,
     refreshTrigger: Int,
     viewModel: CardViewModel,
-    onCardClick: (Card) -> Unit,
-    onLoadMore: () -> Unit,
-    onPageSizeChange: (Int) -> Unit
+    onCardClick: (Card) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
