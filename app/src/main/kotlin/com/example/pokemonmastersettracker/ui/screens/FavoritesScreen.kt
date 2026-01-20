@@ -1,6 +1,7 @@
 package com.example.pokemonmastersettracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -534,71 +535,95 @@ fun CardAlbumView(
             val endIndex = minOf(startIndex + cardsPerPage, cards.size)
             val pageCards = cards.subList(startIndex, endIndex)
             
-            // 2x2 Grid of cards
-            Column(
+            // Binder page with dark background and edges
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
+                    .padding(horizontal = 8.dp)
             ) {
-                // Top row (2 cards)
-                Row(
+                // Dark binder background with page edges
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (pageCards.isNotEmpty()) {
-                        CardAlbumSlot(
-                            card = pageCards[0],
-                            modifier = Modifier.weight(1f),
-                            refreshTrigger = refreshTrigger,
-                            onCardClick = onCardClick,
-                            viewModel = viewModel
+                        .fillMaxSize()
+                        .background(Color(0xFF1A1A1A)) // Dark binder background
+                        .border(
+                            width = 2.dp,
+                            color = Color(0xFF2A2A2A) // Subtle edge
                         )
-                    }
-                    if (pageCards.size > 1) {
-                        CardAlbumSlot(
-                            card = pageCards[1],
-                            modifier = Modifier.weight(1f),
-                            refreshTrigger = refreshTrigger,
-                            onCardClick = onCardClick,
-                            viewModel = viewModel
+                        .padding(4.dp)
+                        .background(Color(0xFF0D0D0D)) // Darker inner background
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFF333333) // Page edge highlight
                         )
-                    } else {
-                        // Empty slot
-                        Box(modifier = Modifier.weight(1f))
-                    }
-                }
+                )
                 
-                // Bottom row (2 cards)
-                Row(
+                // 2x2 Grid of cards on top of binder background
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top)
                 ) {
-                    if (pageCards.size > 2) {
-                        CardAlbumSlot(
-                            card = pageCards[2],
-                            modifier = Modifier.weight(1f),
-                            refreshTrigger = refreshTrigger,
-                            onCardClick = onCardClick,
-                            viewModel = viewModel
-                        )
-                    } else {
-                        Box(modifier = Modifier.weight(1f))
+                    // Top row (2 cards)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (pageCards.isNotEmpty()) {
+                            CardAlbumSlot(
+                                card = pageCards[0],
+                                modifier = Modifier.weight(1f),
+                                refreshTrigger = refreshTrigger,
+                                onCardClick = onCardClick,
+                                viewModel = viewModel
+                            )
+                        }
+                        if (pageCards.size > 1) {
+                            CardAlbumSlot(
+                                card = pageCards[1],
+                                modifier = Modifier.weight(1f),
+                                refreshTrigger = refreshTrigger,
+                                onCardClick = onCardClick,
+                                viewModel = viewModel
+                            )
+                        } else {
+                            // Empty slot with pocket outline
+                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                        }
                     }
-                    if (pageCards.size > 3) {
-                        CardAlbumSlot(
-                            card = pageCards[3],
-                            modifier = Modifier.weight(1f),
-                            refreshTrigger = refreshTrigger,
-                            onCardClick = onCardClick,
-                            viewModel = viewModel
-                        )
-                    } else {
-                        Box(modifier = Modifier.weight(1f))
+                    
+                    // Bottom row (2 cards)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (pageCards.size > 2) {
+                            CardAlbumSlot(
+                                card = pageCards[2],
+                                modifier = Modifier.weight(1f),
+                                refreshTrigger = refreshTrigger,
+                                onCardClick = onCardClick,
+                                viewModel = viewModel
+                            )
+                        } else {
+                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                        }
+                        if (pageCards.size > 3) {
+                            CardAlbumSlot(
+                                card = pageCards[3],
+                                modifier = Modifier.weight(1f),
+                                refreshTrigger = refreshTrigger,
+                                onCardClick = onCardClick,
+                                viewModel = viewModel
+                            )
+                        } else {
+                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -642,5 +667,23 @@ fun CardAlbumSlot(
         onCardClick = { onCardClick(card) },
         onFavoriteToggle = { /* Handle favorite toggle */ },
         modifier = modifier
+    )
+}
+
+/**
+ * Empty card slot showing pocket outline in the binder
+ */
+@Composable
+fun EmptyCardSlot(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .aspectRatio(0.72f) // Standard Pokemon card aspect ratio
+            .border(
+                width = 1.dp,
+                color = Color(0xFF333333) // Dark pocket outline
+            )
+            .background(Color(0xFF0A0A0A)) // Very dark pocket background
     )
 }
