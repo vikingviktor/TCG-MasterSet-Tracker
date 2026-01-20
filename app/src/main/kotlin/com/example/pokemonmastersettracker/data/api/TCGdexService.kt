@@ -186,7 +186,7 @@ class TCGdexService {
             val detailedCards = filteredCards.mapNotNull { simpleCard ->
                 try {
                     val fullCard = api.getCard(language, simpleCard.id)
-                    convertToCard(fullCard)
+                    convertTCGdexCard(fullCard, language)
                 } catch (e: Exception) {
                     diagnostics.add("  ⚠ Failed to fetch ${simpleCard.id}: ${e.message}")
                     null

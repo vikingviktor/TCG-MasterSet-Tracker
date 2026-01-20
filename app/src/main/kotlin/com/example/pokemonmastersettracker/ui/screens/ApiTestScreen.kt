@@ -106,7 +106,7 @@ fun ApiTestScreen(
                         if (diagnostics.cards.isNotEmpty()) {
                             results.add("Sample cards:")
                             diagnostics.cards.take(3).forEach { card ->
-                                results.add("  • ${card.name} (${card.cardSet})")
+                                results.add("  • ${card.name} (${card.set?.name ?: "Unknown Set"})")
                             }
                         }
                     } catch (e: Exception) {
