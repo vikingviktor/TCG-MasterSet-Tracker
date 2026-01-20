@@ -142,20 +142,30 @@ class TCGdexService {
             }
             
             Log.d("TCGdexService", "✓ TCGdex returned ${response.size} cards")
-            if (response.isNotEmpty()) {
-                Log.d("TCGdexService", "📋 Cards: ${response.take(5).joinToString { it.name }}")
-                if (response.size > 5) {
-                    Log.d("TCGdexService", "   ... and ${response.size - 5} more")
+            
+            // IMPORTANT: Filter to only cards that actually contain the Pokemon name
+            // AND have the exact dexId (not substring match like 93 in 193)
+            val filteredCards = response.filter { card ->
+                val nameMatches = card.name.contains(pokemonName, ignoreCase = true)
+                val dexIdMatches = card.dexId?.contains(dexId) == true
+                nameMatches && dexIdMatches
+            }
+            
+            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards matching '$pokemonName' with exact dexId #$dexId")
+            if (filteredCards.isNotEmpty()) {
+                Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
+                if (filteredCards.size > 5) {
+                    Log.d("TCGdexService", "   ... and ${filteredCards.size - 5} more")
                 }
-                Log.d("TCGdexService", "🖼️  First image: ${response.first().image}")
+                Log.d("TCGdexService", "🖼️  First image: ${filteredCards.first().image}")
             } else {
-                Log.w("TCGdexService", "⚠️ No cards found for Pokedex #$dexId ($pokemonName)")
+                Log.w("TCGdexService", "⚠️ No cards found matching name '$pokemonName' (had ${response.size} cards for dexId #$dexId)")
             }
             
             // The dexId search returns simplified data without set info
             // Fetch full details for each card to get set names and complete data
-            Log.d("TCGdexService", "📡 Fetching full details for ${response.size} cards...")
-            val detailedCards = response.mapNotNull { simpleCard ->
+            Log.d("TCGdexService", "📡 Fetching full details for ${filteredCards.size} cards...")
+            val detailedCards = filteredCards.mapNotNull { simpleCard ->
                 try {
                     api.getCard(language, simpleCard.id)
                 } catch (e: Exception) {

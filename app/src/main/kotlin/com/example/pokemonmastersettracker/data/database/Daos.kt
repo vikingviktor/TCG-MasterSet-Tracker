@@ -122,7 +122,7 @@ interface FavoritePokemonDao {
     suspend fun deleteFavorite(favorite: FavoritePokemon)
     
     // Single query that gets all favorite Pokemon with details via JOINs
-    // Counts owned cards by joining with cards table and filtering by exact Pokemon name match
+    // Counts owned cards by checking if card name contains the Pokemon name
     @Query("""
         SELECT 
             fp.pokemonName as pokemonName,
@@ -130,8 +130,10 @@ interface FavoritePokemonDao {
             p.imageUrl as imageUrl,
             fp.totalCards as totalCards,
             COUNT(DISTINCT CASE 
-                WHEN c.name LIKE fp.pokemonName || ' %' 
-                     OR c.name = fp.pokemonName 
+                WHEN uc.isOwned = 1 AND (
+                    c.name LIKE '%' || fp.pokemonName || '%'
+                    OR c.name = fp.pokemonName
+                )
                 THEN uc.cardId 
                 ELSE NULL 
             END) as ownedCount

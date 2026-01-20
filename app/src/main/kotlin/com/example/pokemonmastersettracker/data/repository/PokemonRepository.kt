@@ -202,7 +202,7 @@ class PokemonRepository @Inject constructor(
             updatePokemonImage(pokemonName, imageUrl)
         }
         
-        // Add to favorites with total count
+        // Add to favorites (IGNORE if exists)
         favoritePokemonDao.addFavorite(
             FavoritePokemon(
                 userId = userId,
@@ -210,6 +210,9 @@ class PokemonRepository @Inject constructor(
                 totalCards = totalCards
             )
         )
+        
+        // Always update totalCards in case it changed or was 0 before
+        favoritePokemonDao.updateTotalCards(userId, pokemonName, totalCards)
         
         android.util.Log.d("PokemonRepository", "✓ Added favorite: $pokemonName (${totalCards} cards, image: ${imageUrl != null})")
     }
