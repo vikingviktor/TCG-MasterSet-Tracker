@@ -621,24 +621,5 @@ fun CardDetailView(
                 )
             }
         }
-        
-        // Load More button removed - TCGdex returns all cards at once
-            ) {
-                Text(
-                    text = "Load More Cards (Page ${currentPage + 1})",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else if (cards.isNotEmpty()) {
-            Text(
-                text = "All cards loaded (Page $currentPage)",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
     }
 }
