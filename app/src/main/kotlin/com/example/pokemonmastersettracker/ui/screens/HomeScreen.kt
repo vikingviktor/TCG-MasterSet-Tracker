@@ -328,9 +328,7 @@ fun HomeScreen(
                                 isCardOwned = viewModel.isCardOwned(card.id)
                                 isCardInWishlist = viewModel.isInWishlist(card.id)
                             }
-                        },
-                        onLoadMore = { viewModel.loadMoreCards(setOf("en")) },
-                        onPageSizeChange = { newSize -> viewModel.changePageSize(newSize, setOf("en")) }
+                        }
                     )
                 }
             }

@@ -183,56 +183,13 @@ class PokemonRepository @Inject constructor(
             FavoritePokemon(
                 userId = userId,
                 pokemonName = pokemonName,
-                totalCards = 0 // Will update next
+                totalCards = 0 // Total cards not available in TCGdex without fetching
             )
         )
-        
-        // Then fetch the actual total card count from API
-        val totalCards = try {
-            val query = buildCardQuery(pokemonName)
-            val response = api.searchCards(query = query, pageSize = 1)
-            val count = response.totalCount
-            android.util.Log.d("PokemonRepository", "📊 Fetched total for $pokemonName: $count")
-            count
-        } catch (e: Exception) {
-            android.util.Log.w("PokemonRepository", "⚠️ API failed for $pokemonName, using cached count")
-            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            if (cachedCards.isNotEmpty()) cachedCards.size else 50
-        }
-        
-        // Update the totalCards for this favorite (keeps same id)
-        favoritePokemonDao.updateTotalCards(userId, pokemonName, totalCards)
-        android.util.Log.d("PokemonRepository", "✓ Updated $pokemonName totalCards: $totalCards")
     }
 
     suspend fun removeFavoritePokemon(userId: String, pokemonName: String) {
         favoritePokemonDao.removeFavorite(userId, pokemonName)
-    }
-    
-    suspend fun refreshFavoritePokemonTotalCards(userId: String, pokemonName: String) {
-        // Re-fetch the total count for an existing favorite Pokemon
-        val totalCards = try {
-            val query = buildCardQuery(pokemonName)
-            val response = api.searchCards(query = query, pageSize = 1)
-            val count = response.totalCount
-            android.util.Log.d("PokemonRepository", "🔄 Refreshed total cards for $pokemonName: $count")
-            count
-        } catch (e: Exception) {
-            // Fallback to cached count
-            val cachedCards = cardDao.getCardsByPokemonNameSync("%$pokemonName%")
-            val count = if (cachedCards.isNotEmpty()) cachedCards.size else 50
-            android.util.Log.w("PokemonRepository", "API failed, using cached/default count for $pokemonName: $count")
-            count
-        }
-        
-        // Update the favorite with new count
-        favoritePokemonDao.addFavorite(
-            FavoritePokemon(
-                userId = userId,
-                pokemonName = pokemonName,
-                totalCards = totalCards
-            )
-        )
     }
 
     fun getUserFavoritePokemon(userId: String): Flow<List<FavoritePokemon>> {
