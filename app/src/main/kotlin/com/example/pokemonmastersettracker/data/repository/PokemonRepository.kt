@@ -13,6 +13,7 @@ import com.example.pokemonmastersettracker.data.models.WishlistCard
 import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.models.CardCondition
+import com.example.pokemonmastersettracker.data.api.TCGdexService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -187,7 +188,7 @@ class PokemonRepository @Inject constructor(
         // Fetch cards from TCGdex to get image and count
         val tcgdexService = TCGdexService()
         val cards = try {
-            tcgdexService.searchCards(pokemonName, "en")
+            tcgdexService.searchCardsByPokemon(pokemonName, "en")
         } catch (e: Exception) {
             android.util.Log.w("PokemonRepository", "Failed to fetch TCGdex cards for $pokemonName: ${e.message}")
             emptyList()
