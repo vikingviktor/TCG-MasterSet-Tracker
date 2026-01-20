@@ -179,15 +179,26 @@ class TCGdexService {
             diagnostics.add("✓ Loaded ${detailedCards.size} complete cards with full data")
             
             diagnostics.add("")
-            diagnostics.add("Filtering by Pokémon name (removes wrong Pokemon)...")
-            diagnostics.add("ℹ Example: Haunter (#93) search returns Yanma (#193)")
-            val filteredCards = detailedCards.filter { card ->
-                card.name.contains(pokemonName, ignoreCase = true)
+            if (language == "en") {
+                diagnostics.add("Filtering by Pokémon name (English only)...")
+                diagnostics.add("ℹ Example: Haunter (#93) search returns Yanma (#193)")
+            } else {
+                diagnostics.add("Language: $language - Skipping name filter")
+                diagnostics.add("ℹ Reason: Card names are in $language, not English")
+                diagnostics.add("ℹ Trusting dexId search results")
             }
             
-            diagnostics.add("✓ ${filteredCards.size} cards match '$pokemonName'")
+            val filteredCards = if (language == "en") {
+                detailedCards.filter { card ->
+                    card.name.contains(pokemonName, ignoreCase = true)
+                }
+            } else {
+                detailedCards
+            }
             
-            if (filteredCards.size < detailedCards.size) {
+            diagnostics.add("✓ ${filteredCards.size} cards ${if (language == "en") "match '$pokemonName'" else "returned (no filter)"}")
+            
+            if (language == "en" && filteredCards.size < detailedCards.size) {
                 diagnostics.add("")
                 diagnostics.add("Filtered out ${detailedCards.size - filteredCards.size} wrong Pokemon:")
                 detailedCards.filter { card -> !card.name.contains(pokemonName, ignoreCase = true) }.take(5).forEach { card ->
@@ -274,13 +285,19 @@ class TCGdexService {
                 }
             }
             
-            // Filter to only cards matching the Pokemon name
+            // Filter to only cards matching the Pokemon name (English only)
+            // For non-English languages, card names are in that language, so skip filtering
             // This removes wrong Pokemon from substring matching (e.g., Yanma when searching Haunter)
-            val filteredCards = convertedCards.filter { card ->
-                card.name.contains(pokemonName, ignoreCase = true)
+            val filteredCards = if (language == "en") {
+                convertedCards.filter { card ->
+                    card.name.contains(pokemonName, ignoreCase = true)
+                }
+            } else {
+                // For Japanese/other languages, trust the dexId search
+                convertedCards
             }
             
-            Log.d("TCGdexService", "✓ Loaded ${filteredCards.size} cards for '$pokemonName' (filtered from ${convertedCards.size} total)")
+            Log.d("TCGdexService", "✓ Loaded ${filteredCards.size} cards for '$pokemonName' (${if (language == "en") "filtered from ${convertedCards.size} total" else "non-English, no name filter"})")
             if (filteredCards.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
                 if (filteredCards.size > 5) {
