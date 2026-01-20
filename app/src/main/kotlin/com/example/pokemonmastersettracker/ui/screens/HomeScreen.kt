@@ -552,33 +552,7 @@ fun CardDetailView(
             )
             
             // Page size selector
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Per page:",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-                listOf(25, 50, 100).forEach { size ->
-                    OutlinedButton(
-                        onClick = { onPageSizeChange(size) },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (pageSize == size) PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
-                            contentColor = if (pageSize == size) PokemonColors.Primary else Color.Gray
-                        ),
-                        modifier = Modifier.height(32.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = size.toString(),
-                            fontSize = 12.sp,
-                            fontWeight = if (pageSize == size) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
+            // Page size selector removed - TCGdex returns all cards at once
         }
         
         // Sort options
@@ -648,16 +622,7 @@ fun CardDetailView(
             }
         }
         
-        // Load More button
-        if (hasMorePages) {
-            Button(
-                onClick = onLoadMore,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PokemonColors.Primary
-                )
+        // Load More button removed - TCGdex returns all cards at once
             ) {
                 Text(
                     text = "Load More Cards (Page ${currentPage + 1})",
