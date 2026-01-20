@@ -160,30 +160,13 @@ class TCGdexService {
             }
             
             diagnostics.add("")
-            diagnostics.add("Filtering to exact dexId match...")
-            val filteredCards = response.filter { card ->
-                card.dexId?.contains(dexId) == true
-            }
-            
-            diagnostics.add("✓ ${filteredCards.size} cards match dexId #$dexId")
-            
-            if (filteredCards.size < response.size) {
-                diagnostics.add("")
-                diagnostics.add("Filtered out ${response.size - filteredCards.size} cards:")
-                response.filter { card -> card.dexId?.contains(dexId) != true }.take(5).forEach { card ->
-                    diagnostics.add("  ❌ ${card.name} (dexId=${card.dexId})")
-                }
-            }
-            
-            if (filteredCards.isEmpty()) {
-                diagnostics.add("")
-                diagnostics.add("⚠ All cards filtered out!")
-                return@withContext SearchDiagnostics(emptyList(), diagnostics)
-            }
-            
+            diagnostics.add("⚠ Note: Simplified response has dexId=null")
+            diagnostics.add("ℹ Strategy: Fetch full details first, THEN filter by name")
+            diagnostics.add("ℹ Reason: Can't filter on dexId if it's null")
             diagnostics.add("")
-            diagnostics.add("Fetching full details for ${filteredCards.size} cards...")
-            val detailedCards = filteredCards.mapNotNull { simpleCard ->
+            diagnostics.add("Fetching full details for ${response.size} cards...")
+            
+            val detailedCards = response.mapNotNull { simpleCard ->
                 try {
                     val fullCard = api.getCard(language, simpleCard.id)
                     convertTCGdexCard(fullCard, language)
@@ -193,9 +176,32 @@ class TCGdexService {
                 }
             }
             
-            diagnostics.add("✓ Loaded ${detailedCards.size} complete cards")
+            diagnostics.add("✓ Loaded ${detailedCards.size} complete cards with full data")
             
-            SearchDiagnostics(detailedCards, diagnostics)
+            diagnostics.add("")
+            diagnostics.add("Filtering by Pokémon name (removes wrong Pokemon)...")
+            diagnostics.add("ℹ Example: Haunter (#93) search returns Yanma (#193)")
+            val filteredCards = detailedCards.filter { card ->
+                card.name.contains(pokemonName, ignoreCase = true)
+            }
+            
+            diagnostics.add("✓ ${filteredCards.size} cards match '$pokemonName'")
+            
+            if (filteredCards.size < detailedCards.size) {
+                diagnostics.add("")
+                diagnostics.add("Filtered out ${detailedCards.size - filteredCards.size} wrong Pokemon:")
+                detailedCards.filter { card -> !card.name.contains(pokemonName, ignoreCase = true) }.take(5).forEach { card ->
+                    diagnostics.add("  ❌ ${card.name}")
+                }
+            }
+            
+            if (filteredCards.isEmpty()) {
+                diagnostics.add("")
+                diagnostics.add("⚠ WARNING: All cards filtered out!")
+                diagnostics.add("ℹ This means no cards contain '$pokemonName' in the name")
+            }
+            
+            SearchDiagnostics(filteredCards, diagnostics)
             
         } catch (e: Exception) {
             diagnostics.add("❌ Unexpected error: ${e.message}")
@@ -241,33 +247,14 @@ class TCGdexService {
                 }
             }
             
-            // IMPORTANT: The API query parameter does substring matching (93 matches 193, 293, etc.)
-            // Filter to only cards where the dexId array contains EXACTLY our target dexId
-            // Example: Furret has dexId=[162], Yanma has dexId=[193]
-            // When searching for Haunter (#93), we only want cards with dexId=[93], not [193]
-            val filteredCards = response.filter { card ->
-                val matches = card.dexId?.contains(dexId) == true
-                if (!matches && response.size < 10) {
-                    Log.d("TCGdexService", "❌ Filtered out: ${card.name} (dexId=${card.dexId}, looking for $dexId)")
-                }
-                matches
-            }
-            
-            Log.d("TCGdexService", "✓ Filtered to ${filteredCards.size} cards with exact dexId #$dexId (from ${response.size} total)")
-            if (filteredCards.isNotEmpty()) {
-                Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
-                if (filteredCards.size > 5) {
-                    Log.d("TCGdexService", "   ... and ${filteredCards.size - 5} more")
-                }
-                Log.d("TCGdexService", "🖼️  First image: ${filteredCards.first().image}")
-            } else {
-                Log.w("TCGdexService", "⚠️ No cards found matching name '$pokemonName' (had ${response.size} cards for dexId #$dexId)")
-            }
+            // NOTE: The simplified response has dexId=null, so we can't filter on it yet
+            // Fetch full details first, then filter by Pokemon name to remove wrong Pokemon
+            // (API does substring matching: searching #93 returns #193, #293, etc.)
             
             // The dexId search returns simplified data without set info
             // Fetch full details for each card to get set names and complete data
-            Log.d("TCGdexService", "📡 Fetching full details for ${filteredCards.size} cards...")
-            val detailedCards = filteredCards.mapNotNull { simpleCard ->
+            Log.d("TCGdexService", "📡 Fetching full details for ${response.size} cards...")
+            val detailedCards = response.mapNotNull { simpleCard ->
                 try {
                     api.getCard(language, simpleCard.id)
                 } catch (e: Exception) {
@@ -287,8 +274,24 @@ class TCGdexService {
                 }
             }
             
-            Log.d("TCGdexService", "✓ Converted ${convertedCards.size} cards")
-            convertedCards
+            // Filter to only cards matching the Pokemon name
+            // This removes wrong Pokemon from substring matching (e.g., Yanma when searching Haunter)
+            val filteredCards = convertedCards.filter { card ->
+                card.name.contains(pokemonName, ignoreCase = true)
+            }
+            
+            Log.d("TCGdexService", "✓ Loaded ${filteredCards.size} cards for '$pokemonName' (filtered from ${convertedCards.size} total)")
+            if (filteredCards.isNotEmpty()) {
+                Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
+                if (filteredCards.size > 5) {
+                    Log.d("TCGdexService", "   ... and ${filteredCards.size - 5} more")
+                }
+                Log.d("TCGdexService", "🖼️  First image: ${filteredCards.first().image}")
+            } else {
+                Log.w("TCGdexService", "⚠️ No cards found matching name '$pokemonName' after filtering")
+            }
+            
+            filteredCards
         } catch (e: Exception) {
             Log.e("TCGdexService", "❌ Error: ${e.message}", e)
             e.printStackTrace()
