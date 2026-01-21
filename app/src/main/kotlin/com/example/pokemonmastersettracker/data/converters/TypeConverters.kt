@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.example.pokemonmastersettracker.data.models.CardImage
+import com.example.pokemonmastersettracker.data.models.CardMarketData
 import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.TCGPlayerData
 import com.example.pokemonmastersettracker.data.models.PriceData
@@ -63,5 +64,15 @@ class TypeConverters {
         if (value == null) return null
         val type = object : TypeToken<Map<String, PriceData>>() {}.type
         return gson.fromJson(value, type)
+    }
+
+    @TypeConverter
+    fun fromCardMarketData(value: CardMarketData?): String? {
+        return if (value == null) null else gson.toJson(value)
+    }
+
+    @TypeConverter
+    fun toCardMarketData(value: String?): CardMarketData? {
+        return if (value == null) null else gson.fromJson(value, CardMarketData::class.java)
     }
 }
