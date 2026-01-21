@@ -589,9 +589,9 @@ fun CardAlbumView(
                                 onCardClick = onCardClick,
                                 viewModel = viewModel
                             )
-                        } else {
-                            // Empty slot with pocket outline
-                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                        } else if (pageCards.isNotEmpty()) {
+                            // Empty slot with pocket outline (not compact for top row)
+                            EmptyCardSlot(modifier = Modifier.weight(1f), isCompact = false)
                         }
                     }
                     
@@ -599,7 +599,14 @@ fun CardAlbumView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .then(
+                                // If no cards in bottom row, make it much smaller
+                                if (pageCards.size <= 2) {
+                                    Modifier.height(40.dp)
+                                } else {
+                                    Modifier.weight(1f)
+                                }
+                            ),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (pageCards.size > 2) {
@@ -611,7 +618,7 @@ fun CardAlbumView(
                                 viewModel = viewModel
                             )
                         } else {
-                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                            EmptyCardSlot(modifier = Modifier.weight(1f), isCompact = true)
                         }
                         if (pageCards.size > 3) {
                             CardAlbumSlot(
@@ -622,7 +629,7 @@ fun CardAlbumView(
                                 viewModel = viewModel
                             )
                         } else {
-                            EmptyCardSlot(modifier = Modifier.weight(1f))
+                            EmptyCardSlot(modifier = Modifier.weight(1f), isCompact = pageCards.size <= 2)
                         }
                     }
                 }
@@ -675,11 +682,20 @@ fun CardAlbumSlot(
  */
 @Composable
 fun EmptyCardSlot(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCompact: Boolean = false
 ) {
     Box(
         modifier = modifier
-            .aspectRatio(0.72f) // Standard Pokemon card aspect ratio
+            .then(
+                if (isCompact) {
+                    // Compact version - just a small placeholder
+                    Modifier.height(40.dp)
+                } else {
+                    // Full size with card aspect ratio
+                    Modifier.aspectRatio(0.72f)
+                }
+            )
             .border(
                 width = 1.dp,
                 color = Color(0xFF333333) // Dark pocket outline

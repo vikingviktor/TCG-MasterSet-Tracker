@@ -329,11 +329,15 @@ class CardViewModel @Inject constructor(
             )
             
             try {
-                // First, try to load from cache
-                val cachedCards = repository.getCachedCardsForPokemon(pokemonName)
+                // Only use cache for English cards to avoid language conflicts
+                val cachedCards = if (language == "en") {
+                    repository.getCachedCardsForPokemon(pokemonName)
+                } else {
+                    emptyList()
+                }
                 
                 if (cachedCards.isNotEmpty()) {
-                    android.util.Log.d("CardViewModel", "📦 Found ${cachedCards.size} cached cards for $pokemonName")
+                    android.util.Log.d("CardViewModel", "📦 Found ${cachedCards.size} cached English cards for $pokemonName")
                     
                     // Show cached cards immediately
                     _cardUiState.value = _cardUiState.value.copy(
@@ -358,8 +362,8 @@ class CardViewModel @Inject constructor(
                     
                     android.util.Log.d("CardViewModel", "✓ TCGdex returned ${cards.size} cards")
                     
-                    // Save cards to database for future cache hits
-                    if (cards.isNotEmpty()) {
+                    // Save cards to database for future cache hits (only for English to avoid conflicts)
+                    if (cards.isNotEmpty() && language == "en") {
                         repository.saveCards(cards)
                         android.util.Log.d("CardViewModel", "✓ Saved ${cards.size} cards to database cache")
                         
@@ -367,6 +371,8 @@ class CardViewModel @Inject constructor(
                         cards.firstOrNull()?.image?.small?.let { imageUrl ->
                             repository.updatePokemonImage(pokemonName, imageUrl)
                         }
+                    } else if (cards.isNotEmpty() && language != "en") {
+                        android.util.Log.d("CardViewModel", "ℹ Skipping cache save for non-English cards")
                     }
                     
                     _cardUiState.value = _cardUiState.value.copy(

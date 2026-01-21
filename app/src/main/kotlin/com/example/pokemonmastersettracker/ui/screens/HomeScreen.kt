@@ -173,15 +173,40 @@ fun HomeScreen(
                 }
             )
         } else {
-            // Show back button when viewing cards
-            Button(
-                onClick = { viewModel.clearSelection() },
+            // Show back button and favorite button when viewing cards
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = PokemonColors.Secondary
-                )
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("← Back to Search Results")
+                Button(
+                    onClick = { viewModel.clearSelection() },
+                    modifier = Modifier.weight(1f),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = PokemonColors.Secondary
+                    )
+                ) {
+                    Text("← Back to Search Results")
+                }
+                
+                // Check if this Pokemon is in favorites
+                val pokemonName = cardUiState.selectedPokemonName ?: ""
+                val isFavorite = cardUiState.pokemonList.find { it.name == pokemonName }?.isFavorite ?: false
+                
+                Button(
+                    onClick = { 
+                        if (pokemonName.isNotEmpty()) {
+                            viewModel.toggleFavorite(pokemonName)
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = if (isFavorite) PokemonColors.Primary else Color.Gray
+                    )
+                ) {
+                    Text(
+                        text = if (isFavorite) "★" else "☆",
+                        fontSize = 20.sp
+                    )
+                }
             }
         }
 
