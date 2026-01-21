@@ -137,24 +137,72 @@ fun CardItem(
                 }
             }
             
-            // Status banner at bottom - horizontal
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350)
+            // Status banner or pricing at bottom
+            if (isOwned) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF4CAF50))
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "OWNED",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
-                    .padding(vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (isOwned) "OWNED" else "MISSING",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                }
+            } else {
+                // Show pricing for missing cards
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .border(
+                            width = 2.dp,
+                            color = Color(0xFFEF5350),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(vertical = 6.dp, horizontal = 8.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    // CardMarket price
+                    card.cardmarket?.avg?.let { price ->
+                        Text(
+                            text = "CM: €${String.format("%.2f", price)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF2196F3)
+                        )
+                    }
+                    
+                    // TCGPlayer price
+                    val tcgPrice = card.tcgplayer?.prices?.get("normal")?.mid 
+                        ?: card.tcgplayer?.prices?.get("holofoil")?.mid
+                        ?: card.tcgplayer?.prices?.get("reverse")?.mid
+                    
+                    tcgPrice?.let { price ->
+                        Text(
+                            text = "TCG: $${String.format("%.2f", price)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF4CAF50)
+                        )
+                    }
+                    
+                    // Show "Price: N/A" if no pricing available
+                    if (card.cardmarket?.avg == null && tcgPrice == null) {
+                        Text(
+                            text = "Price: N/A",
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
             }
         }
     }

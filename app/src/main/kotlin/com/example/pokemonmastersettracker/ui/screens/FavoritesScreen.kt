@@ -79,6 +79,7 @@ fun FavoritesScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var selectedPokemonForLanguage by remember { mutableStateOf<String?>(null) }
+    var showAddToWishlistDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
@@ -145,6 +146,41 @@ fun FavoritesScreen(
                     selectedPokemonForLanguage = null
                 }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Add to wishlist confirmation dialog
+    if (showAddToWishlistDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddToWishlistDialog = false },
+            title = {
+                Text("Add Missing Cards to Wishlist?")
+            },
+            text = {
+                Text(
+                    "This will add all the missing ${cardUiState.selectedPokemonName} cards from this masterset to the wishlist. Do you want to continue?",
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.addAllMissingCardsToWishlist()
+                        showAddToWishlistDialog = false
+                        refreshTrigger++
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PokemonColors.Primary
+                    )
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddToWishlistDialog = false }) {
+                    Text("No")
                 }
             }
         )
@@ -257,7 +293,7 @@ fun FavoritesScreen(
                         
                         // Add missing cards to wishlist button
                         OutlinedButton(
-                            onClick = { viewModel.addAllMissingCardsToWishlist() },
+                            onClick = { showAddToWishlistDialog = true },
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = PokemonColors.Primary
                             ),
