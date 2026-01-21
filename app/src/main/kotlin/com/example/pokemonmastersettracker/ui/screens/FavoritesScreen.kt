@@ -241,13 +241,36 @@ fun FavoritesScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "${cardUiState.selectedPokemonName} Cards (${cardUiState.cards.size})",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PokemonColors.Primary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${cardUiState.selectedPokemonName} Cards (${cardUiState.cards.size})",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PokemonColors.Primary
+                        )
+                        
+                        // Add missing cards to wishlist button
+                        OutlinedButton(
+                            onClick = { viewModel.addAllMissingCardsToWishlist() },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = PokemonColors.Primary
+                            ),
+                            modifier = Modifier.height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = "+ Wishlist",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     
                     // Sort options
                     Row(
@@ -629,7 +652,7 @@ fun CardAlbumView(
                                 viewModel = viewModel
                             )
                         } else {
-                            EmptyCardSlot(modifier = Modifier.weight(1f), isCompact = pageCards.size <= 2)
+                            EmptyCardSlot(modifier = Modifier.weight(1f), isCompact = pageCards.size <= 3)
                         }
                     }
                 }

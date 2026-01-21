@@ -312,6 +312,33 @@ class CardViewModel @Inject constructor(
             }
         }
     }
+    
+    fun addAllMissingCardsToWishlist() {
+        viewModelScope.launch {
+            try {
+                val cards = _cardUiState.value.cards
+                val pokemonName = _cardUiState.value.selectedPokemonName
+                
+                android.util.Log.d("CardViewModel", "Adding all missing cards to wishlist for $pokemonName")
+                
+                var addedCount = 0
+                cards.forEach { card ->
+                    val isOwned = isCardOwned(card.id)
+                    val isInWishlist = isInWishlist(card.id)
+                    
+                    // Add to wishlist if not owned and not already in wishlist
+                    if (!isOwned && !isInWishlist) {
+                        repository.addToWishlist(defaultUserId, card.id)
+                        addedCount++
+                    }
+                }
+                
+                android.util.Log.d("CardViewModel", "✓ Added $addedCount missing cards to wishlist")
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "❌ Error adding missing cards to wishlist: ${e.message}", e)
+            }
+        }
+    }
 
     // testDirectApiCall removed - old Pokemon TCG API no longer used
     
