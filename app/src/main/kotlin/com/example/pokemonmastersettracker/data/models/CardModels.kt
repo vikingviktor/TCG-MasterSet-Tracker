@@ -73,7 +73,10 @@ data class Card(
     val artist: String?,
     
     @SerializedName("tcgplayer")
-    val tcgplayer: TCGPlayerData?
+    val tcgplayer: TCGPlayerData?,
+    
+    @SerializedName("cardmarket")
+    val cardmarket: CardMarketData?
 ) {
     companion object {
         // For Room, we need a no-arg constructor
@@ -89,8 +92,9 @@ data class Card(
             image: CardImage? = null,
             number: String? = null,
             artist: String? = null,
-            tcgplayer: TCGPlayerData? = null
-        ) = Card(id, name, supertype, subtypes, hp, types, rarity, set, image, number, artist, tcgplayer)
+            tcgplayer: TCGPlayerData? = null,
+            cardmarket: CardMarketData? = null
+        ) = Card(id, name, supertype, subtypes, hp, types, rarity, set, image, number, artist, tcgplayer, cardmarket)
     }
 }
 
@@ -182,6 +186,23 @@ data class PriceData(
     
     @SerializedName("directLow")
     val directLow: Double?
+)
+
+data class CardMarketData(
+    @SerializedName("updated")
+    val updated: String?,
+    
+    @SerializedName("unit")
+    val unit: String?,
+    
+    @SerializedName("avg")
+    val avg: Double?,
+    
+    @SerializedName("low")
+    val low: Double?,
+    
+    @SerializedName("trend")
+    val trend: Double?
 )
 
 data class SetResponse(

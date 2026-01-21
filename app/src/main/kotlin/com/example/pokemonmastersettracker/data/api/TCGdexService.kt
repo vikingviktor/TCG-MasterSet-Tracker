@@ -86,7 +86,8 @@ data class TCGdexCardResponse(
     val dexId: List<Int>?,
     val rarity: String?,
     val illustrator: String?,
-    val set: TCGdexSetInfo?
+    val set: TCGdexSetInfo?,
+    val pricing: TCGdexPricing?
 )
 
 data class TCGdexSetInfo(
@@ -99,6 +100,35 @@ data class TCGdexSetInfo(
 data class TCGdexCardCount(
     val total: Int?,
     val official: Int?
+)
+
+data class TCGdexPricing(
+    val cardmarket: CardMarketPricing?,
+    val tcgplayer: TCGdexTCGPlayerPricing?
+)
+
+data class CardMarketPricing(
+    val updated: String?,
+    val unit: String?,
+    val avg: Double?,
+    val low: Double?,
+    val trend: Double?
+)
+
+data class TCGdexTCGPlayerPricing(
+    val updated: String?,
+    val unit: String?,
+    val normal: TCGdexPriceVariant?,
+    val reverse: TCGdexPriceVariant?,
+    val holofoil: TCGdexPriceVariant?
+)
+
+data class TCGdexPriceVariant(
+    val lowPrice: Double?,
+    val midPrice: Double?,
+    val highPrice: Double?,
+    val marketPrice: Double?,
+    val directLowPrice: Double?
 )
 
 /**
@@ -340,6 +370,47 @@ class TCGdexService {
             Log.d("TCGdexService", "  Reconstructed small: $smallImageUrl")
             Log.d("TCGdexService", "  Reconstructed large: $largeImageUrl")
             
+            // Convert pricing data
+            val tcgplayerData = tcgdexCard.pricing?.tcgplayer?.let { pricing ->
+                TCGPlayerData(
+                    url = null,
+                    updatedAt = pricing.updated,
+                    prices = mapOf(
+                        "normal" to PriceData(
+                            low = pricing.normal?.lowPrice,
+                            mid = pricing.normal?.midPrice,
+                            high = pricing.normal?.highPrice,
+                            market = pricing.normal?.marketPrice,
+                            directLow = pricing.normal?.directLowPrice
+                        ),
+                        "reverse" to PriceData(
+                            low = pricing.reverse?.lowPrice,
+                            mid = pricing.reverse?.midPrice,
+                            high = pricing.reverse?.highPrice,
+                            market = pricing.reverse?.marketPrice,
+                            directLow = pricing.reverse?.directLowPrice
+                        ),
+                        "holofoil" to PriceData(
+                            low = pricing.holofoil?.lowPrice,
+                            mid = pricing.holofoil?.midPrice,
+                            high = pricing.holofoil?.highPrice,
+                            market = pricing.holofoil?.marketPrice,
+                            directLow = pricing.holofoil?.directLowPrice
+                        )
+                    ).filterValues { it.mid != null || it.market != null }
+                )
+            }
+            
+            val cardmarketData = tcgdexCard.pricing?.cardmarket?.let { pricing ->
+                CardMarketData(
+                    updated = pricing.updated,
+                    unit = pricing.unit,
+                    avg = pricing.avg,
+                    low = pricing.low,
+                    trend = pricing.trend
+                )
+            }
+            
             Card(
                 id = tcgdexCard.id,
                 name = tcgdexCard.name,
@@ -363,7 +434,8 @@ class TCGdexService {
                 ),
                 number = tcgdexCard.localId,
                 artist = tcgdexCard.illustrator,
-                tcgplayer = null
+                tcgplayer = tcgplayerData,
+                cardmarket = cardmarketData
             )
         } catch (e: Exception) {
             Log.e("TCGdexService", "Error converting card: ${e.message}", e)

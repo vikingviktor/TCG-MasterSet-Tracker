@@ -62,6 +62,14 @@ class PokemonRepository @Inject constructor(
         }
     }
     
+    /**
+     * Get cached cards for a Pokemon by name
+     * Returns cards from local database
+     */
+    suspend fun getCachedCardsForPokemon(pokemonName: String): List<Card> {
+        return cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+    }
+    
     suspend fun seedPopularPokemon() {
         val count = pokemonDao.getPokemonCount()
         if (count == 0) {

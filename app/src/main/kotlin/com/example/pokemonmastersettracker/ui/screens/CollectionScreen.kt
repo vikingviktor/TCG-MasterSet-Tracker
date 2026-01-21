@@ -377,6 +377,46 @@ fun CollectionCardItem(
                     )
                 }
             }
+            
+            // Card pricing section
+            Column(
+                modifier = Modifier.padding(end = 8.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                // CardMarket pricing (EUR)
+                val cardmarketPrice = card?.cardmarket?.avg
+                if (cardmarketPrice != null) {
+                    Text(
+                        text = "CM: €${String.format("%.2f", cardmarketPrice)}",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF2196F3)
+                    )
+                }
+                
+                // TCGPlayer pricing (USD)
+                val tcgPrice = card?.tcgplayer?.prices?.get("normal")?.mid 
+                    ?: card?.tcgplayer?.prices?.get("holofoil")?.mid
+                    ?: card?.tcgplayer?.prices?.get("reverse")?.mid
+                
+                if (tcgPrice != null) {
+                    Text(
+                        text = "TCG: $${String.format("%.2f", tcgPrice)}",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF4CAF50)
+                    )
+                }
+                
+                // Show N/A if no pricing available
+                if (cardmarketPrice == null && tcgPrice == null) {
+                    Text(
+                        text = "Price: N/A",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
 
             IconButton(onClick = onRemove) {
                 Icon(
