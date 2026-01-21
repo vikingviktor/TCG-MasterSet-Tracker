@@ -22,7 +22,8 @@ object MockData {
             image = null,
             number = number,
             artist = "Ken Sugimori",
-            tcgplayer = null
+            tcgplayer = null,
+            cardmarket = null
         )
     }
 

@@ -13,6 +13,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.data.models.CardSet
 import com.example.pokemonmastersettracker.data.models.CardImage
+import com.example.pokemonmastersettracker.data.models.CardMarketData
+import com.example.pokemonmastersettracker.data.models.TCGPlayerData
+import com.example.pokemonmastersettracker.data.models.PriceData
 
 /**
  * Diagnostic information from a search operation
