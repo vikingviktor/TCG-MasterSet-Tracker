@@ -24,6 +24,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -82,6 +83,7 @@ fun FavoritesScreen(
     var selectedPokemonForLanguage by remember { mutableStateOf<String?>(null) }
     var showAddToWishlistDialog by remember { mutableStateOf(false) }
     var showJapaneseApiNotice by remember { mutableStateOf(false) }
+    var showSortDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
@@ -209,6 +211,63 @@ fun FavoritesScreen(
         )
     }
     
+    // Sort options dialog
+    if (showSortDialog) {
+        AlertDialog(
+            onDismissRequest = { showSortDialog = false },
+            title = { Text("Sort Cards") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val sortOptions = listOf(
+                        CardSortOption.NONE to "None (Default)",
+                        CardSortOption.SET_NAME to "Set Name",
+                        CardSortOption.PRICE_LOW to "Price (Low to High)",
+                        CardSortOption.PRICE_HIGH to "Price (High to Low)",
+                        CardSortOption.RARITY to "Rarity",
+                        CardSortOption.CARD_NUMBER to "Card Number"
+                    )
+                    
+                    sortOptions.forEach { (option, label) ->
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.setSortOption(option)
+                                showSortDialog = false
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (cardUiState.sortOption == option) 
+                                    PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                                contentColor = if (cardUiState.sortOption == option) 
+                                    PokemonColors.Primary else Color.Gray
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (cardUiState.sortOption == option) 
+                                        FontWeight.Bold else FontWeight.Normal
+                                )
+                                if (cardUiState.sortOption == option) {
+                                    Text("✓", fontSize = 16.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSortDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+    
     // Show dialog when a card is selected
     selectedCardForDialog?.let { card ->
         CardDetailDialog(
@@ -314,20 +373,36 @@ fun FavoritesScreen(
                             color = PokemonColors.Primary
                         )
                         
-                        // Add missing cards to wishlist button
-                        OutlinedButton(
-                            onClick = { showAddToWishlistDialog = true },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = PokemonColors.Primary
-                            ),
-                            modifier = Modifier.height(36.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "+ Wishlist",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            // Filter/Sort button
+                            IconButton(
+                                onClick = { showSortDialog = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = "Sort options",
+                                    tint = PokemonColors.Primary
+                                )
+                            }
+                            
+                            // Add missing cards to wishlist button
+                            OutlinedButton(
+                                onClick = { showAddToWishlistDialog = true },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = PokemonColors.Primary
+                                ),
+                                modifier = Modifier.height(36.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    text = "+ Wishlist",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                     
@@ -368,51 +443,6 @@ fun FavoritesScreen(
                                     text = "▶",
                                     fontSize = 12.sp,
                                     color = Color(0xFFE65100)
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Sort options
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Sort:",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                        
-                        val sortOptions = listOf(
-                            CardSortOption.NONE to "None",
-                            CardSortOption.SET_NAME to "Set",
-                            CardSortOption.PRICE_LOW to "Price↑",
-                            CardSortOption.PRICE_HIGH to "Price↓",
-                            CardSortOption.RARITY to "Rarity",
-                            CardSortOption.CARD_NUMBER to "Number"
-                        )
-                        
-                        sortOptions.forEach { (option, label) ->
-                            OutlinedButton(
-                                onClick = { viewModel.setSortOption(option) },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = if (cardUiState.sortOption == option) 
-                                        PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
-                                    contentColor = if (cardUiState.sortOption == option) 
-                                        PokemonColors.Primary else Color.Gray
-                                ),
-                                modifier = Modifier.height(32.dp),
-                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (cardUiState.sortOption == option) 
-                                        FontWeight.Bold else FontWeight.Normal
                                 )
                             }
                         }

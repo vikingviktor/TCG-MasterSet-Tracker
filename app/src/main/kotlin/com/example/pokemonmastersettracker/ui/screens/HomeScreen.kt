@@ -154,13 +154,27 @@ fun HomeScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PokemonColors.Background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isRefreshing),
+        onRefresh = {
+            scope.launch {
+                isRefreshing = true
+                // Clear search and return to generations
+                searchQuery = ""
+                viewModel.clearSelection()
+                viewModel.clearGeneration()
+                delay(300)
+                isRefreshing = false
+            }
+        }
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PokemonColors.Background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Only show search section when NOT viewing a Pokemon's cards
         if (cardUiState.selectedPokemonName == null) {
             SearchSection(
@@ -439,6 +453,7 @@ fun HomeScreen(
                     }
                 }
             }
+        }
         }
     }
 }
