@@ -40,7 +40,8 @@ data class CardUiState(
     val lastQuery: String? = null, // For debugging - shows the actual query used
     val debugInfo: String? = null, // For debugging - shows diagnostic information
     val sortOption: CardSortOption = CardSortOption.NONE,
-    val showTrackingDialog: String? = null // Pokemon name to show tracking dialog for
+    val showTrackingDialog: String? = null, // Pokemon name to show tracking dialog for
+    val currentLanguage: String = "en" // Track current search language
 )
 
 @HiltViewModel
@@ -352,7 +353,8 @@ class CardViewModel @Inject constructor(
             _cardUiState.value = _cardUiState.value.copy(
                 loading = true,
                 selectedPokemonName = pokemonName,
-                showTrackingDialog = null
+                showTrackingDialog = null,
+                currentLanguage = language
             )
             
             try {

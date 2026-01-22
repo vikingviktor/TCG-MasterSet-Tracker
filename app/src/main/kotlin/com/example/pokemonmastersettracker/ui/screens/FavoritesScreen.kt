@@ -308,6 +308,44 @@ fun FavoritesScreen(
                         }
                     }
                     
+                    // Japanese API notice banner
+                    if (cardUiState.currentLanguage == "ja") {
+                        androidx.compose.material3.Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            colors = androidx.compose.material3.CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFF3E0)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "ℹ️",
+                                    fontSize = 16.sp
+                                )
+                                Column {
+                                    Text(
+                                        text = "Work in Progress",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFE65100)
+                                    )
+                                    Text(
+                                        text = "The TCGdex API is being populated. Some cards may be missing.",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFEF6C00)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
                     // Sort options
                     Row(
                         modifier = Modifier
