@@ -193,56 +193,53 @@ class TCGdexService {
             }
             
             diagnostics.add("")
-            diagnostics.add("⚠ Note: Simplified response has dexId=null")
-            diagnostics.add("ℹ Strategy: Fetch full details first, THEN filter by name")
-            diagnostics.add("ℹ Reason: Can't filter on dexId if it's null")
+            diagnostics.add("⚠ Note: API does substring matching on dexId")
+            diagnostics.add("ℹ Example: Searching #94 (Gengar) also returns #194, #294, etc.")
+            diagnostics.add("ℹ Strategy: Fetch full details, then filter by EXACT dexId match")
             diagnostics.add("")
             diagnostics.add("Fetching full details for ${response.size} cards...")
             
-            val detailedCards = response.mapNotNull { simpleCard ->
+            val detailedCardsWithDexId = response.mapNotNull { simpleCard ->
                 try {
-                    val fullCard = api.getCard(language, simpleCard.id)
-                    convertTCGdexCard(fullCard, language)
+                    api.getCard(language, simpleCard.id)
                 } catch (e: Exception) {
                     diagnostics.add("  ⚠ Failed to fetch ${simpleCard.id}: ${e.message}")
                     null
                 }
             }
             
-            diagnostics.add("✓ Loaded ${detailedCards.size} complete cards with full data")
+            diagnostics.add("✓ Loaded ${detailedCardsWithDexId.size} complete cards with full data")
+            diagnostics.add("")
+            diagnostics.add("Filtering by EXACT dexId match (all languages)...")
+            diagnostics.add("ℹ Only keeping cards where dexId list contains #$dexId")
+            
+            val filteredCards = detailedCardsWithDexId.mapNotNull { tcgdexCard ->
+                val hasExactDexId = tcgdexCard.dexId?.contains(dexId) ?: false
+                
+                if (hasExactDexId) {
+                    try {
+                        convertTCGdexCard(tcgdexCard, language)
+                    } catch (e: Exception) {
+                        diagnostics.add("  ⚠ Failed to convert ${tcgdexCard.id}: ${e.message}")
+                        null
+                    }
+                } else {
+                    diagnostics.add("  ❌ Filtered out: ${tcgdexCard.name} (dexId=${tcgdexCard.dexId})")
+                    null
+                }
+            }
             
             diagnostics.add("")
-            if (language == "en") {
-                diagnostics.add("Filtering by Pokémon name (English only)...")
-                diagnostics.add("ℹ Example: Haunter (#93) search returns Yanma (#193)")
-            } else {
-                diagnostics.add("Language: $language - Skipping name filter")
-                diagnostics.add("ℹ Reason: Card names are in $language, not English")
-                diagnostics.add("ℹ Trusting dexId search results")
-            }
+            diagnostics.add("✓ ${filteredCards.size} cards match exact dexId #$dexId")
             
-            val filteredCards = if (language == "en") {
-                detailedCards.filter { card ->
-                    card.name.contains(pokemonName, ignoreCase = true)
-                }
-            } else {
-                detailedCards
-            }
-            
-            diagnostics.add("✓ ${filteredCards.size} cards ${if (language == "en") "match '$pokemonName'" else "returned (no filter)"}")
-            
-            if (language == "en" && filteredCards.size < detailedCards.size) {
-                diagnostics.add("")
-                diagnostics.add("Filtered out ${detailedCards.size - filteredCards.size} wrong Pokemon:")
-                detailedCards.filter { card -> !card.name.contains(pokemonName, ignoreCase = true) }.take(5).forEach { card ->
-                    diagnostics.add("  ❌ ${card.name}")
-                }
+            if (filteredCards.size < detailedCardsWithDexId.size) {
+                diagnostics.add("ℹ Removed ${detailedCardsWithDexId.size - filteredCards.size} wrong Pokemon from substring match")
             }
             
             if (filteredCards.isEmpty()) {
                 diagnostics.add("")
                 diagnostics.add("⚠ WARNING: All cards filtered out!")
-                diagnostics.add("ℹ This means no cards contain '$pokemonName' in the name")
+                diagnostics.add("ℹ No cards have dexId #$dexId in their dexId list")
             }
             
             SearchDiagnostics(filteredCards, diagnostics)
@@ -318,19 +315,27 @@ class TCGdexService {
                 }
             }
             
-            // Filter to only cards matching the Pokemon name (English only)
-            // For non-English languages, card names are in that language, so skip filtering
-            // This removes wrong Pokemon from substring matching (e.g., Yanma when searching Haunter)
-            val filteredCards = if (language == "en") {
-                convertedCards.filter { card ->
-                    card.name.contains(pokemonName, ignoreCase = true)
+            // Filter to only cards matching the exact Pokemon
+            // The API does substring matching on dexId (e.g., searching #94 returns #194, #294)
+            // So we need to filter by exact dexId match for all languages
+            val filteredCards = detailedCards.mapNotNull { tcgdexCard ->
+                // Check if this card's dexId list contains the exact Pokemon we're searching for
+                val hasExactDexId = tcgdexCard.dexId?.contains(dexId) ?: false
+                
+                if (hasExactDexId) {
+                    try {
+                        convertTCGdexCard(tcgdexCard, language)
+                    } catch (e: Exception) {
+                        Log.e("TCGdexService", "Failed to convert card ${tcgdexCard.id}: ${e.message}")
+                        null
+                    }
+                } else {
+                    Log.d("TCGdexService", "⚠️ Filtered out ${tcgdexCard.name} (dexId=${tcgdexCard.dexId}, wanted #$dexId)")
+                    null
                 }
-            } else {
-                // For Japanese/other languages, trust the dexId search
-                convertedCards
             }
             
-            Log.d("TCGdexService", "✓ Loaded ${filteredCards.size} cards for '$pokemonName' (${if (language == "en") "filtered from ${convertedCards.size} total" else "non-English, no name filter"})")
+            Log.d("TCGdexService", "✓ Loaded ${filteredCards.size} cards for '$pokemonName' after exact dexId filtering (from ${detailedCards.size} total)")
             if (filteredCards.isNotEmpty()) {
                 Log.d("TCGdexService", "📋 Cards: ${filteredCards.take(5).joinToString { it.name }}")
                 if (filteredCards.size > 5) {
