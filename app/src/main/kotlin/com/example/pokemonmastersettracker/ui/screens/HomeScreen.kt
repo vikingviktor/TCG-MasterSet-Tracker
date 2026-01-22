@@ -165,7 +165,13 @@ fun HomeScreen(
         if (cardUiState.selectedPokemonName == null) {
             SearchSection(
                 searchQuery = searchQuery,
-                onSearchQueryChanged = { searchQuery = it },
+                onSearchQueryChanged = { 
+                    searchQuery = it
+                    // Clear generation selection when user starts typing
+                    if (it.isNotEmpty() && cardUiState.selectedGeneration != null) {
+                        viewModel.clearGeneration()
+                    }
+                },
                 onSearch = {
                     if (searchQuery.isNotEmpty()) {
                         viewModel.searchPokemonLocal(searchQuery)
@@ -179,7 +185,13 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = { viewModel.clearSelection() },
+                    onClick = { 
+                        viewModel.clearSelection()
+                        // If we came from a generation, reload it
+                        cardUiState.selectedGeneration?.let { gen ->
+                            viewModel.selectGeneration(gen)
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = PokemonColors.Secondary
@@ -368,24 +380,63 @@ fun HomeScreen(
             }
 
             cardUiState.pokemonList.isNotEmpty() && cardUiState.selectedPokemonName == null -> {
-                // Show Pokemon selection view (local search results)
-                PokemonListView(
-                    pokemonList = cardUiState.pokemonList,
-                    onPokemonSelect = { pokemonName ->
-                        viewModel.loadCardsFromTCGdex(pokemonName, "en")
-                    },
-                    onFavoriteToggle = { pokemonName ->
-                        viewModel.toggleFavorite(pokemonName)
+                // Show Pokemon selection view (from search or generation filter)
+                Column {
+                    // Show generation header if we're viewing a generation
+                    cardUiState.selectedGeneration?.let { genNumber ->
+                        val generation = com.example.pokemonmastersettracker.viewmodel.GENERATIONS.find { it.number == genNumber }
+                        generation?.let {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = it.name,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = PokemonColors.Primary
+                                )
+                                Button(
+                                    onClick = { viewModel.clearGeneration() },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PokemonColors.Secondary
+                                    )
+                                ) {
+                                    Text("← Back to Generations")
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
-                )
+                    
+                    PokemonListView(
+                        pokemonList = cardUiState.pokemonList,
+                        onPokemonSelect = { pokemonName ->
+                            viewModel.loadCardsFromTCGdex(pokemonName, "en")
+                        },
+                        onFavoriteToggle = { pokemonName ->
+                            viewModel.toggleFavorite(pokemonName)
+                        }
+                    )
+                }
             }
 
             else -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Search for a Pokemon to get started")
+                // Show generation selector when no search is active
+                if (searchQuery.isEmpty() && cardUiState.selectedGeneration == null) {
+                    GenerationSelector(
+                        onGenerationSelect = { generationNumber ->
+                            viewModel.selectGeneration(generationNumber)
+                        }
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Search for a Pokemon to get started")
+                    }
                 }
             }
         }
@@ -644,6 +695,75 @@ fun CardDetailView(
                     onCardClick = { onCardClick(card) },
                     onFavoriteToggle = { /* Handle favorite toggle */ }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun GenerationSelector(
+    onGenerationSelect: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Select a Generation",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = PokemonColors.Primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Text(
+            text = "Browse Pokémon by generation",
+            fontSize = 14.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(com.example.pokemonmastersettracker.viewmodel.GENERATIONS) { generation ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onGenerationSelect(generation.number) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = PokemonColors.CardBackground
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = generation.name,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = PokemonColors.Primary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "#${generation.dexStart} - #${generation.dexEnd}",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
+                        Text(
+                            text = "→",
+                            fontSize = 24.sp,
+                            color = PokemonColors.Secondary
+                        )
+                    }
+                }
             }
         }
     }

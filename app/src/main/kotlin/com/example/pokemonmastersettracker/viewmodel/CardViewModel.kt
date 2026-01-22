@@ -18,6 +18,25 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class Generation(
+    val number: Int,
+    val name: String,
+    val dexStart: Int,
+    val dexEnd: Int
+)
+
+val GENERATIONS = listOf(
+    Generation(1, "Generation I (Kanto)", 1, 151),
+    Generation(2, "Generation II (Johto)", 152, 251),
+    Generation(3, "Generation III (Hoenn)", 252, 386),
+    Generation(4, "Generation IV (Sinnoh)", 387, 493),
+    Generation(5, "Generation V (Unova)", 494, 649),
+    Generation(6, "Generation VI (Kalos)", 650, 721),
+    Generation(7, "Generation VII (Alola)", 722, 809),
+    Generation(8, "Generation VIII (Galar)", 810, 905),
+    Generation(9, "Generation IX (Paldea)", 906, 1025)
+)
+
 enum class CardSortOption {
     NONE,           // Default - no sorting
     SET_NAME,       // Sort by set name (alphabetical)
@@ -41,7 +60,8 @@ data class CardUiState(
     val debugInfo: String? = null, // For debugging - shows diagnostic information
     val sortOption: CardSortOption = CardSortOption.NONE,
     val showTrackingDialog: String? = null, // Pokemon name to show tracking dialog for
-    val currentLanguage: String = "en" // Track current search language
+    val currentLanguage: String = "en", // Track current search language
+    val selectedGeneration: Int? = null // Currently selected generation (null = show all generations)
 )
 
 @HiltViewModel
@@ -419,5 +439,50 @@ class CardViewModel @Inject constructor(
                 )
             }
         }
+    }
+    
+    // Generation browsing functions
+    fun selectGeneration(generationNumber: Int) {
+        viewModelScope.launch {
+            _cardUiState.value = _cardUiState.value.copy(
+                selectedGeneration = generationNumber,
+                loading = true
+            )
+            
+            try {
+                // Get all Pokemon from database
+                val allPokemon = repository.getAllPokemon().first()
+                
+                // Filter by generation
+                val generation = GENERATIONS.find { it.number == generationNumber }
+                val filteredPokemon = if (generation != null) {
+                    allPokemon.filter { pokemon ->
+                        pokemon.nationalPokedexNumber?.let { dexNum ->
+                            dexNum in generation.dexStart..generation.dexEnd
+                        } ?: false
+                    }.sortedBy { it.nationalPokedexNumber }
+                } else {
+                    emptyList()
+                }
+                
+                _cardUiState.value = _cardUiState.value.copy(
+                    pokemonList = filteredPokemon,
+                    loading = false,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _cardUiState.value = _cardUiState.value.copy(
+                    loading = false,
+                    error = "Failed to load Pokemon: ${e.message}"
+                )
+            }
+        }
+    }
+    
+    fun clearGeneration() {
+        _cardUiState.value = _cardUiState.value.copy(
+            selectedGeneration = null,
+            pokemonList = emptyList()
+        )
     }
 }

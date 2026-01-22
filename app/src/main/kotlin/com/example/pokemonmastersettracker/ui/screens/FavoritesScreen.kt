@@ -80,6 +80,7 @@ fun FavoritesScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var selectedPokemonForLanguage by remember { mutableStateOf<String?>(null) }
     var showAddToWishlistDialog by remember { mutableStateOf(false) }
+    var showJapaneseApiNotice by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // Load favorites when screen opens
@@ -181,6 +182,27 @@ fun FavoritesScreen(
             dismissButton = {
                 TextButton(onClick = { showAddToWishlistDialog = false }) {
                     Text("No")
+                }
+            }
+        )
+    }
+    
+    // Japanese API notice dialog
+    if (showJapaneseApiNotice) {
+        AlertDialog(
+            onDismissRequest = { showJapaneseApiNotice = false },
+            title = {
+                Text("Work in Progress")
+            },
+            text = {
+                Text(
+                    "The TCGdex API is being populated. Some Japanese cards may be missing from the database. English cards are more complete.",
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showJapaneseApiNotice = false }) {
+                    Text("OK")
                 }
             }
         )
@@ -308,12 +330,13 @@ fun FavoritesScreen(
                         }
                     }
                     
-                    // Japanese API notice banner
+                    // Japanese API notice banner - compact version
                     if (cardUiState.currentLanguage == "ja") {
                         androidx.compose.material3.Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 8.dp)
+                                .clickable { showJapaneseApiNotice = true },
                             colors = androidx.compose.material3.CardDefaults.cardColors(
                                 containerColor = Color(0xFFFFF3E0)
                             )
@@ -321,27 +344,30 @@ fun FavoritesScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "ℹ️",
-                                    fontSize = 16.sp
-                                )
-                                Column {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "ℹ️",
+                                        fontSize = 14.sp
+                                    )
                                     Text(
                                         text = "Work in Progress",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFFE65100)
                                     )
-                                    Text(
-                                        text = "The TCGdex API is being populated. Some cards may be missing.",
-                                        fontSize = 11.sp,
-                                        color = Color(0xFFEF6C00)
-                                    )
                                 }
+                                Text(
+                                    text = "▶",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFE65100)
+                                )
                             }
                         }
                     }
