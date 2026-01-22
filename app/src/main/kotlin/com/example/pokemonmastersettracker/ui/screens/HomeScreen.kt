@@ -726,13 +726,14 @@ fun GenerationSelector(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(com.example.pokemonmastersettracker.viewmodel.GENERATIONS) { generation ->
+            items(com.example.pokemonmastersettracker.viewmodel.GENERATIONS.size) { index ->
+                val generation = com.example.pokemonmastersettracker.viewmodel.GENERATIONS[index]
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onGenerationSelect(generation.number) },
                     colors = CardDefaults.cardColors(
-                        containerColor = PokemonColors.CardBackground
+                        containerColor = PokemonColors.Surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {

@@ -451,7 +451,7 @@ class CardViewModel @Inject constructor(
             
             try {
                 // Get all Pokemon from database
-                val allPokemon = repository.getAllPokemon().first()
+                val allPokemon = repository.getAllPokemon()
                 
                 // Filter by generation
                 val generation = GENERATIONS.find { it.number == generationNumber }
