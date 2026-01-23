@@ -68,12 +68,30 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.example.pokemonmastersettracker.ui.theme.ThemeManager
 import com.example.pokemonmastersettracker.ui.theme.AppTheme
 import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalContext
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface ThemeManagerEntryPoint {
+    fun themeManager(): ThemeManager
+}
 
 @Composable
 fun HomeScreen(
     viewModel: CardViewModel = hiltViewModel(),
     onCardClick: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val themeManager = remember {
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            ThemeManagerEntryPoint::class.java
+        ).themeManager()
+    }
     var searchQuery by remember { mutableStateOf("") }
     val cardUiState by viewModel.cardUiState.collectAsState()
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
@@ -83,8 +101,6 @@ fun HomeScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val themeManager: ThemeManager = hiltViewModel()
-    val themeManager: ThemeManager = hiltViewModel()
     
     // Theme selection dialog
     if (showThemeDialog) {
