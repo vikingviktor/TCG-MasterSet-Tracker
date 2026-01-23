@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,14 +30,27 @@ import com.example.pokemonmastersettracker.ui.screens.CollectionScreen
 import com.example.pokemonmastersettracker.ui.screens.FavoritesScreen
 import com.example.pokemonmastersettracker.ui.screens.HomeScreen
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
+import com.example.pokemonmastersettracker.ui.theme.ThemeManager
+import com.example.pokemonmastersettracker.ui.theme.ThemeColorSchemes
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    @Inject
+    lateinit var themeManager: ThemeManager
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val currentTheme by themeManager.currentTheme.collectAsState(initial = com.example.pokemonmastersettracker.ui.theme.AppTheme.LIGHT)
+            
+            // Apply theme colors
+            val themeColors = ThemeColorSchemes.getThemeColors(currentTheme)
+            PokemonColors.applyTheme(themeColors)
+            
             PokemonTrackerAppScreen()
         }
     }

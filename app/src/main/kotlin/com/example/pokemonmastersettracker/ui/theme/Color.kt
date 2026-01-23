@@ -1,20 +1,39 @@
 package com.example.pokemonmastersettracker.ui.theme
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+// Composition local for theme colors
+val LocalThemeColors = compositionLocalOf { ThemeColorSchemes.Light }
+
 object PokemonColors {
-    val Primary = Color(0xFFFF5722)
-    val PrimaryDark = Color(0xFFE64A19)
-    val Secondary = Color(0xFF2196F3)
-    val Accent = Color(0xFFFFEB3B)
-    val Background = Color(0xFFFAFAFA)
-    val Surface = Color(0xFFFFFFFF)
-    val Error = Color(0xFFD32F2F)
-    val OnPrimary = Color(0xFFFFFFFF)
-    val OnSurface = Color(0xFF212121)
-    val OnBackground = Color(0xFF212121)
+    // These are now accessed through LocalThemeColors in composables
+    // Kept for backward compatibility - will be dynamically set
+    var Primary = Color(0xFFFF5722)
+    var PrimaryDark = Color(0xFFE64A19)
+    var Secondary = Color(0xFF2196F3)
+    var Accent = Color(0xFFFFEB3B)
+    var Background = Color(0xFFFAFAFA)
+    var Surface = Color(0xFFFFFFFF)
+    var Error = Color(0xFFD32F2F)
+    var OnPrimary = Color(0xFFFFFFFF)
+    var OnSurface = Color(0xFF212121)
+    var OnBackground = Color(0xFF212121)
     
-    // Pokemon type colors
+    fun applyTheme(colors: ThemeColors) {
+        Primary = colors.primary
+        PrimaryDark = colors.primaryDark
+        Secondary = colors.secondary
+        Accent = colors.accent
+        Background = colors.background
+        Surface = colors.surface
+        Error = colors.error
+        OnPrimary = colors.onPrimary
+        OnSurface = colors.onSurface
+        OnBackground = colors.onBackground
+    }
+    
+    // Pokemon type colors (theme-independent)
     val FireType = Color(0xFFFDA113)
     val WaterType = Color(0xFF87CEEB)
     val GrassType = Color(0xFF78C850)

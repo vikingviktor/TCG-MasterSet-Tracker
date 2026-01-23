@@ -13,8 +13,8 @@ android {
         applicationId = "com.mastersettracker.pokemon"
         minSdk = 24
         targetSdk = 35
-        versionCode = 84
-        versionName = "2.6.3"
+        versionCode = 85
+        versionName = "2.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -132,6 +132,9 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.48")
     kapt("com.google.dagger:hilt-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+
+    // DataStore for theme preferences
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Image Loading with Coil
     implementation("io.coil-kt:coil-compose:2.5.0")
