@@ -243,7 +243,18 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = PokemonColors.Primary)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator(color = PokemonColors.Primary)
+                        Text(
+                            text = "Loading Cards...",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = PokemonColors.Primary
+                        )
+                    }
                 }
             }
 

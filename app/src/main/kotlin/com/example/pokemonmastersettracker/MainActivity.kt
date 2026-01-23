@@ -59,7 +59,14 @@ fun PokemonTrackerAppScreen() {
                         icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
                         label = { Text("Home") },
                         selected = currentScreen == 0,
-                        onClick = { currentScreen = 0 }
+                        onClick = { 
+                            if (currentScreen == 0) {
+                                // Already on Home screen, refresh to generations
+                                homeViewModel.clearSelection()
+                                homeViewModel.clearGeneration()
+                            }
+                            currentScreen = 0 
+                        }
                     )
                     NavigationBarItem(
                         icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection") },
@@ -84,7 +91,7 @@ fun PokemonTrackerAppScreen() {
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 when (currentScreen) {
-                    0 -> HomeScreen()
+                    0 -> HomeScreen(viewModel = homeViewModel)
                     1 -> CollectionScreen(userId = "test-user")
                     2 -> FavoritesScreen()
                     3 -> ApiTestScreen()
