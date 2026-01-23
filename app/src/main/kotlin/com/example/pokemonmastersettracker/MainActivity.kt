@@ -47,6 +47,7 @@ fun PokemonTrackerAppScreen() {
     // For testing, skip login and go straight to home
     // TODO: Implement proper user authentication when ready
     var currentScreen by remember { mutableIntStateOf(0) }
+    val homeViewModel: CardViewModel = hiltViewModel()
 
     MaterialTheme {
         Scaffold(
