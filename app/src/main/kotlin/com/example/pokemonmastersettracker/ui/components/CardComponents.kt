@@ -110,7 +110,8 @@ fun CardItem(
                 text = card.name,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1
+                maxLines = 1,
+                color = PokemonColors.OnSurface
             )
 
             Row(
@@ -242,7 +243,8 @@ fun CardDetailView(
             text = card.name,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
+            color = PokemonColors.OnSurface
         )
 
         Column(

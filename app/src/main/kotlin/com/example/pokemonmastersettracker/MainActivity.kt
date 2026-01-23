@@ -73,8 +73,8 @@ fun PokemonTrackerAppScreen() {
                     contentColor = PokemonColors.OnSurface
                 ) {
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                        label = { Text("Home") },
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "Home", tint = if (currentScreen == 0) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        label = { Text("Home", color = if (currentScreen == 0) PokemonColors.Primary else PokemonColors.OnSurface) },
                         selected = currentScreen == 0,
                         onClick = { 
                             if (currentScreen == 0) {
@@ -86,20 +86,20 @@ fun PokemonTrackerAppScreen() {
                         }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection") },
-                        label = { Text("Collection") },
+                        icon = { Icon(Icons.Filled.Favorite, contentDescription = "Collection", tint = if (currentScreen == 1) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        label = { Text("Collection", color = if (currentScreen == 1) PokemonColors.Primary else PokemonColors.OnSurface) },
                         selected = currentScreen == 1,
                         onClick = { currentScreen = 1 }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Person, contentDescription = "Favorites") },
-                        label = { Text("Favorites") },
+                        icon = { Icon(Icons.Filled.Person, contentDescription = "Favorites", tint = if (currentScreen == 2) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        label = { Text("Favorites", color = if (currentScreen == 2) PokemonColors.Primary else PokemonColors.OnSurface) },
                         selected = currentScreen == 2,
                         onClick = { currentScreen = 2 }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Settings, contentDescription = "API Test") },
-                        label = { Text("API Test") },
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = "API Test", tint = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        label = { Text("API Test", color = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
                         selected = currentScreen == 3,
                         onClick = { currentScreen = 3 }
                     )
