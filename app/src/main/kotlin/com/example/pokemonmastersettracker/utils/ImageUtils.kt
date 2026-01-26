@@ -5,7 +5,7 @@ package com.example.pokemonmastersettracker.utils
  * Returns null if not a Gen 1 Pokemon
  */
 fun getLocalSpritePath(nationalPokedexNumber: Int?): String? {
-    return if (nationalPokedexNumber != null && nationalPokedexNumber in 1..151) {
+    return if (nationalPokedexNumber != null && nationalPokedexNumber in 1..1025) {
         val spriteFileName = String.format("%03d.png", nationalPokedexNumber)
         "file:///android_asset/sprites/$spriteFileName"
     } else {
