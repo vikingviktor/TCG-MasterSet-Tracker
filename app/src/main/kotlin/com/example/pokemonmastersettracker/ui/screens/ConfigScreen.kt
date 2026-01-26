@@ -68,6 +68,7 @@ fun ConfigScreen(
     
     var testResults by remember { mutableStateOf<List<String>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
     val tcgdexService = remember { TCGdexService() }
 
@@ -87,7 +88,10 @@ fun ConfigScreen(
         )
 
         // Theme Selection Section
-        ThemeSelectionSection(themeManager)
+        ThemeSelectionSection(
+            themeManager = themeManager,
+            onThemeChanged = { refreshTrigger++ }
+        )
 
         Divider(color = PokemonColors.Primary.copy(alpha = 0.3f), thickness = 1.dp)
 
@@ -186,7 +190,10 @@ fun ConfigScreen(
 }
 
 @Composable
-fun ThemeSelectionSection(themeManager: ThemeManager) {
+fun ThemeSelectionSection(
+    themeManager: ThemeManager,
+    onThemeChanged: () -> Unit
+) {
     val scope = rememberCoroutineScope()
     
     Column(
@@ -211,6 +218,7 @@ fun ThemeSelectionSection(themeManager: ThemeManager) {
                 onClick = {
                     scope.launch {
                         themeManager.setTheme(theme)
+                        onThemeChanged()
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -233,6 +241,7 @@ fun ThemeSelectionSection(themeManager: ThemeManager) {
 @Composable
 fun FAQSection() {
     var expandedIndex by remember { mutableStateOf<Int?>(null) }
+    var isFAQExpanded by remember { mutableStateOf(false) }
     
     val faqs = listOf(
         FAQ(
@@ -245,15 +254,15 @@ fun FAQSection() {
         ),
         FAQ(
             question = "What's the difference between Collection and Wishlist?",
-            answer = "Collection contains cards you already own, while Wishlist (Favorites tab) contains cards you want to acquire. You can track different information for each."
+            answer = "Collection contains cards you already own, while Wishlist (Collection tab) contains cards you want to acquire. You can track different information for each."
         ),
         FAQ(
             question = "How do I filter and sort my cards?",
-            answer = "In the Wishlist tab, tap the filter icon to access sorting options: by set name, price (low to high), rarity, or card number."
+            answer = "In the Favories or Home search result tab, tap the filter icon to access sorting options: by set name, price (low to high), rarity, or card number."
         ),
         FAQ(
             question = "Can I search for Japanese cards?",
-            answer = "Yes! Use the search bar and the app will fetch Japanese cards. Note: Japanese card support is currently in beta and may have limited availability."
+            answer = "Yes! When you select View Cards from your Favorite Pokemon the app will fetch Japanese cards. Note: Japanese card support is currently in beta and may have limited availability."
         ),
         FAQ(
             question = "How do I change the app theme?",
@@ -265,7 +274,7 @@ fun FAQSection() {
         ),
         FAQ(
             question = "How do I remove a card from my collection?",
-            answer = "Open the card details and tap the 'Remove from Collection' button. This will remove it from your collection but not delete the card data."
+            answer = "Open the card details and tap the 'In Collection' button. This will remove it from your collection but not delete the card data."
         )
     )
     
@@ -273,21 +282,47 @@ fun FAQSection() {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Frequently Asked Questions",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = PokemonColors.OnSurface
-        )
-        
-        faqs.forEachIndexed { index, faq ->
-            FAQItem(
-                faq = faq,
-                isExpanded = expandedIndex == index,
-                onClick = {
-                    expandedIndex = if (expandedIndex == index) null else index
-                }
+        // FAQ Header (collapsible)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isFAQExpanded = !isFAQExpanded },
+            colors = CardDefaults.cardColors(
+                containerColor = PokemonColors.Surface
             )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Frequently Asked Questions",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PokemonColors.OnSurface
+                )
+                Icon(
+                    imageVector = if (isFAQExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isFAQExpanded) "Collapse" else "Expand",
+                    tint = PokemonColors.Primary
+                )
+            }
+        }
+        
+        // FAQ Items (only show when expanded)
+        if (isFAQExpanded) {
+            faqs.forEachIndexed { index, faq ->
+                FAQItem(
+                    faq = faq,
+                    isExpanded = expandedIndex == index,
+                    onClick = {
+                        expandedIndex = if (expandedIndex == index) null else index
+                    }
+                )
+            }
         }
     }
 }
