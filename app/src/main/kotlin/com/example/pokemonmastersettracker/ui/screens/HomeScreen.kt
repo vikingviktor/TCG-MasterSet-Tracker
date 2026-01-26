@@ -57,6 +57,7 @@ import com.example.pokemonmastersettracker.viewmodel.CardSortOption
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
+import com.example.pokemonmastersettracker.utils.getLocalSpritePath
 import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.AlertDialog
@@ -525,6 +526,7 @@ fun PokemonListView(
             PokemonSelectionCard(
                 pokemonName = pokemon.name,
                 imageUrl = pokemon.imageUrl,
+                nationalPokedexNumber = pokemon.nationalPokedexNumber,
                 isFavorite = pokemon.isFavorite,
                 onClick = { onPokemonSelect(pokemon.name) },
                 onFavoriteClick = { onFavoriteToggle(pokemon.name) }
@@ -537,10 +539,13 @@ fun PokemonListView(
 fun PokemonSelectionCard(
     pokemonName: String,
     imageUrl: String?,
+    nationalPokedexNumber: Int?,
     isFavorite: Boolean,
     onClick: () -> Unit,
     onFavoriteClick: () -> Unit
 ) {
+    // Try to use local sprite for Gen 1 Pokemon, fallback to remote URL
+    val displayImageUrl = getLocalSpritePath(nationalPokedexNumber) ?: imageUrl
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -557,9 +562,9 @@ fun PokemonSelectionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Pokemon image placeholder
-            if (imageUrl != null) {
+            if (displayImageUrl != null) {
                 AsyncImage(
-                    model = imageUrl,
+                    model = displayImageUrl,
                     contentDescription = pokemonName,
                     modifier = Modifier
                         .size(60.dp)

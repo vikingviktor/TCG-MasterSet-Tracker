@@ -64,6 +64,7 @@ import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import com.example.pokemonmastersettracker.viewmodel.CardSortOption
 import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
+import com.example.pokemonmastersettracker.utils.getLocalSpritePath
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -555,7 +556,7 @@ fun FavoritePokemonCard(
         ) {
             // Pokemon Image
             AsyncImage(
-                model = pokemon.imageUrl,
+                model = getLocalSpritePath(pokemon.nationalPokedexNumber) ?: pokemon.imageUrl,
                 contentDescription = pokemon.name,
                 modifier = Modifier
                     .size(60.dp)
