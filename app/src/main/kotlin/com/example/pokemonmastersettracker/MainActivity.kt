@@ -25,7 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pokemonmastersettracker.ui.screens.ApiTestScreen
+import com.example.pokemonmastersettracker.ui.screens.ConfigScreen
 import com.example.pokemonmastersettracker.ui.screens.CollectionScreen
 import com.example.pokemonmastersettracker.ui.screens.FavoritesScreen
 import com.example.pokemonmastersettracker.ui.screens.HomeScreen
@@ -51,17 +51,20 @@ class MainActivity : ComponentActivity() {
             val themeColors = ThemeColorSchemes.getThemeColors(currentTheme)
             PokemonColors.applyTheme(themeColors)
             
-            PokemonTrackerAppScreen()
+            PokemonTrackerAppScreen(currentTheme)
         }
     }
 }
 
 @Composable
-fun PokemonTrackerAppScreen() {
+fun PokemonTrackerAppScreen(currentTheme: com.example.pokemonmastersettracker.ui.theme.AppTheme) {
     // For testing, skip login and go straight to home
     // TODO: Implement proper user authentication when ready
     var currentScreen by remember { mutableIntStateOf(0) }
     val homeViewModel: CardViewModel = hiltViewModel()
+    
+    // Force recomposition when theme changes
+    val themeKey = remember(currentTheme) { currentTheme }
 
     MaterialTheme {
         Scaffold(
@@ -98,8 +101,8 @@ fun PokemonTrackerAppScreen() {
                         onClick = { currentScreen = 2 }
                     )
                     NavigationBarItem(
-                        icon = { Icon(Icons.Filled.Settings, contentDescription = "API Test", tint = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
-                        label = { Text("API Test", color = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = "Config", tint = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
+                        label = { Text("Config", color = if (currentScreen == 3) PokemonColors.Primary else PokemonColors.OnSurface) },
                         selected = currentScreen == 3,
                         onClick = { currentScreen = 3 }
                     )
@@ -111,7 +114,7 @@ fun PokemonTrackerAppScreen() {
                     0 -> HomeScreen(viewModel = homeViewModel)
                     1 -> CollectionScreen(userId = "test-user")
                     2 -> FavoritesScreen()
-                    3 -> ApiTestScreen()
+                    3 -> ConfigScreen()
                 }
             }
         }

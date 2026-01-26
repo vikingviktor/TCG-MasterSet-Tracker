@@ -61,37 +61,15 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material.icons.filled.Palette
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.example.pokemonmastersettracker.ui.theme.ThemeManager
-import com.example.pokemonmastersettracker.ui.theme.AppTheme
 import kotlinx.coroutines.delay
-import androidx.compose.ui.platform.LocalContext
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-interface ThemeManagerEntryPoint {
-    fun themeManager(): ThemeManager
-}
 
 @Composable
 fun HomeScreen(
     viewModel: CardViewModel = hiltViewModel(),
     onCardClick: (String) -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val themeManager = remember {
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            ThemeManagerEntryPoint::class.java
-        ).themeManager()
-    }
     var searchQuery by remember { mutableStateOf("") }
     val cardUiState by viewModel.cardUiState.collectAsState()
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
@@ -99,48 +77,8 @@ fun HomeScreen(
     var isCardInWishlist by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableIntStateOf(0) } // Trigger for refreshing card states
     var isRefreshing by remember { mutableStateOf(false) }
-    var showThemeDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
-    // Theme selection dialog
-    if (showThemeDialog) {
-        AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
-            title = { Text("Choose Theme") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AppTheme.values().forEach { theme ->
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    themeManager.setTheme(theme)
-                                    showThemeDialog = false
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = PokemonColors.Primary
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(theme.displayName, fontSize = 16.sp)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showThemeDialog = false }) {
-                    Text("Close")
-                }
-            }
-        )
-    }
-
     // Show dialog when a card is selected
     selectedCardForDialog?.let { card ->
         CardDetailDialog(
@@ -239,38 +177,21 @@ fun HomeScreen(
         ) {
         // Only show search section when NOT viewing a Pokemon's cards
         if (cardUiState.selectedPokemonName == null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    SearchSection(
-                        searchQuery = searchQuery,
-                        onSearchQueryChanged = { 
-                            searchQuery = it
-                            // Clear generation selection when user starts typing
-                            if (it.isNotEmpty() && cardUiState.selectedGeneration != null) {
-                                viewModel.clearGeneration()
-                            }
-                        },
-                        onSearch = {
-                            if (searchQuery.isNotEmpty()) {
-                                viewModel.searchPokemonLocal(searchQuery)
-                            }
-                        }
-                    )
+            SearchSection(
+                searchQuery = searchQuery,
+                onSearchQueryChanged = { 
+                    searchQuery = it
+                    // Clear generation selection when user starts typing
+                    if (it.isNotEmpty() && cardUiState.selectedGeneration != null) {
+                        viewModel.clearGeneration()
+                    }
+                },
+                onSearch = {
+                    if (searchQuery.isNotEmpty()) {
+                        viewModel.searchPokemonLocal(searchQuery)
+                    }
                 }
-                IconButton(
-                    onClick = { showThemeDialog = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Palette,
-                        contentDescription = "Change theme",
-                        tint = PokemonColors.Primary
-                    )
-                }
-            }
+            )
         } else {
             // Show back button and favorite button when viewing cards
             Row(
