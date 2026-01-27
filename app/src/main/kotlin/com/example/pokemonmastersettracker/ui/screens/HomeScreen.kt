@@ -595,9 +595,10 @@ fun PokemonSelectionCard(
             ) {
                 Text(
                     text = pokemonName,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PokemonColors.Primary
+                    color = PokemonColors.Primary,
+                    maxLines = 2
                 )
                 Text(
                     text = "Tap to view all cards",
