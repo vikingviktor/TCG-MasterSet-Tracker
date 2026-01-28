@@ -36,7 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokemonmastersettracker.data.api.TCGdexService
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
