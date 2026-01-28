@@ -36,8 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.MaterialTheme
 import com.example.pokemonmastersettracker.data.api.TCGdexService
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
@@ -80,7 +79,7 @@ fun ConfigScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(PokemonColors.Background)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -89,7 +88,7 @@ fun ConfigScreen(
             text = "Configuration & Help",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = PokemonColors.Primary
+            color = MaterialTheme.colorScheme.primary
         )
 
         // Theme Selection Section
@@ -98,12 +97,12 @@ fun ConfigScreen(
             onThemeChanged = { refreshTrigger++ }
         )
 
-        Divider(color = PokemonColors.Primary.copy(alpha = 0.3f), thickness = 1.dp)
+        Divider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
 
         // FAQ Section
         FAQSection()
 
-        Divider(color = PokemonColors.Primary.copy(alpha = 0.3f), thickness = 1.dp)
+        Divider(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), thickness = 1.dp)
 
         // API Test Section
         ApiTestSection(
@@ -209,7 +208,7 @@ fun ThemeSelectionSection(
             text = "App Theme",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = PokemonColors.OnSurface
+            color = MaterialTheme.colorScheme.onSurface
         )
         
         Text(
@@ -228,7 +227,7 @@ fun ThemeSelectionSection(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = PokemonColors.Primary
+                    contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Row(
@@ -293,7 +292,7 @@ fun FAQSection() {
                 .fillMaxWidth()
                 .clickable { isFAQExpanded = !isFAQExpanded },
             colors = CardDefaults.cardColors(
-                containerColor = PokemonColors.Surface
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Row(
@@ -307,12 +306,12 @@ fun FAQSection() {
                     text = "Frequently Asked Questions",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PokemonColors.OnSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Icon(
                     imageVector = if (isFAQExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (isFAQExpanded) "Collapse" else "Expand",
-                    tint = PokemonColors.Primary
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -343,7 +342,7 @@ fun FAQItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = PokemonColors.Surface
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -360,13 +359,13 @@ fun FAQItem(
                     text = faq.question,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = PokemonColors.OnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = PokemonColors.Primary
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
             
@@ -397,7 +396,7 @@ fun ApiTestSection(
             text = "API Connection Test",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = PokemonColors.OnSurface
+            color = MaterialTheme.colorScheme.onSurface
         )
         
         Text(
@@ -410,7 +409,7 @@ fun ApiTestSection(
             onClick = onRunTest,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = PokemonColors.Primary
+                containerColor = MaterialTheme.colorScheme.primary
             ),
             enabled = !isLoading
         ) {
@@ -427,7 +426,7 @@ fun ApiTestSection(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = PokemonColors.Surface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(
@@ -445,8 +444,8 @@ fun ApiTestSection(
                                 line.startsWith("✗") -> Color(0xFFEF5350)
                                 line.startsWith("⚠") -> Color(0xFFFFA726)
                                 line.startsWith("ℹ") -> Color(0xFF42A5F5)
-                                line.startsWith("===") -> PokemonColors.Primary
-                                else -> PokemonColors.OnSurface
+                                line.startsWith("===") -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.onSurface
                             },
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
