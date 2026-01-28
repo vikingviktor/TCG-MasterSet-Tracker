@@ -88,14 +88,14 @@ object ThemeColorSchemes {
     )
     
     val Midnight = ThemeColors(
-        primary = Color(0xFF9C27B0),
-        primaryDark = Color(0xFF7B1FA2),
+        primary = Color(0xFFB388FF), // lighter purple
+        primaryDark = Color(0xFF7C4DFF), // lighter dark purple
         secondary = Color(0xFF00BCD4),
         accent = Color(0xFFFF4081),
         background = Color(0xFF0A0E27),
-        surface = Color(0xFF1A1F3A),
+        surface = Color(0xFF292C4D), // lighter surface
         error = Color(0xFFCF6679),
-        onPrimary = Color(0xFFFFFFFF),
+        onPrimary = Color(0xFF1A1F3A),
         onSurface = Color(0xFFE0E0E0),
         onBackground = Color(0xFFE0E0E0)
     )

@@ -494,7 +494,14 @@ fun SearchSection(
                     contentDescription = null
                 )
             },
-            singleLine = true
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(
+                color = when (PokemonColors.Primary.value) {
+                    0xFFFF7043 -> Color(0xFFFFA726) // Orange for Dark
+                    0xFFB388FF -> Color(0xFFB388FF) // Purple for Midnight
+                    else -> PokemonColors.Primary
+                }
+            )
         )
 
         Button(

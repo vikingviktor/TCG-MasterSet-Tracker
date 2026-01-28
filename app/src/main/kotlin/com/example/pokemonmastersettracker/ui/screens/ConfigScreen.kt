@@ -65,7 +65,11 @@ fun ConfigScreen(
             ConfigThemeManagerEntryPoint::class.java
         ).themeManager()
     }
-    
+
+    // Observe theme changes and trigger recomposition
+    val currentTheme by themeManager.currentTheme.collectAsState(initial = AppTheme.LIGHT)
+    // Optionally, update PokemonColors here if needed
+
     var testResults by remember { mutableStateOf<List<String>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableStateOf(0) }
