@@ -497,8 +497,8 @@ fun SearchSection(
             singleLine = true,
             textStyle = androidx.compose.ui.text.TextStyle(
                 color = when (PokemonColors.Primary.value) {
-                    0xFFFF7043L -> Color(0xFFFFA726) // Orange for Dark
-                    0xFFB388FFL -> Color(0xFFB388FF) // Purple for Midnight
+                    0xFFFF7043.toLong() -> Color(0xFFFFA726) // Orange for Dark
+                    0xFFB388FF.toLong() -> Color(0xFFB388FF) // Purple for Midnight
                     else -> PokemonColors.Primary
                 }
             )
