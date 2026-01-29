@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -56,6 +57,7 @@ fun CardDetailDialog(
 ) {
     var selectedCondition by remember { mutableStateOf(com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) }
     var showConditionMenu by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
     
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -71,11 +73,18 @@ fun CardDetailDialog(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Close button
+                // Close button and Info icon
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Card Info",
+                            tint = PokemonColors.Primary
+                        )
+                    }
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -235,5 +244,13 @@ fun CardDetailDialog(
                 }
             }
         }
+    }
+    
+    // Show info dialog when requested
+    if (showInfoDialog) {
+        CardInfoDialog(
+            card = card,
+            onDismiss = { showInfoDialog = false }
+        )
     }
 }

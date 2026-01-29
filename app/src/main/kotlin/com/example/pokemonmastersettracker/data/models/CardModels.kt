@@ -76,7 +76,10 @@ data class Card(
     val tcgplayer: TCGPlayerData?,
     
     @SerializedName("cardmarket")
-    val cardmarket: CardMarketData?
+    val cardmarket: CardMarketData?,
+    
+    @SerializedName("variants")
+    val variants: CardVariants? = null
 ) {
     companion object {
         // For Room, we need a no-arg constructor
@@ -93,8 +96,36 @@ data class Card(
             number: String? = null,
             artist: String? = null,
             tcgplayer: TCGPlayerData? = null,
-            cardmarket: CardMarketData? = null
-        ) = Card(id, name, supertype, subtypes, hp, types, rarity, set, image, number, artist, tcgplayer, cardmarket)
+            cardmarket: CardMarketData? = null,
+            variants: CardVariants? = null
+        ) = Card(id, name, supertype, subtypes, hp, types, rarity, set, image, number, artist, tcgplayer, cardmarket, variants)
+    }
+}
+
+data class CardVariants(
+    @SerializedName("firstEdition")
+    val firstEdition: Boolean = false,
+    
+    @SerializedName("holo")
+    val holo: Boolean = false,
+    
+    @SerializedName("normal")
+    val normal: Boolean = false,
+    
+    @SerializedName("reverse")
+    val reverse: Boolean = false,
+    
+    @SerializedName("wPromo")
+    val wPromo: Boolean = false
+) {
+    fun getAvailableVariants(): List<String> {
+        val available = mutableListOf<String>()
+        if (firstEdition) available.add("1st Edition")
+        if (holo) available.add("Holo")
+        if (normal) available.add("Normal")
+        if (reverse) available.add("Reverse Holo")
+        if (wPromo) available.add("Promo")
+        return available
     }
 }
 

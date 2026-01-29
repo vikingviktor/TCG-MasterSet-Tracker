@@ -90,7 +90,8 @@ data class TCGdexCardResponse(
     val rarity: String?,
     val illustrator: String?,
     val set: TCGdexSetInfo?,
-    val pricing: TCGdexPricing?
+    val pricing: TCGdexPricing?,
+    val variants: TCGdexVariants?
 )
 
 data class TCGdexSetInfo(
@@ -132,6 +133,14 @@ data class TCGdexPriceVariant(
     val highPrice: Double?,
     val marketPrice: Double?,
     val directLowPrice: Double?
+)
+
+data class TCGdexVariants(
+    val firstEdition: Boolean = false,
+    val holo: Boolean = false,
+    val normal: Boolean = false,
+    val reverse: Boolean = false,
+    val wPromo: Boolean = false
 )
 
 /**
@@ -443,7 +452,16 @@ class TCGdexService {
                 number = tcgdexCard.localId,
                 artist = tcgdexCard.illustrator,
                 tcgplayer = tcgplayerData,
-                cardmarket = cardmarketData
+                cardmarket = cardmarketData,
+                variants = tcgdexCard.variants?.let { v ->
+                    com.example.pokemonmastersettracker.data.models.CardVariants(
+                        firstEdition = v.firstEdition,
+                        holo = v.holo,
+                        normal = v.normal,
+                        reverse = v.reverse,
+                        wPromo = v.wPromo
+                    )
+                }
             )
         } catch (e: Exception) {
             Log.e("TCGdexService", "Error converting card: ${e.message}", e)
