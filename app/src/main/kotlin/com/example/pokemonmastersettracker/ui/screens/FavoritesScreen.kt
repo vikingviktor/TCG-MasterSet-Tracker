@@ -66,6 +66,9 @@ import com.example.pokemonmastersettracker.ui.components.CardItem
 import com.example.pokemonmastersettracker.ui.components.CardDetailDialog
 import com.example.pokemonmastersettracker.utils.getLocalSpritePath
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
@@ -555,8 +558,13 @@ fun FavoritePokemonCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Pokemon Image
+            val context = LocalContext.current
             AsyncImage(
-                model = getLocalSpritePath(pokemon.nationalPokedexNumber) ?: pokemon.imageUrl,
+                model = ImageRequest.Builder(context)
+                    .data(getLocalSpritePath(pokemon.nationalPokedexNumber) ?: pokemon.imageUrl ?: "file:///android_asset/cards/SubstituteImgCard.png")
+                    .placeholder(coil.base.R.drawable.avd_hide_password)
+                    .error(coil.base.R.drawable.avd_hide_password)
+                    .build(),
                 contentDescription = pokemon.name,
                 modifier = Modifier
                     .size(60.dp)

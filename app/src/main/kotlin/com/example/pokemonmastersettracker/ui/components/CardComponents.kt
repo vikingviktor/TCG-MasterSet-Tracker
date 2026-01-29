@@ -30,6 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 
@@ -43,6 +46,7 @@ fun CardItem(
     modifier: Modifier = Modifier
 ) {
     val borderColor = if (isOwned) Color(0xFF4CAF50) else Color(0xFFEF5350) // Green for owned, Red for not owned
+    val context = LocalContext.current
     
     Column(
         modifier = modifier
@@ -64,21 +68,16 @@ fun CardItem(
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color.LightGray)
         ) {
-            card.image?.large?.let { imageUrl ->
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = card.name,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.Crop
-                )
-            } ?: run {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No Image Available")
-                }
-            }
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(card.image?.large ?: "file:///android_asset/cards/SubstituteImgCard.png")
+                    .placeholder(coil.base.R.drawable.avd_hide_password)
+                    .error(coil.base.R.drawable.avd_hide_password)
+                    .build(),
+                contentDescription = card.name,
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
             
             // Owned checkmark
             if (isOwned) {
@@ -217,6 +216,8 @@ fun CardDetailView(
     condition: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -231,7 +232,11 @@ fun CardDetailView(
         ) {
             card.image?.large?.let { imageUrl ->
                 AsyncImage(
-                    model = imageUrl,
+                    model = ImageRequest.Builder(context)
+                        .data(imageUrl)
+                        .placeholder(coil.base.R.drawable.avd_hide_password)
+                        .error(coil.base.R.drawable.avd_hide_password)
+                        .build(),
                     contentDescription = card.name,
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Fit

@@ -50,6 +50,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
@@ -569,30 +572,19 @@ fun PokemonSelectionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Pokemon image placeholder
-            if (displayImageUrl != null) {
-                AsyncImage(
-                    model = displayImageUrl,
-                    contentDescription = pokemonName,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = pokemonName.first().toString(),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+            val context = LocalContext.current
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(displayImageUrl ?: "file:///android_asset/cards/SubstituteImgCard.png")
+                    .placeholder(coil.base.R.drawable.avd_hide_password)
+                    .error(coil.base.R.drawable.avd_hide_password)
+                    .build(),
+                contentDescription = pokemonName,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
             }
             
             // Pokemon info

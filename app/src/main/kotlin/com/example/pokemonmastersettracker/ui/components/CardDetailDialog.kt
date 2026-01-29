@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 
@@ -56,6 +59,7 @@ fun CardDetailDialog(
 ) {
     var selectedCondition by remember { mutableStateOf(com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) }
     var showConditionMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -87,7 +91,11 @@ fun CardDetailDialog(
                 
                 // Card Image
                 AsyncImage(
-                    model = card.image?.large,
+                    model = ImageRequest.Builder(context)
+                        .data(card.image?.large)
+                        .placeholder(coil.base.R.drawable.avd_hide_password)
+                        .error(coil.base.R.drawable.avd_hide_password)
+                        .build(),
                     contentDescription = card.name,
                     modifier = Modifier
                         .size(300.dp)
