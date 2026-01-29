@@ -483,9 +483,15 @@ fun WishlistContent(
             Button(
                 onClick = {
                     scope.launch {
-                        val imageFile = exportWishlistAsImage(context, wishlistUiState.wishlistCards)
-                        if (imageFile != null) {
-                            shareWishlistImage(context, imageFile)
+                        try {
+                            val imageFile = exportWishlistAsImage(context, wishlistUiState.wishlistCards)
+                            if (imageFile != null) {
+                                shareWishlistImage(context, imageFile)
+                            } else {
+                                android.util.Log.e("WishlistExport", "Failed to create wishlist image")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("WishlistExport", "Error exporting wishlist: ${e.message}", e)
                         }
                     }
                 },

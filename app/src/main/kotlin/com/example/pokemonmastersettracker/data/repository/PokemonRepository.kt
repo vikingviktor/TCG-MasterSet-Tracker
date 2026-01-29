@@ -71,15 +71,19 @@ class PokemonRepository @Inject constructor(
     }
     
     suspend fun seedPopularPokemon() {
-        val count = pokemonDao.getPokemonCount()
-        val expectedCount = 1025 // Total Pokemon Gen 1-9
-        if (count < expectedCount) {
-            android.util.Log.d("PokemonRepository", "Seeding Pokemon database... (current: $count, expected: $expectedCount)")
-            val popularPokemon = getPopularPokemonList()
-            pokemonDao.insertPokemons(popularPokemon)
-            android.util.Log.d("PokemonRepository", "✓ Seeded ${popularPokemon.size} Pokemon (Gen 1-9, Pokedex #1-1025)")
-        } else {
-            android.util.Log.d("PokemonRepository", "Pokemon database complete (count: $count)")
+        try {
+            val count = pokemonDao.getPokemonCount()
+            val expectedCount = 1025 // Total Pokemon Gen 1-9
+            if (count < expectedCount) {
+                android.util.Log.d("PokemonRepository", "Seeding Pokemon database... (current: $count, expected: $expectedCount)")
+                val popularPokemon = getPopularPokemonList()
+                pokemonDao.insertPokemons(popularPokemon)
+                android.util.Log.d("PokemonRepository", "✓ Seeded ${popularPokemon.size} Pokemon (Gen 1-9, Pokedex #1-1025)")
+            } else {
+                android.util.Log.d("PokemonRepository", "Pokemon database complete (count: $count)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error in seedPopularPokemon: ${e.message}", e)
         }
     }
     

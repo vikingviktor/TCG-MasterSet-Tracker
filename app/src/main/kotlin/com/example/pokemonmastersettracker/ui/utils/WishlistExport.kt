@@ -92,20 +92,27 @@ fun exportWishlistAsImage(context: Context, wishlistCards: List<Card>): File? {
 // Share the exported image
 fun shareWishlistImage(context: Context, imageFile: File) {
     try {
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            imageFile
-        )
+        val uri = try {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                imageFile
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("WishlistShare", "FileProvider error, trying direct file URI: ${e.message}")
+            // Fallback to direct file URI (less secure but will work)
+            android.net.Uri.fromFile(imageFile)
+        }
         
         val shareIntent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_STREAM, uri)
             type = "image/png"
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
         
         context.startActivity(Intent.createChooser(shareIntent, "Share Wishlist"))
     } catch (e: Exception) {
-        android.util.Log.e("WishlistShare", "Error sharing wishlist", e)
+        android.util.Log.e("WishlistShare", "Error sharing wishlist: ${e.message}", e)
     }
 }

@@ -98,8 +98,12 @@ class CardViewModel @Inject constructor(
                 android.util.Log.d("CardViewModel", "Test user already exists or error: ${e.message}")
             }
             
-            // Seed Pokemon database
-            repository.seedPopularPokemon()
+            try {
+                // Seed Pokemon database
+                repository.seedPopularPokemon()
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "Error seeding Pokemon database: ${e.message}", e)
+            }
         }
     }
 
