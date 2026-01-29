@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -55,6 +56,21 @@ import java.text.DecimalFormat
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
+import androidx.core.content.FileProvider
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.example.pokemonmastersettracker.ui.utils.exportWishlistAsImage
+import com.example.pokemonmastersettracker.ui.utils.shareWishlistImage
 
 @Composable
 fun CollectionScreen(
@@ -441,6 +457,7 @@ fun WishlistContent(
     val viewModel: UserCollectionViewModel = hiltViewModel()
     val wishlistUiState by viewModel.wishlistUiState.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     LaunchedEffect(userId, refreshTrigger) {
         viewModel.loadWishlist(userId)
@@ -451,12 +468,39 @@ fun WishlistContent(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Your Wishlist",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Your Wishlist",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Button(
+                onClick = {
+                    scope.launch {
+                        val imageFile = exportWishlistAsImage(context, wishlistUiState.wishlistCards)
+                        if (imageFile != null) {
+                            shareWishlistImage(context, imageFile)
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PokemonColors.Primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Export",
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                Text("Export")
+            }
+        }
         
         when {
             wishlistUiState.loading -> {

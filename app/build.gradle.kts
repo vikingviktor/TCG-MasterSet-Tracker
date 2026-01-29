@@ -13,8 +13,8 @@ android {
         applicationId = "com.mastersettracker.pokemon"
         minSdk = 24
         targetSdk = 35
-        versionCode = 97
-        versionName = "2.9.0"
+        versionCode = 98
+        versionName = "2.9.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

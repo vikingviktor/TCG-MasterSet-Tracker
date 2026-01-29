@@ -119,9 +119,9 @@ fun CardItem(
                         color = Color.Gray
                     )
                 }
-                card.rarity?.let {
+                card.set?.name?.let {
                     Text(
-                        text = "Rarity: $it",
+                        text = it,
                         fontSize = 12.sp,
                         color = Color.Gray,
                         maxLines = 1

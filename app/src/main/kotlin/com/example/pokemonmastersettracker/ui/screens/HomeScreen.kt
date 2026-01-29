@@ -135,6 +135,7 @@ fun HomeScreen(
                 Button(
                     onClick = { 
                         viewModel.updateFavoriteWithTracking(pokemonName, enableTracking = true)
+                        viewModel.dismissTrackingDialog()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PokemonColors.Primary
@@ -147,6 +148,7 @@ fun HomeScreen(
                 TextButton(
                     onClick = { 
                         viewModel.updateFavoriteWithTracking(pokemonName, enableTracking = false)
+                        viewModel.dismissTrackingDialog()
                     }
                 ) {
                     Text("No, Just Favorite")
