@@ -87,10 +87,13 @@ class CardViewModel @Inject constructor(
     private val defaultUserId = "test-user"
     
     init {
-        // Initialize app on first launch
+        android.util.Log.d("CardViewModel", "Initializing CardViewModel...")
+        // Initialize app on first launch - non-blocking
         viewModelScope.launch {
+            android.util.Log.d("CardViewModel", "Starting initialization coroutine...")
             try {
                 // Ensure test user exists in database
+                android.util.Log.d("CardViewModel", "Creating test user...")
                 repository.createUser("test@example.com", "test-user")
                 android.util.Log.d("CardViewModel", "✓ Test user created/verified")
             } catch (e: Exception) {
@@ -100,10 +103,13 @@ class CardViewModel @Inject constructor(
             
             try {
                 // Seed Pokemon database
+                android.util.Log.d("CardViewModel", "Starting Pokemon seeding...")
                 repository.seedPopularPokemon()
+                android.util.Log.d("CardViewModel", "✓ Pokemon seeding complete")
             } catch (e: Exception) {
                 android.util.Log.e("CardViewModel", "Error seeding Pokemon database: ${e.message}", e)
             }
+            android.util.Log.d("CardViewModel", "✓ CardViewModel initialization complete")
         }
     }
 

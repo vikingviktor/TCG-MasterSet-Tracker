@@ -71,6 +71,7 @@ fun HomeScreen(
     viewModel: CardViewModel = hiltViewModel(),
     onCardClick: (String) -> Unit = {}
 ) {
+    android.util.Log.d("HomeScreen", "HomeScreen composing...")
     var searchQuery by remember { mutableStateOf("") }
     val cardUiState by viewModel.cardUiState.collectAsState()
     var selectedCardForDialog by remember { mutableStateOf<Card?>(null) }
@@ -79,6 +80,8 @@ fun HomeScreen(
     var refreshTrigger by remember { mutableIntStateOf(0) } // Trigger for refreshing card states
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    
+    android.util.Log.d("HomeScreen", "HomeScreen initialized, cardUiState: $cardUiState")
     
     // Show dialog when a card is selected
     selectedCardForDialog?.let { card ->
@@ -171,6 +174,7 @@ fun HomeScreen(
             }
         }
     ) {
+        android.util.Log.d("HomeScreen", "Rendering main content...")
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -178,6 +182,7 @@ fun HomeScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            android.util.Log.d("HomeScreen", "Main column rendering...")
         // Only show search section when NOT viewing a Pokemon's cards
         if (cardUiState.selectedPokemonName == null) {
             SearchSection(
