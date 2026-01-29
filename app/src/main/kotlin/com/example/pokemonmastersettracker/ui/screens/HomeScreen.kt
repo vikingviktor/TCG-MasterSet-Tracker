@@ -50,9 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
@@ -572,13 +569,8 @@ fun PokemonSelectionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Pokemon image placeholder
-            val context = LocalContext.current
             AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(displayImageUrl ?: "file:///android_asset/cards/SubstituteImgCard.png")
-                    .placeholder(coil.base.R.drawable.avd_hide_password)
-                    .error(coil.base.R.drawable.avd_hide_password)
-                    .build(),
+                model = displayImageUrl ?: "file:///android_asset/cards/SubstituteImgCard.png",
                 contentDescription = pokemonName,
                 modifier = Modifier
                     .size(60.dp)
