@@ -222,11 +222,7 @@ fun CardDetailView(
         ) {
             card.image?.large?.let { imageUrl ->
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(imageUrl)
-                        .placeholder(coil.base.R.drawable.avd_hide_password)
-                        .error(coil.base.R.drawable.avd_hide_password)
-                        .build(),
+                    model = imageUrl,
                     contentDescription = card.name,
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Fit
