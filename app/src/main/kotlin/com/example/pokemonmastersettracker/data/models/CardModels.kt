@@ -3,6 +3,12 @@ package com.example.pokemonmastersettracker.data.models
 import com.google.gson.annotations.SerializedName
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.pokemonmastersettracker.utils.CardImageTypeConverter
+import com.example.pokemonmastersettracker.utils.TCGPlayerDataTypeConverter
+import com.example.pokemonmastersettracker.utils.CardMarketDataTypeConverter
+import com.example.pokemonmastersettracker.utils.StringListTypeConverter
+import com.example.pokemonmastersettracker.utils.CardVariantsTypeConverter
 
 // Pokemon Entity for local search
 @Entity(tableName = "pokemon")
@@ -37,6 +43,13 @@ data class CardResponse(
 )
 
 @Entity(tableName = "cards")
+@TypeConverters(
+    CardImageTypeConverter::class,
+    TCGPlayerDataTypeConverter::class,
+    CardMarketDataTypeConverter::class,
+    StringListTypeConverter::class,
+    CardVariantsTypeConverter::class
+)
 data class Card(
     @PrimaryKey
     @SerializedName("id")

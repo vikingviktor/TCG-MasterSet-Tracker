@@ -3,6 +3,7 @@ package com.example.pokemonmastersettracker.utils
 import androidx.room.TypeConverter
 import com.example.pokemonmastersettracker.data.models.CardImage
 import com.example.pokemonmastersettracker.data.models.CardMarketData
+import com.example.pokemonmastersettracker.data.models.CardVariants
 import com.example.pokemonmastersettracker.data.models.TCGPlayerData
 import com.example.pokemonmastersettracker.data.models.PriceData
 import com.google.gson.Gson
@@ -81,5 +82,19 @@ object StringListTypeConverter {
             val type = object : TypeToken<List<String>>() {}.type
             gson.fromJson(value, type)
         }
+    }
+}
+
+object CardVariantsTypeConverter {
+    private val gson = Gson()
+
+    @TypeConverter
+    fun fromCardVariants(value: CardVariants?): String? {
+        return if (value == null) null else gson.toJson(value)
+    }
+
+    @TypeConverter
+    fun toCardVariants(value: String?): CardVariants? {
+        return if (value == null) null else gson.fromJson(value, CardVariants::class.java)
     }
 }
