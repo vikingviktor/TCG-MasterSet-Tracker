@@ -585,7 +585,6 @@ fun PokemonSelectionCard(
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
-            }
             
             // Pokemon info
             Column(
