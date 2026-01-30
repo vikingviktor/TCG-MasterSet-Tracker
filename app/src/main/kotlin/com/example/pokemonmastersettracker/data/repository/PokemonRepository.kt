@@ -14,6 +14,8 @@ import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.Pokemon
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import com.example.pokemonmastersettracker.data.api.TCGdexService
+import com.example.pokemonmastersettracker.utils.AssetLoader
+import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -24,7 +26,8 @@ class PokemonRepository @Inject constructor(
     private val favoritePokemonDao: FavoritePokemonDao,
     private val wishlistCardDao: WishlistCardDao,
     private val userDao: UserDao,
-    private val pokemonDao: PokemonDao
+    private val pokemonDao: PokemonDao,
+    private val context: Context
 ) {
     
     // Pokemon Operations
@@ -68,6 +71,57 @@ class PokemonRepository @Inject constructor(
      */
     suspend fun getCachedCardsForPokemon(pokemonName: String): List<Card> {
         return cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+    }
+    
+    /**
+     * Load cards from cache only (instant, non-blocking)
+     * 
+     * @param pokemonName Name of the Pokemon to search for
+     * @return List of cached Card objects
+     */
+    suspend fun loadCachedCardsOnly(pokemonName: String): List<Card> {
+        android.util.Log.d("PokemonRepository", "⚡ loadCachedCardsOnly called for: $pokemonName")
+        
+        // Load from bundled asset cache (instant)
+        android.util.Log.d("PokemonRepository", "📦 Loading from asset cache only...")
+        val cachedCards = AssetLoader.loadPopularPokemonCards(context, pokemonName)
+        
+        if (cachedCards.isNotEmpty()) {
+            // Save to database for future offline access
+            android.util.Log.d("PokemonRepository", "💾 Saving ${cachedCards.size} cached cards to database...")
+            saveCards(cachedCards)
+            android.util.Log.d("PokemonRepository", "✓ Cache loaded and saved: ${cachedCards.size} cards")
+        } else {
+            android.util.Log.d("PokemonRepository", "⚠️ No cached cards found for $pokemonName")
+        }
+        
+        return cachedCards
+    }
+    
+    /**
+     * Fetch fresh cards from API (non-blocking, can be called in background)
+     * 
+     * @param pokemonName Name of the Pokemon to search for
+     * @return List of fresh Card objects from API, or empty if failed
+     */
+    suspend fun fetchFreshCardsFromAPI(pokemonName: String): List<Card> {
+        android.util.Log.d("PokemonRepository", "🌐 fetchFreshCardsFromAPI called for: $pokemonName")
+        
+        return try {
+            val tcgdexService = TCGdexService()
+            val apiCards = tcgdexService.searchCardsByPokemon(pokemonName, "en")
+            android.util.Log.d("PokemonRepository", "✓ API returned ${apiCards.size} cards")
+            
+            if (apiCards.isNotEmpty()) {
+                android.util.Log.d("PokemonRepository", "💾 Saving ${apiCards.size} fresh API cards to database...")
+                saveCards(apiCards)
+            }
+            
+            apiCards
+        } catch (e: Exception) {
+            android.util.Log.w("PokemonRepository", "⚠️ Failed to fetch from API: ${e.message}")
+            emptyList()
+        }
     }
     
     suspend fun seedPopularPokemon() {

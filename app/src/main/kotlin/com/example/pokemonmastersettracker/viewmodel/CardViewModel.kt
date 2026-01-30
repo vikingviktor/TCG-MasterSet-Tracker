@@ -61,7 +61,8 @@ data class CardUiState(
     val sortOption: CardSortOption = CardSortOption.NONE,
     val showTrackingDialog: String? = null, // Pokemon name to show tracking dialog for
     val currentLanguage: String = "en", // Track current search language
-    val selectedGeneration: Int? = null // Currently selected generation (null = show all generations)
+    val selectedGeneration: Int? = null, // Currently selected generation (null = show all generations)
+    val isUpdatingSearch: Boolean = false // Whether background API update is in progress
 )
 
 @HiltViewModel
@@ -371,13 +372,143 @@ class CardViewModel @Inject constructor(
         }
     }
 
-    // testDirectApiCall removed - old Pokemon TCG API no longer used
-    
     /**
-     * Load Pokemon cards from TCGdex API with language selection
-     * Used in Favorites screen for English/Japanese card support
+     * Load Pokemon cards with cache-first strategy
+     * Shows cached/local data instantly, then updates from API in background
+     * 
+     * @param pokemonName Name of the Pokemon to search for
+     * @param language Language to search (en or ja)
      */
     fun loadCardsFromTCGdex(pokemonName: String, language: String = "en") {
+        viewModelScope.launch {
+            android.util.Log.d("CardViewModel", "🚀 Loading cards for: $pokemonName (language: $language)")
+            _cardUiState.value = _cardUiState.value.copy(
+                loading = true,
+                selectedPokemonName = pokemonName,
+                showTrackingDialog = null,
+                currentLanguage = language,
+                isUpdatingSearch = false
+            )
+            
+            try {
+                // For English searches, use cache-first strategy
+                if (language == "en") {
+                    android.util.Log.d("CardViewModel", "📦 Attempting cache-first load...")
+                    
+                    // 1. IMMEDIATELY load and show cached cards (non-blocking)
+                    val cachedCards = repository.loadCachedCardsOnly(pokemonName)
+                    
+                    if (cachedCards.isNotEmpty()) {
+                        // Show cached cards INSTANTLY
+                        android.util.Log.d("CardViewModel", "✅ Loaded ${cachedCards.size} cached cards INSTANTLY")
+                        _cardUiState.value = _cardUiState.value.copy(
+                            cards = cachedCards,
+                            allCards = cachedCards,
+                            loading = false,
+                            error = null,
+                            isUpdatingSearch = true  // Show updating indicator while fetching fresh data
+                        )
+                        
+                        // Update Pokemon image if we got cards
+                        cachedCards.firstOrNull()?.image?.small?.let { imageUrl ->
+                            repository.updatePokemonImage(pokemonName, imageUrl)
+                        }
+                        
+                        // 2. BACKGROUND: Fetch fresh data from API (non-blocking)
+                        android.util.Log.d("CardViewModel", "🌐 Launching background API fetch...")
+                        viewModelScope.launch {
+                            try {
+                                val apiCards = repository.fetchFreshCardsFromAPI(pokemonName)
+                                
+                                if (apiCards.isNotEmpty() && apiCards.size != cachedCards.size) {
+                                    android.util.Log.d("CardViewModel", "♻️ API returned ${apiCards.size} cards, updating from ${cachedCards.size}")
+                                    _cardUiState.value = _cardUiState.value.copy(
+                                        cards = apiCards,
+                                        allCards = apiCards,
+                                        isUpdatingSearch = false
+                                    )
+                                } else {
+                                    android.util.Log.d("CardViewModel", "✓ API data same as cache, keeping cache")
+                                    _cardUiState.value = _cardUiState.value.copy(
+                                        isUpdatingSearch = false
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.w("CardViewModel", "⚠️ Background API fetch failed: ${e.message}")
+                                _cardUiState.value = _cardUiState.value.copy(
+                                    isUpdatingSearch = false
+                                )
+                            }
+                        }
+                    } else {
+                        // Not in cache, fetch from API
+                        android.util.Log.d("CardViewModel", "❌ Not in cache, fetching from API...")
+                        val apiCards = repository.fetchFreshCardsFromAPI(pokemonName)
+                        
+                        if (apiCards.isNotEmpty()) {
+                            android.util.Log.d("CardViewModel", "✓ Loaded ${apiCards.size} cards from API")
+                            _cardUiState.value = _cardUiState.value.copy(
+                                cards = apiCards,
+                                allCards = apiCards,
+                                loading = false,
+                                error = null,
+                                isUpdatingSearch = false
+                            )
+                        } else {
+                            android.util.Log.d("CardViewModel", "❌ No cards found from API")
+                            _cardUiState.value = _cardUiState.value.copy(
+                                cards = emptyList(),
+                                allCards = emptyList(),
+                                loading = false,
+                                error = "No cards found for $pokemonName",
+                                isUpdatingSearch = false
+                            )
+                        }
+                    }
+                } else {
+                    // For non-English (Japanese), load from API only, no caching
+                    android.util.Log.d("CardViewModel", "🌐 Loading Japanese cards from API (skipping cache)...")
+                    
+                    val cards = tcgdexService.searchCardsByPokemon(pokemonName, language)
+                    
+                    if (cards.isNotEmpty()) {
+                        android.util.Log.d("CardViewModel", "✓ TCGdex returned ${cards.size} $language cards")
+                        _cardUiState.value = _cardUiState.value.copy(
+                            cards = cards,
+                            allCards = cards,
+                            loading = false,
+                            error = null,
+                            isUpdatingSearch = false
+                        )
+                    } else {
+                        android.util.Log.d("CardViewModel", "❌ No cards found for $pokemonName in $language")
+                        _cardUiState.value = _cardUiState.value.copy(
+                            cards = emptyList(),
+                            allCards = emptyList(),
+                            loading = false,
+                            error = "No cards found in $language",
+                            isUpdatingSearch = false
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CardViewModel", "❌ Error loading cards: ${e.message}", e)
+                _cardUiState.value = _cardUiState.value.copy(
+                    loading = false,
+                    error = "Error loading cards: ${e.message}",
+                    isUpdatingSearch = false
+                )
+            }
+        }
+    }
+
+    /**
+     * OLD VERSION - Load Pokemon cards from TCGdex API with language selection
+     * Used in Favorites screen for English/Japanese card support
+     * (Kept for reference - see loadCardsFromTCGdex for updated cache-first version)
+     */
+    @Deprecated("Use loadCardsFromTCGdex which has cache-first strategy")
+    fun loadCardsFromTCGdexOld(pokemonName: String, language: String = "en") {
         viewModelScope.launch {
             android.util.Log.d("CardViewModel", "🌏 Loading cards for: $pokemonName (language: $language)")
             _cardUiState.value = _cardUiState.value.copy(

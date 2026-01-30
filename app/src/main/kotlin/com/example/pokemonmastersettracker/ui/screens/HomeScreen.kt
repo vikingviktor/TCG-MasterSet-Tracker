@@ -390,6 +390,7 @@ fun HomeScreen(
                         currentPage = cardUiState.currentPage,
                         hasMorePages = cardUiState.hasMorePages,
                         pageSize = cardUiState.pageSize,
+                        sortOption = cardUiState.sortOption,
                         refreshTrigger = refreshTrigger,
                         viewModel = viewModel,
                         onCardClick = { card ->
@@ -400,6 +401,38 @@ fun HomeScreen(
                             }
                         }
                     )
+                    
+                    // Show updating indicator if background API fetch is in progress
+                    if (cardUiState.isUpdatingSearch) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp)
+                                .background(
+                                    color = Color(0xFF1B5E20).copy(alpha = 0.9f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Text(
+                                    text = "Updating search results...",
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -633,6 +666,7 @@ fun CardDetailView(
     currentPage: Int,
     hasMorePages: Boolean,
     pageSize: Int,
+    sortOption: CardSortOption,
     refreshTrigger: Int,
     viewModel: CardViewModel,
     onCardClick: (Card) -> Unit
@@ -687,9 +721,9 @@ fun CardDetailView(
                 OutlinedButton(
                     onClick = { viewModel.setSortOption(option) },
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (viewModel.cardUiState.value.sortOption == option) 
+                        containerColor = if (sortOption == option) 
                             PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
-                        contentColor = if (viewModel.cardUiState.value.sortOption == option) 
+                        contentColor = if (sortOption == option) 
                             PokemonColors.Primary else Color.Gray
                     ),
                     modifier = Modifier.height(32.dp),
@@ -698,7 +732,7 @@ fun CardDetailView(
                     Text(
                         text = label,
                         fontSize = 11.sp,
-                        fontWeight = if (viewModel.cardUiState.value.sortOption == option) 
+                        fontWeight = if (sortOption == option) 
                             FontWeight.Bold else FontWeight.Normal
                     )
                 }

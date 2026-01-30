@@ -72,8 +72,9 @@ object AppModule {
         favoritePokemonDao: FavoritePokemonDao,
         wishlistCardDao: WishlistCardDao,
         userDao: UserDao,
-        pokemonDao: PokemonDao
+        pokemonDao: PokemonDao,
+        @ApplicationContext context: Context
     ): PokemonRepository {
-        return PokemonRepository(cardDao, userCardDao, favoritePokemonDao, wishlistCardDao, userDao, pokemonDao)
+        return PokemonRepository(cardDao, userCardDao, favoritePokemonDao, wishlistCardDao, userDao, pokemonDao, context)
     }
 }

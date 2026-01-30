@@ -96,7 +96,7 @@ fun CardInfoDialog(
                                 Text(
                                     text = "• $variant",
                                     fontSize = 14.sp,
-                                    color = Color.White
+                                    color = Color.Black
                                 )
                             }
                         }
@@ -133,7 +133,7 @@ fun CardInfoDialog(
                         text = "TCG Player (USD)",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                     
@@ -175,7 +175,7 @@ fun CardInfoDialog(
                         text = "CardMarket (${card.cardmarket!!.unit ?: "EUR"})",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
+                        color = Color.Black,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                     
@@ -213,7 +213,7 @@ private fun PriceRow(label: String, price: Double?) {
         Text(
             text = label,
             fontSize = 12.sp,
-            color = Color.White
+            color = Color.Black
         )
         Text(
             text = if (price != null && price > 0) {
