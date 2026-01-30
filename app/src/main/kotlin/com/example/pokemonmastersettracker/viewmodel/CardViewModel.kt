@@ -62,7 +62,8 @@ data class CardUiState(
     val showTrackingDialog: String? = null, // Pokemon name to show tracking dialog for
     val currentLanguage: String = "en", // Track current search language
     val selectedGeneration: Int? = null, // Currently selected generation (null = show all generations)
-    val isUpdatingSearch: Boolean = false // Whether background API update is in progress
+    val isUpdatingSearch: Boolean = false, // Whether background API update is in progress
+    val resetHomeScreenSignal: Long = 0 // Used to trigger home screen reset (incremented on each reset)
 )
 
 @HiltViewModel
@@ -624,6 +625,13 @@ class CardViewModel @Inject constructor(
         _cardUiState.value = _cardUiState.value.copy(
             selectedGeneration = null,
             pokemonList = emptyList()
+        )
+    }
+    
+    fun resetHomeScreen() {
+        // Reset all home screen state for complete refresh
+        _cardUiState.value = CardUiState(
+            resetHomeScreenSignal = System.currentTimeMillis()
         )
     }
 }

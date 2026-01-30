@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -54,6 +55,8 @@ import kotlinx.coroutines.delay
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import android.content.Context
@@ -71,6 +74,9 @@ import java.util.Date
 import java.util.Locale
 import com.example.pokemonmastersettracker.ui.utils.exportWishlistAsImage
 import com.example.pokemonmastersettracker.ui.utils.shareWishlistImage
+import com.example.pokemonmastersettracker.ui.utils.exportWishlistAsCSV
+import com.example.pokemonmastersettracker.ui.utils.exportWishlistAsText
+import com.example.pokemonmastersettracker.ui.utils.shareFile
 
 @Composable
 fun CollectionScreen(
@@ -301,7 +307,8 @@ fun CollectionHeader(
                 Text(
                     text = "Your Collection",
                     fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 
                 // Refresh button
@@ -463,6 +470,8 @@ fun WishlistContent(
         viewModel.loadWishlist(userId)
     }
     
+    var showExportMenu by remember { mutableStateOf(false) }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -478,33 +487,83 @@ fun WishlistContent(
             Text(
                 text = "Your Wishlist",
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
-            Button(
-                onClick = {
-                    scope.launch {
-                        try {
-                            val imageFile = exportWishlistAsImage(context, wishlistUiState.wishlistCards)
-                            if (imageFile != null) {
-                                shareWishlistImage(context, imageFile)
-                            } else {
-                                android.util.Log.e("WishlistExport", "Failed to create wishlist image")
+            Box {
+                Button(
+                    onClick = { showExportMenu = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PokemonColors.Primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Export",
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    Text("Export")
+                }
+                
+                DropdownMenu(
+                    expanded = showExportMenu,
+                    onDismissRequest = { showExportMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Export as Image (PNG)") },
+                        onClick = {
+                            showExportMenu = false
+                            scope.launch {
+                                try {
+                                    val imageFile = exportWishlistAsImage(context, wishlistUiState.wishlistCards)
+                                    if (imageFile != null) {
+                                        shareWishlistImage(context, imageFile)
+                                    } else {
+                                        android.util.Log.e("WishlistExport", "Failed to create wishlist image")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("WishlistExport", "Error exporting wishlist: ${e.message}", e)
+                                }
                             }
-                        } catch (e: Exception) {
-                            android.util.Log.e("WishlistExport", "Error exporting wishlist: ${e.message}", e)
                         }
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PokemonColors.Primary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Export",
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-                Text("Export")
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Export as CSV (Excel)") },
+                        onClick = {
+                            showExportMenu = false
+                            scope.launch {
+                                try {
+                                    val csvFile = exportWishlistAsCSV(context, wishlistUiState.wishlistCards)
+                                    if (csvFile != null) {
+                                        shareFile(context, csvFile, "text/csv")
+                                    } else {
+                                        android.util.Log.e("WishlistExport", "Failed to create CSV file")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("WishlistExport", "Error exporting wishlist: ${e.message}", e)
+                                }
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Export as Text (TXT)") },
+                        onClick = {
+                            showExportMenu = false
+                            scope.launch {
+                                try {
+                                    val textFile = exportWishlistAsText(context, wishlistUiState.wishlistCards)
+                                    if (textFile != null) {
+                                        shareFile(context, textFile, "text/plain")
+                                    } else {
+                                        android.util.Log.e("WishlistExport", "Failed to create text file")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("WishlistExport", "Error exporting wishlist: ${e.message}", e)
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
         

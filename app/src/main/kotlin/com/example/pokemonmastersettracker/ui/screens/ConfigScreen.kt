@@ -96,6 +96,7 @@ fun ConfigScreen(
         // Theme Selection Section
         ThemeSelectionSection(
             themeManager = themeManager,
+            currentTheme = currentTheme,
             onThemeChanged = { refreshTrigger++ }
         )
 
@@ -198,6 +199,7 @@ fun ConfigScreen(
 @Composable
 fun ThemeSelectionSection(
     themeManager: ThemeManager,
+    currentTheme: AppTheme,
     onThemeChanged: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -229,6 +231,8 @@ fun ThemeSelectionSection(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (theme == currentTheme) 
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
@@ -237,7 +241,15 @@ fun ThemeSelectionSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(theme.displayName, fontSize = 16.sp)
+                    Text(
+                        theme.displayName, 
+                        fontSize = 16.sp,
+                        fontWeight = if (theme == currentTheme) FontWeight.Bold else FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (theme == currentTheme) {
+                        Text("✓", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }

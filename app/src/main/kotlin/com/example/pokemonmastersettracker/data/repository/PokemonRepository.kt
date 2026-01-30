@@ -70,7 +70,7 @@ class PokemonRepository @Inject constructor(
      * Returns cards from local database
      */
     suspend fun getCachedCardsForPokemon(pokemonName: String): List<Card> {
-        return cardDao.getCardsByPokemonNameSync("%$pokemonName%")
+        return cardDao.getCardsByPokemonNameSync(pokemonName)
     }
     
     /**

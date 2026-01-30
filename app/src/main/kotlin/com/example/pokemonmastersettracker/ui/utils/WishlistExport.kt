@@ -14,6 +14,81 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// Export wishlist as CSV file
+fun exportWishlistAsCSV(context: Context, wishlistCards: List<Card>): File? {
+    return try {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val file = File(context.cacheDir, "wishlist_$timestamp.csv")
+        
+        val csvContent = StringBuilder()
+        // Header row
+        csvContent.append("Card Name,Set Name,Card Number,Rarity,Type,HP\n")
+        
+        // Data rows
+        for (card in wishlistCards) {
+            val name = card.name?.replace(",", " ") ?: ""
+            val setName = card.set?.name?.replace(",", " ") ?: ""
+            val number = card.number ?: ""
+            val rarity = card.rarity?.replace(",", " ") ?: ""
+            val types = card.types?.joinToString(";") ?: ""
+            val hp = card.hp ?: ""
+            
+            csvContent.append("\"$name\",\"$setName\",\"$number\",\"$rarity\",\"$types\",\"$hp\"\n")
+        }
+        
+        FileOutputStream(file).use { out ->
+            out.write(csvContent.toString().toByteArray())
+            out.flush()
+        }
+        
+        file
+    } catch (e: Exception) {
+        android.util.Log.e("WishlistExportCSV", "Error exporting wishlist as CSV", e)
+        null
+    }
+}
+
+// Export wishlist as text file
+fun exportWishlistAsText(context: Context, wishlistCards: List<Card>): File? {
+    return try {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val file = File(context.cacheDir, "wishlist_$timestamp.txt")
+        
+        val textContent = StringBuilder()
+        textContent.append("=== MY POKEMON WISHLIST ===\n")
+        textContent.append("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())}\n")
+        textContent.append("Total Cards: ${wishlistCards.size}\n")
+        textContent.append("=====================================\n\n")
+        
+        for ((index, card) in wishlistCards.withIndex()) {
+            textContent.append("${index + 1}. ${card.name}\n")
+            textContent.append("   Set: ${card.set?.name ?: "Unknown"}\n")
+            textContent.append("   Card #: ${card.number ?: "N/A"}\n")
+            textContent.append("   Rarity: ${card.rarity ?: "N/A"}\n")
+            if (!card.types.isNullOrEmpty()) {
+                textContent.append("   Type: ${card.types.joinToString(", ")}\n")
+            }
+            if (!card.hp.isNullOrEmpty()) {
+                textContent.append("   HP: ${card.hp}\n")
+            }
+            textContent.append("\n")
+        }
+        
+        textContent.append("=====================================\n")
+        textContent.append("End of Wishlist")
+        
+        FileOutputStream(file).use { out ->
+            out.write(textContent.toString().toByteArray())
+            out.flush()
+        }
+        
+        file
+    } catch (e: Exception) {
+        android.util.Log.e("WishlistExportText", "Error exporting wishlist as text", e)
+        null
+    }
+}
+
 // Export wishlist as image
 fun exportWishlistAsImage(context: Context, wishlistCards: List<Card>): File? {
     return try {
@@ -114,5 +189,32 @@ fun shareWishlistImage(context: Context, imageFile: File) {
         context.startActivity(Intent.createChooser(shareIntent, "Share Wishlist"))
     } catch (e: Exception) {
         android.util.Log.e("WishlistShare", "Error sharing wishlist: ${e.message}", e)
+    }
+}
+
+// Generic share function for any file
+fun shareFile(context: Context, file: File, mimeType: String) {
+    try {
+        val uri = try {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("FileShare", "FileProvider error, trying direct file URI: ${e.message}")
+            android.net.Uri.fromFile(file)
+        }
+        
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = mimeType
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+        
+        context.startActivity(Intent.createChooser(shareIntent, "Share File"))
+    } catch (e: Exception) {
+        android.util.Log.e("FileShare", "Error sharing file: ${e.message}", e)
     }
 }

@@ -32,6 +32,7 @@ import com.example.pokemonmastersettracker.ui.screens.HomeScreen
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
 import com.example.pokemonmastersettracker.ui.theme.ThemeManager
 import com.example.pokemonmastersettracker.ui.theme.ThemeColorSchemes
+import com.example.pokemonmastersettracker.ui.theme.toMaterial3ColorScheme
 import com.example.pokemonmastersettracker.viewmodel.CardViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -63,10 +64,13 @@ fun PokemonTrackerAppScreen(currentTheme: com.example.pokemonmastersettracker.ui
     var currentScreen by remember { mutableIntStateOf(0) }
     val homeViewModel: CardViewModel = hiltViewModel()
     
-    // Force recomposition when theme changes
-    val themeKey = remember(currentTheme) { currentTheme }
+    // Get the Material3 ColorScheme for the current theme
+    val themeColors = ThemeColorSchemes.getThemeColors(currentTheme)
+    val material3ColorScheme = remember(currentTheme) { 
+        themeColors.toMaterial3ColorScheme()
+    }
 
-    MaterialTheme {
+    MaterialTheme(colorScheme = material3ColorScheme) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = PokemonColors.Background,
@@ -81,9 +85,8 @@ fun PokemonTrackerAppScreen(currentTheme: com.example.pokemonmastersettracker.ui
                         selected = currentScreen == 0,
                         onClick = { 
                             if (currentScreen == 0) {
-                                // Already on Home screen, refresh to generations
-                                homeViewModel.clearSelection()
-                                homeViewModel.clearGeneration()
+                                // Already on Home screen, do a full reset
+                                homeViewModel.resetHomeScreen()
                             }
                             currentScreen = 0 
                         }

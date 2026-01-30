@@ -81,6 +81,13 @@ fun HomeScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
+    // Listen for home screen reset signal to clear search query
+    LaunchedEffect(cardUiState.resetHomeScreenSignal) {
+        if (cardUiState.resetHomeScreenSignal > 0) {
+            searchQuery = ""
+        }
+    }
+    
     android.util.Log.d("HomeScreen", "HomeScreen initialized, cardUiState: $cardUiState")
     
     // Show dialog when a card is selected

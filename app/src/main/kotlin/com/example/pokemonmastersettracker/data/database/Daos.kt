@@ -53,10 +53,10 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE id = :cardId")
     suspend fun getCardById(cardId: String): Card?
 
-    @Query("SELECT * FROM cards WHERE name LIKE '%' || :pokemonName || '%'")
+    @Query("SELECT * FROM cards WHERE LOWER(name) = LOWER(:pokemonName)")
     fun getCardsByPokemonName(pokemonName: String): Flow<List<Card>>
     
-    @Query("SELECT * FROM cards WHERE name LIKE :pokemonName")
+    @Query("SELECT * FROM cards WHERE LOWER(name) = LOWER(:pokemonName)")
     suspend fun getCardsByPokemonNameSync(pokemonName: String): List<Card>
 
     @Query("SELECT * FROM cards")
