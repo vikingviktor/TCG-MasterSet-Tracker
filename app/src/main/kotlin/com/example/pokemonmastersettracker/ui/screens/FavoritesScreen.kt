@@ -89,9 +89,19 @@ fun FavoritesScreen(
     var showSortDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
-    // Handle device back button - close card details if open, otherwise system default
-    BackHandler(enabled = selectedCardForDialog != null) {
-        selectedCardForDialog = null
+    // Handle device back button
+    BackHandler(enabled = selectedCardForDialog != null || cardUiState.selectedPokemonName != null) {
+        when {
+            selectedCardForDialog != null -> {
+                // Close card details if open
+                selectedCardForDialog = null
+            }
+            cardUiState.selectedPokemonName != null -> {
+                // Go back to favorites list if viewing a Pokemon's cards
+                viewModel.clearSelection()
+                viewModel.loadFavorites()
+            }
+        }
     }
     
     // Load favorites when screen opens

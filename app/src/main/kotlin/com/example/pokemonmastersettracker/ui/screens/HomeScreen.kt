@@ -82,10 +82,22 @@ fun HomeScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
-    // Handle device back button - close card details if open
+    // Handle device back button
     BackHandler {
-        if (selectedCardForDialog != null) {
-            selectedCardForDialog = null
+        when {
+            selectedCardForDialog != null -> {
+                // Close card details if open
+                selectedCardForDialog = null
+            }
+            cardUiState.selectedPokemonName != null -> {
+                // Go back to search results if viewing a Pokemon's cards
+                viewModel.clearSelection()
+                // If we came from a generation, reload it
+                cardUiState.selectedGeneration?.let { gen ->
+                    viewModel.selectGeneration(gen)
+                }
+            }
+            // Otherwise, let system handle (minimize app)
         }
     }
     
