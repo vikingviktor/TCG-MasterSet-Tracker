@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.AlertDialog
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -87,6 +88,11 @@ fun FavoritesScreen(
     var showJapaneseApiNotice by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    
+    // Handle device back button - close card details if open, otherwise system default
+    BackHandler(enabled = selectedCardForDialog != null) {
+        selectedCardForDialog = null
+    }
     
     // Load favorites when screen opens
     LaunchedEffect(Unit) {

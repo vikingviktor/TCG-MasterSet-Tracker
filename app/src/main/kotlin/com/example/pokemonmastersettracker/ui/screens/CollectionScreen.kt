@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -93,6 +94,11 @@ fun CollectionScreen(
     var refreshTrigger by remember { mutableIntStateOf(0) }
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    
+    // Handle device back button - close card details if open, otherwise system default
+    BackHandler(enabled = selectedCardForDialog != null) {
+        selectedCardForDialog = null
+    }
     
     // Initialize the collection viewModel with userId
     LaunchedEffect(userId) {

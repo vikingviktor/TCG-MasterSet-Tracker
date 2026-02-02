@@ -22,7 +22,7 @@ fun exportWishlistAsCSV(context: Context, wishlistCards: List<Card>): File? {
         
         val csvContent = StringBuilder()
         // Header row
-        csvContent.append("Card Name,Set Name,Card Number,Rarity,Type,HP\n")
+        csvContent.append("Card Name,Set Name,Card Number,Rarity,Type,HP,Avg Price\n")
         
         // Data rows
         for (card in wishlistCards) {
@@ -32,8 +32,9 @@ fun exportWishlistAsCSV(context: Context, wishlistCards: List<Card>): File? {
             val rarity = card.rarity?.replace(",", " ") ?: ""
             val types = card.types?.joinToString(";") ?: ""
             val hp = card.hp ?: ""
+            val avgPrice = card.cardmarket?.avg?.let { "${'$'}%.2f".format(it) } ?: "N/A"
             
-            csvContent.append("\"$name\",\"$setName\",\"$number\",\"$rarity\",\"$types\",\"$hp\"\n")
+            csvContent.append("\"$name\",\"$setName\",\"$number\",\"$rarity\",\"$types\",\"$hp\",\"$avgPrice\"\n")
         }
         
         FileOutputStream(file).use { out ->
@@ -60,6 +61,7 @@ fun exportWishlistAsText(context: Context, wishlistCards: List<Card>): File? {
         textContent.append("Total Cards: ${wishlistCards.size}\n")
         textContent.append("=====================================\n\n")
         
+        var totalValue = 0.0
         for ((index, card) in wishlistCards.withIndex()) {
             textContent.append("${index + 1}. ${card.name}\n")
             textContent.append("   Set: ${card.set?.name ?: "Unknown"}\n")
@@ -71,10 +73,17 @@ fun exportWishlistAsText(context: Context, wishlistCards: List<Card>): File? {
             if (!card.hp.isNullOrEmpty()) {
                 textContent.append("   HP: ${card.hp}\n")
             }
+            card.cardmarket?.avg?.let {
+                textContent.append("   Market Avg Price: ${'$'}%.2f\n".format(it))
+                totalValue += it
+            }
             textContent.append("\n")
         }
         
         textContent.append("=====================================\n")
+        if (totalValue > 0) {
+            textContent.append("Total Estimated Value: ${'$'}%.2f\n".format(totalValue))
+        }
         textContent.append("End of Wishlist")
         
         FileOutputStream(file).use { out ->
@@ -94,7 +103,7 @@ fun exportWishlistAsImage(context: Context, wishlistCards: List<Card>): File? {
     return try {
         // Create bitmap (width, height)
         val width = 1080
-        val height = 200 + (wishlistCards.size * 150) // Dynamic height based on cards
+        val height = 200 + (wishlistCards.size * 180) // Increased height for price info
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         
         val canvas = Canvas(bitmap)
@@ -126,6 +135,12 @@ fun exportWishlistAsImage(context: Context, wishlistCards: List<Card>): File? {
             typeface = Typeface.DEFAULT
         }
         
+        val pricePaint = Paint().apply {
+            color = android.graphics.Color.parseColor("#E63946") // Red for price
+            textSize = 28f
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        
         var yPosition = 150f
         for (card in wishlistCards) {
             // Card name
@@ -144,7 +159,24 @@ fun exportWishlistAsImage(context: Context, wishlistCards: List<Card>): File? {
                 subPaint
             )
             
-            yPosition += 150f
+            // Market average price
+            card.cardmarket?.avg?.let {
+                canvas.drawText(
+                    "Market Avg: \$%.2f".format(it),
+                    40f,
+                    yPosition + 80f,
+                    pricePaint
+                )
+            } ?: run {
+                canvas.drawText(
+                    "Market Avg: N/A",
+                    40f,
+                    yPosition + 80f,
+                    pricePaint
+                )
+            }
+            
+            yPosition += 180f
         }
         
         // Save bitmap to file
