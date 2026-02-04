@@ -40,6 +40,7 @@ val GENERATIONS = listOf(
 enum class CardSortOption {
     NONE,           // Default - no sorting
     SET_NAME,       // Sort by set name (alphabetical)
+    SET_YEAR,       // Sort by set year (newest to oldest)
     PRICE_LOW,      // Sort by price (low to high)
     PRICE_HIGH,     // Sort by price (high to low)
     RARITY,         // Sort by rarity
@@ -221,6 +222,18 @@ class CardViewModel @Inject constructor(
         val sortedCards = when (sortOption) {
             CardSortOption.NONE -> currentCards
             CardSortOption.SET_NAME -> currentCards.sortedBy { it.set?.name ?: "" }
+            CardSortOption.SET_YEAR -> {
+                currentCards.sortedByDescending { card ->
+                    val setName = card.set?.name
+                    val isJapanese = card.set?.isJapanese ?: false
+                    val year = com.example.pokemonmastersettracker.utils.SetYearHelper.getSetYear(
+                        context,
+                        setName,
+                        isJapanese
+                    )
+                    year?.toIntOrNull() ?: 0
+                }
+            }
             CardSortOption.PRICE_LOW -> currentCards.sortedBy { 
                 it.tcgplayer?.prices?.get("normal")?.market ?: it.tcgplayer?.prices?.get("holofoil")?.market ?: Double.MAX_VALUE
             }

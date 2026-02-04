@@ -738,6 +738,7 @@ fun CardDetailView(
             val sortOptions = listOf(
                 CardSortOption.NONE to "None",
                 CardSortOption.SET_NAME to "Set",
+                CardSortOption.SET_YEAR to "Year",
                 CardSortOption.PRICE_LOW to "Price↑",
                 CardSortOption.PRICE_HIGH to "Price↓",
                 CardSortOption.RARITY to "Rarity",

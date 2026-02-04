@@ -21,6 +21,7 @@ data class UserCollectionUiState(
     val ownedCount: Int = 0,
     val totalCount: Int = 0,
     val completionPercentage: Float = 0f,
+    val totalValue: Double = 0.0,
     val loading: Boolean = false,
     val error: String? = null
 )
@@ -70,6 +71,11 @@ class UserCollectionViewModel @Inject constructor(
                 } else {
                     0f
                 }
+                
+                // Calculate total collection value based on average Cardmarket prices
+                val totalValue = ownedCardsWithDetails.sumOf { (_, card) ->
+                    card?.cardmarket?.avg ?: 0.0
+                }
 
                 _collectionUiState.value = UserCollectionUiState(
                     userCards = userCards,
@@ -77,6 +83,7 @@ class UserCollectionViewModel @Inject constructor(
                     ownedCount = ownedCards,
                     totalCount = totalCardsForFavorites,
                     completionPercentage = completionPercentage,
+                    totalValue = totalValue,
                     loading = false
                 )
             }

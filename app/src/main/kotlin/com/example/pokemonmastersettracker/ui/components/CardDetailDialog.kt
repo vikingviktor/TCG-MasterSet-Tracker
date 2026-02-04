@@ -45,6 +45,8 @@ import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.pokemonmastersettracker.data.models.Card
 import com.example.pokemonmastersettracker.ui.theme.PokemonColors
+import com.example.pokemonmastersettracker.utils.SetYearHelper
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CardDetailDialog(
@@ -114,17 +116,33 @@ fun CardDetailDialog(
                     color = PokemonColors.Primary
                 )
                 
-                // Card Set - show name and ID
+                // Card Set - show name, year, and ID
                 card.set?.let { set ->
+                    val context = LocalContext.current
+                    val setYear = SetYearHelper.getSetYear(context, set.name, set.isJapanese)
+                    
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         set.name?.let { setName ->
-                            Text(
-                                text = setName,
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = setName,
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                                setYear?.let { year ->
+                                    Text(
+                                        text = "($year)",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
                         }
                         // Show set ID below the name for easy reference
                         Text(

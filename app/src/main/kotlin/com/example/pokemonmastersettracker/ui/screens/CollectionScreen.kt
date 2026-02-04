@@ -229,6 +229,7 @@ fun CollectionContent(
             ownedCount = collectionUiState.ownedCount,
             totalCount = collectionUiState.totalCount,
             completionPercentage = collectionUiState.completionPercentage,
+            totalValue = collectionUiState.totalValue,
             onRefresh = onRefresh
         )
 
@@ -292,6 +293,7 @@ fun CollectionHeader(
     ownedCount: Int,
     totalCount: Int,
     completionPercentage: Float,
+    totalValue: Double = 0.0,
     onRefresh: (() -> Unit)? = null
 ) {
     Card(
@@ -354,6 +356,28 @@ fun CollectionHeader(
                 Column(horizontalAlignment = Alignment.End) {
                     Text("Total", fontSize = 12.sp, color = Color.Gray)
                     Text("$totalCount", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            
+            // Collection Value
+            if (totalValue > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Est. Collection Value", fontSize = 12.sp, color = Color.Gray)
+                        Text(
+                            "€${
+                                DecimalFormat("#,##0.00").apply {
+                                    roundingMode = RoundingMode.HALF_UP
+                                }.format(totalValue)
+                            }",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4CAF50)
+                        )
+                    }
                 }
             }
 
