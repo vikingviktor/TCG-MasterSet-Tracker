@@ -239,6 +239,7 @@ fun FavoritesScreen(
                     val sortOptions = listOf(
                         CardSortOption.NONE to "None (Default)",
                         CardSortOption.SET_NAME to "Set Name",
+                        CardSortOption.SET_YEAR to "Set Year",
                         CardSortOption.PRICE_LOW to "Price (Low to High)",
                         CardSortOption.PRICE_HIGH to "Price (High to Low)",
                         CardSortOption.RARITY to "Rarity",

@@ -19,21 +19,44 @@ from typing import List, Dict, Any
 
 # List of most popular Pokemon to cache
 POPULAR_POKEMON = [
-    "Pikachu", "Charizard", "Blastoise", "Venusaur", "Dragonite",
-    "Lapras", "Gengar", "Alakazam", "Machamp", "Golem",
-    "Arcanine", "Exeggutor", "Marowak", "Hitmonlee", "Hitmonchan",
-    "Vileplume", "Bellossom", "Wigglytuff", "Golduck", "Kangaskhan",
-    "Rhydon", "Magneton", "Farfetchd", "Dodrio", "Electrode",
-    "Cloyster", "Kingler", "Haunter", "Gengar", "Arbok",
-    "Weezing", "Victreebel", "Muk", "Jynx", "Porygon",
-    "Snorlax", "Articuno", "Zapdos", "Moltres", "Ditto",
-    "Mewtwo", "Mew", "Gyarados", "Tentacruel", "Primeape",
-    "Seaking", "Goldeen", "Staryu", "Starmie", "Slowbro",
-    "Hypno", "Poliwrath", "Grimer", "Kadabra", "Graveler",
-    "Shellder", "Rapidash", "Onix", "Dugtrio", "Persian",
-    "Tauros", "Nidoking", "Nidoqueen", "Ninetales", "Vulpix",
-    "Growlithe", "Psyduck", "Abra", "Mankey", "Pidgeot",
-    "Spearow", "Jigglypuff", "Zubat", "Odish", "Bellsprout"
+    # --- Generation I (Kanto) ---
+    "Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard", 
+    "Squirtle", "Wartortle", "Blastoise", "Pidgeot", "Arbok", "Pikachu", 
+    "Raichu", "Sandslash", "Nidoqueen", "Nidoking", "Vulpix", "Ninetales", 
+    "Jigglypuff", "Wigglytuff", "Zubat", "Oddish", "Vileplume", "Psyduck", 
+    "Golduck", "Mankey", "Primeape", "Growlithe", "Arcanine", "Poliwrath", 
+    "Abra", "Kadabra", "Alakazam", "Machamp", "Bellsprout", "Victreebel", 
+    "Tentacruel", "Graveler", "Golem", "Rapidash", "Slowbro", "Magneton", 
+    "Farfetchd", "Dodrio", "Grimer", "Muk", "Shellder", "Cloyster", 
+    "Haunter", "Gengar", "Onix", "Hypno", "Kingler", "Electrode", 
+    "Exeggutor", "Marowak", "Hitmonlee", "Hitmonchan", "Lickitung", "Rhydon", 
+    "Chansey", "Kangaskhan", "Seaking", "Starmie", "Mr. Mime", "Scyther", 
+    "Jynx", "Electabuzz", "Magmar", "Pinsir", "Tauros", "Gyarados", 
+    "Lapras", "Ditto", "Eevee", "Vaporeon", "Jolteon", "Flareon", 
+    "Porygon", "Aerodactyl", "Snorlax", "Articuno", "Zapdos", "Moltres", 
+    "Dragonite", "Mewtwo", "Mew",
+
+    # --- Generation II (Johto) ---
+    "Chikorita", "Cyndaquil", "Typhlosion", "Totodile", "Feraligatr", "Crobat", 
+    "Ampharos", "Bellossom", "Azumarill", "Sudowoodo", "Umbreon", "Espeon", 
+    "Slowking", "Wobbuffet", "Steelix", "Scizor", "Heracross", "Houndoom", 
+    "Donphan", "Tyranitar", "Lugia", "Ho-Oh", "Celebi",
+
+    # --- Generation III (Hoenn) ---
+    "Treecko", "Sceptile", "Torchic", "Blaziken", "Mudkip", "Swampert", 
+    "Gardevoir", "Slaking", "Exploud", "Aggron", "Flygon", "Altaria", 
+    "Milotic", "Absol", "Salamence", "Metagross", "Regice", "Latias", 
+    "Latios", "Kyogre", "Groudon", "Rayquaza", "Deoxys",
+
+    # --- Mid-Generations (IV - VII Highlights) ---
+    "Lucario", "Garchomp", "Piplup", "Darkrai", "Arceus", "Zoroark", 
+    "Chandelure", "Greninja", "Sylveon", "Xerneas", "Mimikyu", "Decidueye",
+
+    # --- Generation VIII (Galar) ---
+    "Corviknight", "Toxtricity", "Snom", "Dragapult", "Zacian", "Eternatus",
+
+    # --- Generation IX (Paldea) ---
+    "Fuecoco", "Meowscarada", "Tinkaton", "Ceruledge", "Clodsire", "Koraidon", "Miraidon"
 ]
 
 # TCGdex API base URL
@@ -47,7 +70,7 @@ def fetch_pokemon_cards(pokemon_name: str) -> List[Dict[str, Any]]:
         pokemon_name: Name of the Pokemon to search for
         
     Returns:
-        List of card dictionaries
+        List of card dictionaries with set information
     """
     try:
         print(f"Fetching cards for {pokemon_name}...", end=" ")
@@ -56,8 +79,28 @@ def fetch_pokemon_cards(pokemon_name: str) -> List[Dict[str, Any]]:
         response.raise_for_status()
         
         cards = response.json()
-        print(f"✓ ({len(cards)} cards found)")
-        return cards
+        
+        # Extract only the needed fields including set information
+        processed_cards = []
+        for card in cards:
+            processed_card = {
+                "id": card.get("id", ""),
+                "localId": card.get("localId", ""),
+                "name": card.get("name", ""),
+                "image": card.get("image", "")
+            }
+            
+            # Add set information if available
+            if "set" in card:
+                processed_card["set"] = {
+                    "id": card["set"].get("id", ""),
+                    "name": card["set"].get("name", "")
+                }
+            
+            processed_cards.append(processed_card)
+        
+        print(f"✓ ({len(processed_cards)} cards found)")
+        return processed_cards
     except requests.exceptions.RequestException as e:
         print(f"✗ Error: {e}")
         return []
