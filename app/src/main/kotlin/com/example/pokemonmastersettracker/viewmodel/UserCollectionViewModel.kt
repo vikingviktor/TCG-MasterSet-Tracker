@@ -126,6 +126,7 @@ class UserCollectionViewModel @Inject constructor(
 
     fun addCardToCollection(
         cardId: String,
+        variant: String? = null,
         isOwned: Boolean,
         condition: CardCondition = CardCondition.NEAR_MINT,
         isGraded: Boolean = false,
@@ -138,6 +139,7 @@ class UserCollectionViewModel @Inject constructor(
                 repository.addCardToCollection(
                     userId = userId,
                     cardId = cardId,
+                    variant = variant,
                     isOwned = isOwned,
                     condition = condition,
                     isGraded = isGraded,

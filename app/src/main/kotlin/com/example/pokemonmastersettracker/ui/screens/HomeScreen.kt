@@ -120,9 +120,9 @@ fun HomeScreen(
                 selectedCardForDialog = null
                 refreshTrigger++ // Trigger refresh when dialog closes
             },
-            onToggleOwned = { condition ->
+            onToggleOwned = { condition, variant ->
                 scope.launch {
-                    viewModel.toggleCardOwnership(card.id, isCardOwned, condition)
+                    viewModel.toggleCardOwnership(card.id, isCardOwned, condition, variant)
                     // Wait a bit for database operation to complete
                     delay(100)
                     // Re-query the actual state from database
@@ -738,7 +738,8 @@ fun CardDetailView(
             val sortOptions = listOf(
                 CardSortOption.NONE to "None",
                 CardSortOption.SET_NAME to "Set",
-                CardSortOption.SET_YEAR to "Year",
+                CardSortOption.SET_YEAR_DESC to "Year↓",
+                CardSortOption.SET_YEAR_ASC to "Year↑",
                 CardSortOption.PRICE_LOW to "Price↑",
                 CardSortOption.PRICE_HIGH to "Price↓",
                 CardSortOption.RARITY to "Rarity",

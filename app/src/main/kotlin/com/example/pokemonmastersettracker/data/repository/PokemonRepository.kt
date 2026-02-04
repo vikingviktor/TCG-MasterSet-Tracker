@@ -160,6 +160,7 @@ class PokemonRepository @Inject constructor(
     suspend fun addCardToCollection(
         userId: String,
         cardId: String,
+        variant: String? = null,
         isOwned: Boolean = false,
         condition: CardCondition = CardCondition.NEAR_MINT,
         isGraded: Boolean = false,
@@ -170,6 +171,7 @@ class PokemonRepository @Inject constructor(
         val userCard = UserCard(
             userId = userId,
             cardId = cardId,
+            variant = variant,
             isOwned = isOwned,
             condition = condition,
             isGraded = isGraded,
@@ -184,15 +186,26 @@ class PokemonRepository @Inject constructor(
         userCardDao.updateUserCard(userCard)
     }
 
-    suspend fun markCardAsOwned(userId: String, cardId: String, condition: CardCondition = CardCondition.NEAR_MINT) {
+    suspend fun markCardAsOwned(
+        userId: String, 
+        cardId: String, 
+        condition: CardCondition = CardCondition.NEAR_MINT,
+        variant: String? = null
+    ) {
         val userCard = userCardDao.getUserCard(userId, cardId)
         if (userCard == null) {
             // Card doesn't exist in collection, insert it as owned
-            val newUserCard = UserCard(userId = userId, cardId = cardId, isOwned = true, condition = condition)
+            val newUserCard = UserCard(
+                userId = userId, 
+                cardId = cardId, 
+                variant = variant,
+                isOwned = true, 
+                condition = condition
+            )
             userCardDao.insertUserCard(newUserCard)
         } else {
             // Card exists, update it
-            userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition))
+            userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition, variant = variant))
         }
     }
 

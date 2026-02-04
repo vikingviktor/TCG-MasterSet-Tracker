@@ -18,6 +18,7 @@ data class UserCard(
     val id: Long = 0,
     val userId: String,
     val cardId: String,
+    val variant: String? = null, // Tracks which variant is owned (e.g., "Holo", "Reverse Holo", "Normal", etc.)
     val isOwned: Boolean = false,
     val condition: CardCondition = CardCondition.NEAR_MINT,
     val isGraded: Boolean = false,

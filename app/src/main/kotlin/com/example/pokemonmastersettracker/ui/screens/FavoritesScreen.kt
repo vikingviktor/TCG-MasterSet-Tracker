@@ -239,7 +239,8 @@ fun FavoritesScreen(
                     val sortOptions = listOf(
                         CardSortOption.NONE to "None (Default)",
                         CardSortOption.SET_NAME to "Set Name",
-                        CardSortOption.SET_YEAR to "Set Year",
+                        CardSortOption.SET_YEAR_DESC to "Set Year (Newest First)",
+                        CardSortOption.SET_YEAR_ASC to "Set Year (Oldest First)",
                         CardSortOption.PRICE_LOW to "Price (Low to High)",
                         CardSortOption.PRICE_HIGH to "Price (High to Low)",
                         CardSortOption.RARITY to "Rarity",
@@ -297,9 +298,9 @@ fun FavoritesScreen(
                 selectedCardForDialog = null
                 refreshTrigger++ // Trigger refresh when dialog closes
             },
-            onToggleOwned = {
+            onToggleOwned = { condition, variant ->
                 scope.launch {
-                    viewModel.toggleCardOwnership(card.id, isCardOwned)
+                    viewModel.toggleCardOwnership(card.id, isCardOwned, condition, variant)
                     // Wait a bit for database operation to complete
                     delay(100)
                     // Re-query the actual state from database

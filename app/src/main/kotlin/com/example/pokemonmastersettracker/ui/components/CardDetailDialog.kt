@@ -54,12 +54,13 @@ fun CardDetailDialog(
     isOwned: Boolean,
     isInWishlist: Boolean,
     onDismiss: () -> Unit,
-    onToggleOwned: (com.example.pokemonmastersettracker.data.models.CardCondition) -> Unit,
+    onToggleOwned: (com.example.pokemonmastersettracker.data.models.CardCondition, String?) -> Unit,
     onToggleWishlist: () -> Unit
 ) {
     var selectedCondition by remember { mutableStateOf(com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) }
     var showConditionMenu by remember { mutableStateOf(false) }
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showVariantDialog by remember { mutableStateOf(false) }
     
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -218,7 +219,14 @@ fun CardDetailDialog(
                 ) {
                     // Collection Button
                     Button(
-                        onClick = { onToggleOwned(selectedCondition) },
+                        onClick = { 
+                            // If card has variants and not already owned, show variant selection
+                            if (!isOwned && card.variants != null && card.variants!!.getAvailableVariants().isNotEmpty()) {
+                                showVariantDialog = true
+                            } else {
+                                onToggleOwned(selectedCondition, null)
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isOwned) Color(0xFF4CAF50) else PokemonColors.Primary
@@ -271,4 +279,63 @@ fun CardDetailDialog(
             onDismiss = { showInfoDialog = false }
         )
     }
+    
+    // Show variant selection dialog
+    if (showVariantDialog) {
+        VariantSelectionDialog(
+            variants = card.variants!!.getAvailableVariants(),
+            onVariantSelected = { selectedVariant ->
+                showVariantDialog = false
+                onToggleOwned(selectedCondition, selectedVariant)
+            },
+            onDismiss = { showVariantDialog = false }
+        )
+    }
+}
+
+@Composable
+fun VariantSelectionDialog(
+    variants: List<String>,
+    onVariantSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Card Variant") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Choose which variant to add to your collection:",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                variants.forEach { variant ->
+                    OutlinedButton(
+                        onClick = { onVariantSelected(variant) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text(
+                            text = variant,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

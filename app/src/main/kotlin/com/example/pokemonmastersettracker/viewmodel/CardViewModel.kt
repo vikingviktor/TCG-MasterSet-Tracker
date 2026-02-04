@@ -40,7 +40,8 @@ val GENERATIONS = listOf(
 enum class CardSortOption {
     NONE,           // Default - no sorting
     SET_NAME,       // Sort by set name (alphabetical)
-    SET_YEAR,       // Sort by set year (newest to oldest)
+    SET_YEAR_DESC,  // Sort by set year (newest to oldest)
+    SET_YEAR_ASC,   // Sort by set year (oldest to newest)
     PRICE_LOW,      // Sort by price (low to high)
     PRICE_HIGH,     // Sort by price (high to low)
     RARITY,         // Sort by rarity
@@ -222,7 +223,7 @@ class CardViewModel @Inject constructor(
         val sortedCards = when (sortOption) {
             CardSortOption.NONE -> currentCards
             CardSortOption.SET_NAME -> currentCards.sortedBy { it.set?.name ?: "" }
-            CardSortOption.SET_YEAR -> {
+            CardSortOption.SET_YEAR_DESC -> {
                 currentCards.sortedByDescending { card ->
                     val setName = card.set?.name
                     val isJapanese = card.set?.isJapanese ?: false
@@ -232,6 +233,18 @@ class CardViewModel @Inject constructor(
                         isJapanese
                     )
                     year?.toIntOrNull() ?: 0
+                }
+            }
+            CardSortOption.SET_YEAR_ASC -> {
+                currentCards.sortedBy { card ->
+                    val setName = card.set?.name
+                    val isJapanese = card.set?.isJapanese ?: false
+                    val year = com.example.pokemonmastersettracker.utils.SetYearHelper.getSetYear(
+                        context,
+                        setName,
+                        isJapanese
+                    )
+                    year?.toIntOrNull() ?: 9999
                 }
             }
             CardSortOption.PRICE_LOW -> currentCards.sortedBy { 
@@ -305,16 +318,21 @@ class CardViewModel @Inject constructor(
         return result
     }
     
-    fun toggleCardOwnership(cardId: String, currentlyOwned: Boolean, condition: com.example.pokemonmastersettracker.data.models.CardCondition = com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT) {
+    fun toggleCardOwnership(
+        cardId: String, 
+        currentlyOwned: Boolean, 
+        condition: com.example.pokemonmastersettracker.data.models.CardCondition = com.example.pokemonmastersettracker.data.models.CardCondition.NEAR_MINT,
+        variant: String? = null
+    ) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, condition=$condition, userId=$defaultUserId")
+                android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, condition=$condition, variant=$variant, userId=$defaultUserId")
                 if (currentlyOwned) {
                     repository.markCardAsMissing(defaultUserId, cardId)
                     android.util.Log.d("CardViewModel", "✓ Removed from collection: $cardId")
                 } else {
-                    repository.markCardAsOwned(defaultUserId, cardId, condition)
-                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition")
+                    repository.markCardAsOwned(defaultUserId, cardId, condition, variant)
+                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition, variant: $variant")
                     
                     // Auto-favorite the Pokemon when adding a card to collection (only if not already favorited)
                     _cardUiState.value.selectedPokemonName?.let { pokemonName ->

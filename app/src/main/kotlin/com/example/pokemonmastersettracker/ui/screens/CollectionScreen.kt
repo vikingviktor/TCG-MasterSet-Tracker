@@ -122,9 +122,9 @@ fun CollectionScreen(
                 selectedCardForDialog = null
                 refreshTrigger++ // Trigger refresh
             },
-            onToggleOwned = { condition ->
+            onToggleOwned = { condition, variant ->
                 scope.launch {
-                    cardViewModel.toggleCardOwnership(card.id, isCardOwned, condition)
+                    cardViewModel.toggleCardOwnership(card.id, isCardOwned, condition, variant)
                     // Wait a bit for database operation to complete
                     delay(100)
                     // Re-query the actual state from database
@@ -421,6 +421,15 @@ fun CollectionCardItem(
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
+                // Display variant if available
+                if (userCard.variant != null) {
+                    Text(
+                        text = "Variant: ${userCard.variant}",
+                        fontSize = 12.sp,
+                        color = PokemonColors.Primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
                 Text("Condition: ${userCard.condition}", fontSize = 12.sp, color = Color.Gray)
                 if (userCard.isGraded) {
                     Text(
