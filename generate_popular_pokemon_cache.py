@@ -73,31 +73,46 @@ def fetch_pokemon_cards(pokemon_name: str) -> List[Dict[str, Any]]:
         List of card dictionaries with set information
     """
     try:
-        print(f"Fetching cards for {pokemon_name}...", end=" ")
-        url = f"{TCGDEX_API_BASE}?name={pokemon_name}"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        print(f"Fetching cards for {pokemon_name}...", end=" ", flush=True)
         
-        cards = response.json()
+        # First, get the list of card IDs
+        search_url = f"{TCGDEX_API_BASE}?name={pokemon_name}"
+        search_response = requests.get(search_url, timeout=10)
+        search_response.raise_for_status()
+        card_list = search_response.json()
         
-        # Extract only the needed fields including set information
+        # Now fetch full details for each card to get set information
         processed_cards = []
-        for card in cards:
-            processed_card = {
-                "id": card.get("id", ""),
-                "localId": card.get("localId", ""),
-                "name": card.get("name", ""),
-                "image": card.get("image", "")
-            }
-            
-            # Add set information if available
-            if "set" in card:
-                processed_card["set"] = {
-                    "id": card["set"].get("id", ""),
-                    "name": card["set"].get("name", "")
+        for card_summary in card_list:
+            card_id = card_summary.get("id", "")
+            if not card_id:
+                continue
+                
+            # Fetch full card details
+            detail_url = f"{TCGDEX_API_BASE}/{card_id}"
+            try:
+                detail_response = requests.get(detail_url, timeout=10)
+                detail_response.raise_for_status()
+                card = detail_response.json()
+                
+                processed_card = {
+                    "id": card.get("id", ""),
+                    "localId": card.get("localId", ""),
+                    "name": card.get("name", ""),
+                    "image": card.get("image", "")
                 }
-            
-            processed_cards.append(processed_card)
+                
+                # Add set information if available
+                if "set" in card and card["set"]:
+                    processed_card["set"] = {
+                        "id": card["set"].get("id", ""),
+                        "name": card["set"].get("name", "")
+                    }
+                
+                processed_cards.append(processed_card)
+            except:
+                # If individual card fetch fails, skip it
+                continue
         
         print(f"✓ ({len(processed_cards)} cards found)")
         return processed_cards
