@@ -71,6 +71,12 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
+enum class OwnershipFilter {
+    ALL,        // Show all cards
+    OWNED,      // Show only owned cards
+    NOT_OWNED   // Show only cards not owned
+}
+
 @Composable
 fun FavoritesScreen(
     viewModel: CardViewModel = hiltViewModel(),
@@ -87,6 +93,7 @@ fun FavoritesScreen(
     var showAddToWishlistDialog by remember { mutableStateOf(false) }
     var showJapaneseApiNotice by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
+    var ownershipFilter by remember { mutableStateOf(OwnershipFilter.ALL) }
     val scope = rememberCoroutineScope()
     
     // Handle device back button
@@ -427,6 +434,53 @@ fun FavoritesScreen(
                         }
                     }
                     
+                    // Ownership Filter Buttons
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { ownershipFilter = OwnershipFilter.ALL },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (ownershipFilter == OwnershipFilter.ALL) 
+                                    PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                                contentColor = if (ownershipFilter == OwnershipFilter.ALL) 
+                                    PokemonColors.Primary else Color.Gray
+                            )
+                        ) {
+                            Text("All", fontSize = 12.sp)
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { ownershipFilter = OwnershipFilter.OWNED },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (ownershipFilter == OwnershipFilter.OWNED) 
+                                    Color(0xFF4CAF50).copy(alpha = 0.1f) else Color.Transparent,
+                                contentColor = if (ownershipFilter == OwnershipFilter.OWNED) 
+                                    Color(0xFF4CAF50) else Color.Gray
+                            )
+                        ) {
+                            Text("Owned", fontSize = 12.sp)
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { ownershipFilter = OwnershipFilter.NOT_OWNED },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (ownershipFilter == OwnershipFilter.NOT_OWNED) 
+                                    Color(0xFFFF9800).copy(alpha = 0.1f) else Color.Transparent,
+                                contentColor = if (ownershipFilter == OwnershipFilter.NOT_OWNED) 
+                                    Color(0xFFFF9800) else Color.Gray
+                            )
+                        ) {
+                            Text("Not Owned", fontSize = 12.sp)
+                        }
+                    }
+                    
                     // Japanese API notice banner - compact version
                     if (cardUiState.currentLanguage == "ja") {
                         androidx.compose.material3.Card(
@@ -487,6 +541,7 @@ fun FavoritesScreen(
                         CardAlbumView(
                             cards = cardUiState.cards,
                             refreshTrigger = refreshTrigger,
+                            ownershipFilter = ownershipFilter,
                             onCardClick = { card ->
                                 selectedCardForDialog = card
                                 scope.launch {
@@ -646,17 +701,39 @@ fun FavoritePokemonCard(
 fun CardAlbumView(
     cards: List<Card>,
     refreshTrigger: Int,
+    ownershipFilter: OwnershipFilter,
     onCardClick: (Card) -> Unit,
     viewModel: CardViewModel
 ) {
+    // Filter cards based on ownership status
+    val filteredCards = remember(cards, ownershipFilter, refreshTrigger) {
+        cards.filter { card ->
+            when (ownershipFilter) {
+                OwnershipFilter.ALL -> true
+                OwnershipFilter.OWNED -> kotlinx.coroutines.runBlocking { viewModel.isCardOwned(card.id) }
+                OwnershipFilter.NOT_OWNED -> !kotlinx.coroutines.runBlocking { viewModel.isCardOwned(card.id) }
+            }
+        }
+    }
+    
     val cardsPerPage = 4
-    val pageCount = (cards.size + cardsPerPage - 1) / cardsPerPage
+    val pageCount = (filteredCards.size + cardsPerPage - 1) / cardsPerPage
     val pagerState = rememberPagerState(pageCount = { pageCount })
     
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // Filtered count display
+        if (ownershipFilter != OwnershipFilter.ALL) {
+            Text(
+                text = "Showing ${filteredCards.size} of ${cards.size} cards",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+        }
+        
         // Page indicator
         if (pageCount > 1) {
             Row(
@@ -707,8 +784,8 @@ fun CardAlbumView(
                 .weight(1f)
         ) { page ->
             val startIndex = page * cardsPerPage
-            val endIndex = minOf(startIndex + cardsPerPage, cards.size)
-            val pageCards = cards.subList(startIndex, endIndex)
+            val endIndex = minOf(startIndex + cardsPerPage, filteredCards.size)
+            val pageCards = filteredCards.subList(startIndex, endIndex)
             
             // Binder page with dark background and edges
             Box(
