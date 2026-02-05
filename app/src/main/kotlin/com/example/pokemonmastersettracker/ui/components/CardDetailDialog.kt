@@ -218,30 +218,69 @@ fun CardDetailDialog(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Collection Button
-                    Button(
-                        onClick = { 
-                            // If card has variants and not already owned, show variant selection
-                            if (!isOwned && card.variants != null && card.variants!!.getAvailableVariants().isNotEmpty()) {
-                                showVariantDialog = true
-                            } else {
-                                onToggleOwned(selectedCondition, null)
+                    if (card.variants != null && card.variants!!.getAvailableVariants().isNotEmpty()) {
+                        // Card has variants - always show variant selection
+                        if (isOwned) {
+                            // Already own at least one variant - show "Add Another Variant" button
+                            Button(
+                                onClick = { showVariantDialog = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PokemonColors.Primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "+ Variant",
+                                    fontSize = 12.sp
+                                )
                             }
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isOwned) Color(0xFF4CAF50) else PokemonColors.Primary
-                        )
-                    ) {
-                        Icon(
-                            imageVector = if (isOwned) Icons.Default.Check else Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (isOwned) "In Collection" else "Add to Collection",
-                            fontSize = 12.sp
-                        )
+                        } else {
+                            // Don't own any variant yet
+                            Button(
+                                onClick = { showVariantDialog = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PokemonColors.Primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Add to Collection",
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    } else {
+                        // Card has no variants - use toggle button
+                        Button(
+                            onClick = { onToggleOwned(selectedCondition, null) },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isOwned) Color(0xFF4CAF50) else PokemonColors.Primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = if (isOwned) Icons.Default.Check else Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isOwned) "In Collection" else "Add to Collection",
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
                 

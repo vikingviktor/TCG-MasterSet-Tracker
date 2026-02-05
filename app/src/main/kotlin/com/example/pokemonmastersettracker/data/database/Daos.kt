@@ -81,6 +81,9 @@ interface UserCardDao {
     @Query("SELECT * FROM user_cards WHERE userId = :userId AND cardId = :cardId")
     suspend fun getUserCard(userId: String, cardId: String): UserCard?
 
+    @Query("SELECT * FROM user_cards WHERE userId = :userId AND cardId = :cardId AND variant = :variant")
+    suspend fun getUserCardByVariant(userId: String, cardId: String, variant: String?): UserCard?
+
     @Query("SELECT * FROM user_cards WHERE userId = :userId")
     fun getUserCards(userId: String): Flow<List<UserCard>>
     

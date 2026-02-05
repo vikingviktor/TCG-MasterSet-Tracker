@@ -1104,7 +1104,7 @@ class PokemonRepository @Inject constructor(
             
             // Import owned cards
             importData.ownedCards.forEach { exportedCard ->
-                val existingCard = userCardDao.getUserCard(userId, exportedCard.cardId)
+                val existingCard = userCardDao.getUserCardByVariant(userId, exportedCard.cardId, exportedCard.variant)
                 if (existingCard == null) {
                     val userCard = UserCard(
                         userId = userId,
