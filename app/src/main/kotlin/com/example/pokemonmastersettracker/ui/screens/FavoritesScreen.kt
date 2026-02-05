@@ -34,7 +34,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -298,11 +298,7 @@ fun FavoritesScreen(
                         }
                     }
                     
-                    androidx.compose.material3.HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.Gray.copy(alpha = 0.3f)
-                    )
-                    
+                Divider(
                     // Sort Section
                     Text(
                         text = "Sort Cards By",
