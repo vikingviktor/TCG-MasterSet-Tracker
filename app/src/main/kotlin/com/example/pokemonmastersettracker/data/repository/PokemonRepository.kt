@@ -1104,8 +1104,11 @@ class PokemonRepository @Inject constructor(
             
             // Import owned cards
             importData.ownedCards.forEach { exportedCard ->
+                // Check if this exact card+variant combination already exists in collection
                 val existingCard = userCardDao.getUserCardByVariant(userId, exportedCard.cardId, exportedCard.variant)
-                if (existingCard == null) {
+                
+                // Only import if card doesn't exist or isn't already owned
+                if (existingCard == null || !existingCard.isOwned) {
                     val userCard = UserCard(
                         userId = userId,
                         cardId = exportedCard.cardId,
