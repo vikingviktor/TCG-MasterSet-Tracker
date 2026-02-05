@@ -94,7 +94,13 @@ fun FavoritesScreen(
     var showJapaneseApiNotice by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
     var ownershipFilter by remember { mutableStateOf(OwnershipFilter.ALL) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var importJsonText by remember { mutableStateOf("") }
+    var showImportResultDialog by remember { mutableStateOf(false) }
+    var importResultMessage by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     // Handle device back button
     BackHandler(enabled = selectedCardForDialog != null || cardUiState.selectedPokemonName != null) {
@@ -236,13 +242,74 @@ fun FavoritesScreen(
         )
     }
     
-    // Sort options dialog
+    // Sort and Filter options dialog
     if (showSortDialog) {
         AlertDialog(
             onDismissRequest = { showSortDialog = false },
-            title = { Text("Sort Cards") },
+            title = { Text("Sort & Filter Cards") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Filter Section
+                    Text(
+                        text = "Filter by Ownership",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PokemonColors.Primary
+                    )
+                    
+                    val filterOptions = listOf(
+                        OwnershipFilter.ALL to "All Cards",
+                        OwnershipFilter.OWNED to "Owned Only",
+                        OwnershipFilter.NOT_OWNED to "Not Owned Only"
+                    )
+                    
+                    filterOptions.forEach { (filter, label) ->
+                        OutlinedButton(
+                            onClick = {
+                                ownershipFilter = filter
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (ownershipFilter == filter) 
+                                    PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
+                                contentColor = if (ownershipFilter == filter) 
+                                    PokemonColors.Primary else Color.Gray
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (ownershipFilter == filter) 
+                                        FontWeight.Bold else FontWeight.Normal
+                                )
+                                if (ownershipFilter == filter) {
+                                    Text("✓", fontSize = 16.sp)
+                                }
+                            }
+                        }
+                    }
+                    
+                    androidx.compose.material3.HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.Gray.copy(alpha = 0.3f)
+                    )
+                    
+                    // Sort Section
+                    Text(
+                        text = "Sort Cards By",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PokemonColors.Primary
+                    )
+                    
                     val sortOptions = listOf(
                         CardSortOption.NONE to "None (Default)",
                         CardSortOption.SET_NAME to "Set Name",
@@ -258,7 +325,6 @@ fun FavoritesScreen(
                         OutlinedButton(
                             onClick = {
                                 viewModel.setSortOption(option)
-                                showSortDialog = false
                             },
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = if (cardUiState.sortOption == option) 
@@ -290,6 +356,153 @@ fun FavoritesScreen(
             confirmButton = {
                 TextButton(onClick = { showSortDialog = false }) {
                     Text("Close")
+                }
+            }
+        )
+    }
+    
+    // Export Dialog
+    if (showExportDialog) {
+        var exportedData by remember { mutableStateOf("") }
+        LaunchedEffect(Unit) {
+            exportedData = viewModel.exportFavoritesData()
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("Export Favorites Data") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Your favorites data has been exported. Copy to clipboard and save to a file for backup.",
+                        fontSize = 14.sp
+                    )
+                    if (exportedData.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                // Copy to clipboard
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("Favorites Export", exportedData)
+                                clipboard.setPrimaryClip(clip)
+                                
+                                // Save to Downloads folder
+                                try {
+                                    val fileName = "pokemon_favorites_${System.currentTimeMillis()}.json"
+                                    val resolver = context.contentResolver
+                                    val contentValues = android.content.ContentValues().apply {
+                                        put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                                        put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                                    }
+                                    
+                                    val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                                    uri?.let {
+                                        resolver.openOutputStream(it)?.use { outputStream ->
+                                            outputStream.write(exportedData.toByteArray())
+                                        }
+                                        android.widget.Toast.makeText(context, "Saved to Downloads/$fileName", android.widget.Toast.LENGTH_LONG).show()
+                                    }
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(context, "Data copied to clipboard!", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Copy to Clipboard & Save")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showExportDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+    
+    // Import Dialog
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showImportDialog = false
+                importJsonText = ""
+            },
+            title = { Text("Import Favorites Data") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Paste your exported JSON data below or load from file:",
+                        fontSize = 14.sp
+                    )
+                    
+                    OutlinedButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clipData = clipboard.primaryClip
+                            if (clipData != null && clipData.itemCount > 0) {
+                                importJsonText = clipData.getItemAt(0).text.toString()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Paste from Clipboard")
+                    }
+                    
+                    androidx.compose.material3.OutlinedTextField(
+                        value = importJsonText,
+                        onValueChange = { importJsonText = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        placeholder = { Text("Paste JSON data here...") },
+                        maxLines = 10
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            val result = viewModel.importFavoritesData(importJsonText)
+                            importResultMessage = result.message
+                            showImportResultDialog = true
+                            showImportDialog = false
+                            importJsonText = ""
+                            refreshTrigger++
+                        }
+                    },
+                    enabled = importJsonText.isNotEmpty()
+                ) {
+                    Text("Import")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showImportDialog = false
+                    importJsonText = ""
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Import Result Dialog
+    if (showImportResultDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportResultDialog = false },
+            title = { Text("Import Result") },
+            text = { Text(importResultMessage) },
+            confirmButton = {
+                TextButton(onClick = { showImportResultDialog = false }) {
+                    Text("OK")
                 }
             }
         )
@@ -344,29 +557,61 @@ fun FavoritesScreen(
                 Text("← Back to Favorites")
             }
         } else {
-            // Header with title and refresh button
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Header with title and action buttons
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Favorite Pokemon",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                IconButton(
-                    onClick = { viewModel.loadFavorites() }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh favorites",
-                        tint = PokemonColors.Primary
+                    Text(
+                        text = "Favorite Pokemon",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    
+                    IconButton(
+                        onClick = { viewModel.loadFavorites() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh favorites",
+                            tint = PokemonColors.Primary
+                        )
+                    }
+                }
+                
+                // Export/Import buttons row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { showExportDialog = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text("📥 Export", fontSize = 13.sp)
+                    }
+                    
+                    OutlinedButton(
+                        onClick = { showImportDialog = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = PokemonColors.Primary
+                        )
+                    ) {
+                        Text("📤 Import", fontSize = 13.sp)
+                    }
                 }
             }
         }
@@ -411,7 +656,7 @@ fun FavoritesScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.FilterList,
-                                    contentDescription = "Sort options",
+                                    contentDescription = "Sort & Filter options",
                                     tint = PokemonColors.Primary
                                 )
                             }
@@ -431,53 +676,6 @@ fun FavoritesScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                        }
-                    }
-                    
-                    // Ownership Filter Buttons
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { ownershipFilter = OwnershipFilter.ALL },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (ownershipFilter == OwnershipFilter.ALL) 
-                                    PokemonColors.Primary.copy(alpha = 0.1f) else Color.Transparent,
-                                contentColor = if (ownershipFilter == OwnershipFilter.ALL) 
-                                    PokemonColors.Primary else Color.Gray
-                            )
-                        ) {
-                            Text("All", fontSize = 12.sp)
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { ownershipFilter = OwnershipFilter.OWNED },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (ownershipFilter == OwnershipFilter.OWNED) 
-                                    Color(0xFF4CAF50).copy(alpha = 0.1f) else Color.Transparent,
-                                contentColor = if (ownershipFilter == OwnershipFilter.OWNED) 
-                                    Color(0xFF4CAF50) else Color.Gray
-                            )
-                        ) {
-                            Text("Owned", fontSize = 12.sp)
-                        }
-                        
-                        OutlinedButton(
-                            onClick = { ownershipFilter = OwnershipFilter.NOT_OWNED },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (ownershipFilter == OwnershipFilter.NOT_OWNED) 
-                                    Color(0xFFFF9800).copy(alpha = 0.1f) else Color.Transparent,
-                                contentColor = if (ownershipFilter == OwnershipFilter.NOT_OWNED) 
-                                    Color(0xFFFF9800) else Color.Gray
-                            )
-                        ) {
-                            Text("Not Owned", fontSize = 12.sp)
                         }
                     }
                     

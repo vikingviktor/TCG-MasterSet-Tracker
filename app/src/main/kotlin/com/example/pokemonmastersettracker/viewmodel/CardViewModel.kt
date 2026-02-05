@@ -665,4 +665,19 @@ class CardViewModel @Inject constructor(
             resetHomeScreenSignal = System.currentTimeMillis()
         )
     }
+    
+    // Export/Import Favorites
+    
+    suspend fun exportFavoritesData(): String {
+        return repository.exportFavoritesData(defaultUserId)
+    }
+    
+    suspend fun importFavoritesData(jsonData: String): com.example.pokemonmastersettracker.data.repository.ImportResult {
+        val result = repository.importFavoritesData(defaultUserId, jsonData)
+        if (result.success) {
+            // Refresh favorites list after import
+            loadFavorites()
+        }
+        return result
+    }
 }

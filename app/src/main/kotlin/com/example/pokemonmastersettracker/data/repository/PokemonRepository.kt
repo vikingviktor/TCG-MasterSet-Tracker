@@ -1058,4 +1058,115 @@ class PokemonRepository @Inject constructor(
             Pokemon(name = name, nationalPokedexNumber = number)
         }
     }
+    
+    // Export/Import Favorites Data
+    
+    suspend fun exportFavoritesData(userId: String): String {
+        val favoritePokemon = favoritePokemonDao.getFavoritePokemonSync(userId)
+        val userCards = userCardDao.getUserCardsSync(userId)
+        
+        val exportData = FavoritesExportData(
+            version = "1.0",
+            exportDate = System.currentTimeMillis(),
+            userId = userId,
+            favoritePokemon = favoritePokemon.map { it.pokemonName },
+            ownedCards = userCards.filter { it.isOwned }.map { userCard ->
+                ExportedCard(
+                    cardId = userCard.cardId,
+                    variant = userCard.variant,
+                    condition = userCard.condition.name,
+                    isGraded = userCard.isGraded,
+                    gradingCompany = userCard.gradingCompany,
+                    grade = userCard.grade,
+                    purchasePrice = userCard.purchasePrice,
+                    addedAt = userCard.addedAt
+                )
+            }
+        )
+        
+        return com.google.gson.Gson().toJson(exportData)
+    }
+    
+    suspend fun importFavoritesData(userId: String, jsonData: String): ImportResult {
+        return try {
+            val importData = com.google.gson.Gson().fromJson(jsonData, FavoritesExportData::class.java)
+            
+            var importedPokemon = 0
+            var importedCards = 0
+            
+            // Import favorite Pokemon
+            importData.favoritePokemon.forEach { pokemonName ->
+                if (!isFavoritePokemon(userId, pokemonName)) {
+                    addFavoritePokemon(userId, pokemonName)
+                    importedPokemon++
+                }
+            }
+            
+            // Import owned cards
+            importData.ownedCards.forEach { exportedCard ->
+                val existingCard = userCardDao.getUserCard(userId, exportedCard.cardId)
+                if (existingCard == null) {
+                    val userCard = UserCard(
+                        userId = userId,
+                        cardId = exportedCard.cardId,
+                        variant = exportedCard.variant,
+                        isOwned = true,
+                        condition = try {
+                            CardCondition.valueOf(exportedCard.condition)
+                        } catch (e: Exception) {
+                            CardCondition.NEAR_MINT
+                        },
+                        isGraded = exportedCard.isGraded,
+                        gradingCompany = exportedCard.gradingCompany,
+                        grade = exportedCard.grade,
+                        purchasePrice = exportedCard.purchasePrice,
+                        addedAt = exportedCard.addedAt
+                    )
+                    userCardDao.insertUserCard(userCard)
+                    importedCards++
+                }
+            }
+            
+            ImportResult(
+                success = true,
+                importedPokemon = importedPokemon,
+                importedCards = importedCards,
+                message = "Successfully imported $importedPokemon Pokemon and $importedCards cards"
+            )
+        } catch (e: Exception) {
+            ImportResult(
+                success = false,
+                importedPokemon = 0,
+                importedCards = 0,
+                message = "Failed to import data: ${e.message}"
+            )
+        }
+    }
 }
+
+// Data classes for export/import
+data class FavoritesExportData(
+    val version: String,
+    val exportDate: Long,
+    val userId: String,
+    val favoritePokemon: List<String>,
+    val ownedCards: List<ExportedCard>
+)
+
+data class ExportedCard(
+    val cardId: String,
+    val variant: String?,
+    val condition: String,
+    val isGraded: Boolean,
+    val gradingCompany: String?,
+    val grade: String?,
+    val purchasePrice: Double?,
+    val addedAt: Long
+)
+
+data class ImportResult(
+    val success: Boolean,
+    val importedPokemon: Int,
+    val importedCards: Int,
+    val message: String
+)
