@@ -149,6 +149,8 @@ data class TCGdexVariants(
  */
 class TCGdexService {
     
+    private val pokeWalletService = PokeWalletService()
+    
     private val api: TCGdexApi = Retrofit.Builder()
         .baseUrl("https://api.tcgdex.net/v2/")
         .client(
@@ -466,6 +468,58 @@ class TCGdexService {
         } catch (e: Exception) {
             Log.e("TCGdexService", "Error converting card: ${e.message}", e)
             null
+        }
+    }
+    
+    /**
+     * Enhance a card with pricing data from PokeWallet if TCGdex pricing is missing
+     */
+    suspend fun enhanceCardWithPricing(card: Card): Card {
+        // Check if card already has pricing data
+        val hasTCGPlayerPricing = card.tcgplayer?.prices?.values?.any { 
+            it.market != null || it.mid != null 
+        } == true
+        
+        if (hasTCGPlayerPricing) {
+            Log.d("TCGdexService", "Card ${card.name} already has pricing, skipping PokeWallet")
+            return card
+        }
+        
+        Log.d("TCGdexService", "Card ${card.name} missing pricing, checking PokeWallet...")
+        
+        // Fetch pricing from PokeWallet
+        val pokeWalletPricing = pokeWalletService.fetchPricing(
+            cardName = card.name,
+            setName = card.set?.name,
+            cardNumber = card.number
+        )
+        
+        if (pokeWalletPricing != null) {
+            Log.d("TCGdexService", "✓ Enhanced ${card.name} with PokeWallet pricing")
+            return card.copy(
+                tcgplayer = TCGPlayerData(
+                    url = card.tcgplayer?.url,
+                    updatedAt = card.tcgplayer?.updatedAt,
+                    prices = pokeWalletPricing
+                )
+            )
+        }
+        
+        Log.d("TCGdexService", "⚠ No PokeWallet pricing found for ${card.name}")
+        return card
+    }
+    
+    /**
+     * Enhance multiple cards with pricing data from PokeWallet
+     */
+    suspend fun enhanceCardsWithPricing(cards: List<Card>): List<Card> = withContext(Dispatchers.IO) {
+        return@withContext cards.map { card ->
+            try {
+                enhanceCardWithPricing(card)
+            } catch (e: Exception) {
+                Log.e("TCGdexService", "Failed to enhance card ${card.name}: ${e.message}")
+                card
+            }
         }
     }
     

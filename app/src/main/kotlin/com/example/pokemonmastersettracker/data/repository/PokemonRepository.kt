@@ -112,12 +112,20 @@ class PokemonRepository @Inject constructor(
             val apiCards = tcgdexService.searchCardsByPokemon(pokemonName, "en")
             android.util.Log.d("PokemonRepository", "✓ API returned ${apiCards.size} cards")
             
-            if (apiCards.isNotEmpty()) {
-                android.util.Log.d("PokemonRepository", "💾 Saving ${apiCards.size} fresh API cards to database...")
-                saveCards(apiCards)
+            // Enhance cards with PokeWallet pricing if missing
+            val enhancedCards = if (apiCards.isNotEmpty()) {
+                android.util.Log.d("PokemonRepository", "💰 Enhancing cards with PokeWallet pricing...")
+                tcgdexService.enhanceCardsWithPricing(apiCards)
+            } else {
+                apiCards
             }
             
-            apiCards
+            if (enhancedCards.isNotEmpty()) {
+                android.util.Log.d("PokemonRepository", "💾 Saving ${enhancedCards.size} enhanced cards to database...")
+                saveCards(enhancedCards)
+            }
+            
+            enhancedCards
         } catch (e: Exception) {
             android.util.Log.w("PokemonRepository", "⚠️ Failed to fetch from API: ${e.message}")
             emptyList()
