@@ -1062,14 +1062,14 @@ class PokemonRepository @Inject constructor(
     // Export/Import Favorites Data
     
     suspend fun exportFavoritesData(userId: String): String {
-        val favoritePokemon = favoritePokemonDao.getFavoritePokemonSync(userId)
+        val favoritePokemon = favoritePokemonDao.getUserFavoritesSync(userId)
         val userCards = userCardDao.getUserCardsSync(userId)
         
         val exportData = FavoritesExportData(
             version = "1.0",
             exportDate = System.currentTimeMillis(),
             userId = userId,
-            favoritePokemon = favoritePokemon.map { it.pokemonName },
+            favoritePokemon = favoritePokemon.map { favPokemon -> favPokemon.pokemonName },
             ownedCards = userCards.filter { it.isOwned }.map { userCard ->
                 ExportedCard(
                     cardId = userCard.cardId,
