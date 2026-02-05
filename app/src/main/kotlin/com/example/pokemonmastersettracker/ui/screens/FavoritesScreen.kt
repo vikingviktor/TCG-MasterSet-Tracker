@@ -299,18 +299,17 @@ fun FavoritesScreen(
                     }
                     
                 Divider(
-                    // Sort Section
-                    Text(
-                        text = "Sort Cards By",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PokemonColors.Primary
-                    )
-                    
-                    val sortOptions = listOf(
-                        CardSortOption.NONE to "None (Default)",
-                        CardSortOption.SET_NAME to "Set Name",
-                        CardSortOption.SET_YEAR_DESC to "Set Year (Newest First)",
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = Color.Gray.copy(alpha = 0.3f)
+                )
+                
+                // Sort Section
+                Text(
+                    text = "Sort Cards By",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PokemonColors.Primary
+                )
                         CardSortOption.SET_YEAR_ASC to "Set Year (Oldest First)",
                         CardSortOption.PRICE_LOW to "Price (Low to High)",
                         CardSortOption.PRICE_HIGH to "Price (High to Low)",
