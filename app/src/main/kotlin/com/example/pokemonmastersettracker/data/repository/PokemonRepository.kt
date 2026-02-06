@@ -412,7 +412,7 @@ class PokemonRepository @Inject constructor(
             
             favoritePokemon.forEach { fav ->
                 // Get all cards for this Pokemon
-                val cards = cardDao.getCardsByPokemonName(fav.pokemonName)
+                val cards = cardDao.getCardsByPokemonNameSync(fav.pokemonName)
                 
                 // Count all available variants for each card
                 val variantsForPokemon = cards.sumOf { card ->
