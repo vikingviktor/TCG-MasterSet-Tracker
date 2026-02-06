@@ -327,14 +327,24 @@ class CardViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 android.util.Log.d("CardViewModel", "Toggle ownership: cardId=$cardId, currentlyOwned=$currentlyOwned, condition=$condition, variant=$variant, userId=$defaultUserId")
-                if (currentlyOwned) {
-                    repository.markCardAsMissing(defaultUserId, cardId)
-                    android.util.Log.d("CardViewModel", "✓ Removed from collection: $cardId")
-                } else {
+                
+                // If a variant is specified, always add it (never remove)
+                if (variant != null) {
                     repository.markCardAsOwned(defaultUserId, cardId, condition, variant)
-                    android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition, variant: $variant")
-                    
-                    // Auto-favorite the Pokemon when adding a card to collection (only if not already favorited)
+                    android.util.Log.d("CardViewModel", "✓ Added variant to collection: $cardId - $variant with condition: $condition")
+                } else {
+                    // No variant - toggle between owned and not owned
+                    if (currentlyOwned) {
+                        repository.markCardAsMissing(defaultUserId, cardId)
+                        android.util.Log.d("CardViewModel", "✓ Removed from collection: $cardId")
+                    } else {
+                        repository.markCardAsOwned(defaultUserId, cardId, condition, null)
+                        android.util.Log.d("CardViewModel", "✓ Added to collection: $cardId with condition: $condition")
+                    }
+                }
+                
+                // Auto-favorite the Pokemon when adding a card to collection (only if not already favorited)
+                if (!currentlyOwned || variant != null) {
                     _cardUiState.value.selectedPokemonName?.let { pokemonName ->
                         // Check synchronously to avoid race conditions
                         val alreadyFavorited = repository.isFavoritePokemon(defaultUserId, pokemonName)

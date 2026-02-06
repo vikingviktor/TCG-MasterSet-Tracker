@@ -226,6 +226,75 @@ Perfect for learning modern Android development!
 
 ---
 
+## ❓ Frequently Asked Questions (FAQ)
+
+### Collection Management
+
+**Q: How do card variants work?**  
+A: Some cards have multiple variants (Holo, Reverse Holo, Normal, 1st Edition, etc.). When adding a card with variants to your collection:
+- First time: Select which variant you're adding
+- Already own a variant: Click the "+ Variant" button to add additional variants of the same card
+- Each variant is tracked separately, so you can collect all variants of a single card
+
+**Q: What's the difference between Collection and Wishlist?**  
+A: 
+- **Collection**: Cards you physically own
+- **Wishlist**: Cards you want to buy/trade for
+- You can add missing cards from your Favorites binder to the Wishlist in bulk using the "+ Wishlist" button
+
+### Data Backup & Export
+
+**Q: How do I backup my collection data?**  
+A: Use the Export/Import feature in the Favorites tab:
+1. Go to Favorites → Pokemon tab
+2. Click "📥 Export" to save your data
+3. Choose to copy to clipboard or save to Downloads folder
+4. The export includes all your favorite Pokemon and owned cards (with variants)
+
+**Q: How do I restore my collection on a new device?**  
+A: 
+1. Go to Favorites → Pokemon tab
+2. Click "📤 Import"
+3. Paste your previously exported JSON data or select the file
+4. Click "Import" - your favorites and collection will be restored
+5. The import automatically avoids duplicates
+
+**Q: What data is included in the export?**  
+A: The export includes:
+- All favorite Pokemon
+- All owned cards with their variants
+- Card conditions and grading information
+- Purchase prices and dates
+- Everything needed to fully restore your collection
+
+**Q: Can I export my Wishlist?**  
+A: Yes! In the Wishlist screen, tap the share/export icon to save your wishlist. You can share it as text or save it locally.
+
+### Pricing Data
+
+**Q: Where do card prices come from?**  
+A: Card prices are sourced from two APIs:
+- **TCGdex**: Primary source for card data and pricing
+- **PokeWallet.io**: Backup source that fills in missing prices
+- Prices are automatically fetched when you load cards
+
+**Q: Why don't all cards have prices?**  
+A: Some cards (especially older or Japanese exclusive cards) may not have pricing data available in the APIs. We're continuously working to improve price coverage.
+
+### Language & Cards
+
+**Q: Can I search for Japanese cards?**  
+A: Yes! In the Favorites screen:
+1. Select a Pokemon
+2. Switch to the "Cards" tab
+3. Toggle between "English" and "Japanese" using the language selector
+4. Japanese cards will show the set names in Japanese characters
+
+**Q: How many cards are in the database?**  
+A: The app has access to 1000+ Pokemon cards across multiple sets and languages, with new cards added regularly through API updates.
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.

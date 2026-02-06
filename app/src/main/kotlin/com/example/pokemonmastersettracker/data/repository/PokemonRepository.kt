@@ -200,20 +200,43 @@ class PokemonRepository @Inject constructor(
         condition: CardCondition = CardCondition.NEAR_MINT,
         variant: String? = null
     ) {
-        val userCard = userCardDao.getUserCard(userId, cardId)
-        if (userCard == null) {
-            // Card doesn't exist in collection, insert it as owned
-            val newUserCard = UserCard(
-                userId = userId, 
-                cardId = cardId, 
-                variant = variant,
-                isOwned = true, 
-                condition = condition
-            )
-            userCardDao.insertUserCard(newUserCard)
+        // If a variant is specified, always insert a new entry (supports multiple variants)
+        if (variant != null) {
+            // Check if this specific variant already exists
+            val existingVariant = userCardDao.getUserCardByVariant(userId, cardId, variant)
+            if (existingVariant == null) {
+                // Insert new variant
+                val newUserCard = UserCard(
+                    userId = userId,
+                    cardId = cardId,
+                    variant = variant,
+                    isOwned = true,
+                    condition = condition
+                )
+                userCardDao.insertUserCard(newUserCard)
+                android.util.Log.d("PokemonRepository", "✓ Added new variant: $variant for card $cardId")
+            } else {
+                // Variant already exists, just update it
+                userCardDao.updateUserCard(existingVariant.copy(isOwned = true, condition = condition))
+                android.util.Log.d("PokemonRepository", "✓ Updated existing variant: $variant for card $cardId")
+            }
         } else {
-            // Card exists, update it
-            userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition, variant = variant))
+            // No variant specified - legacy behavior for cards without variants
+            val userCard = userCardDao.getUserCard(userId, cardId)
+            if (userCard == null) {
+                // Card doesn't exist in collection, insert it as owned
+                val newUserCard = UserCard(
+                    userId = userId,
+                    cardId = cardId,
+                    variant = null,
+                    isOwned = true,
+                    condition = condition
+                )
+                userCardDao.insertUserCard(newUserCard)
+            } else {
+                // Card exists, update it
+                userCardDao.updateUserCard(userCard.copy(isOwned = true, condition = condition))
+            }
         }
     }
 
