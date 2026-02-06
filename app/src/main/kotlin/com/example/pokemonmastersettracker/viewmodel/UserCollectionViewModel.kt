@@ -1,5 +1,6 @@
 package com.example.pokemonmastersettracker.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pokemonmastersettracker.data.models.Card
@@ -7,11 +8,14 @@ import com.example.pokemonmastersettracker.data.models.User
 import com.example.pokemonmastersettracker.data.models.UserCard
 import com.example.pokemonmastersettracker.data.models.CardCondition
 import com.example.pokemonmastersettracker.data.repository.PokemonRepository
+import com.example.pokemonmastersettracker.data.preferences.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,7 +27,8 @@ data class UserCollectionUiState(
     val completionPercentage: Float = 0f,
     val totalValue: Double = 0.0,
     val loading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val countVariants: Boolean = false // Whether to count variants in totals
 )
 
 data class WishlistUiState(
@@ -34,9 +39,11 @@ data class WishlistUiState(
 
 @HiltViewModel
 class UserCollectionViewModel @Inject constructor(
-    private val repository: PokemonRepository
+    private val repository: PokemonRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    private val userPreferences = UserPreferences(context)
     private val _collectionUiState = MutableStateFlow(UserCollectionUiState())
     val collectionUiState: StateFlow<UserCollectionUiState> = _collectionUiState.asStateFlow()
 
@@ -54,20 +61,37 @@ class UserCollectionViewModel @Inject constructor(
         viewModelScope.launch {
             _collectionUiState.value = _collectionUiState.value.copy(loading = true)
             
-            repository.getUserCards(userId).collect { userCards ->
-                val ownedCards = userCards.filter { it.isOwned }.size
-                
+            combine(
+                repository.getUserCards(userId),
+                userPreferences.countVariantsInCollection
+            ) { userCards, countVariants ->
+                Pair(userCards, countVariants)
+            }.collect { (userCards, countVariants) ->
                 // Get card details for all user cards
                 val allCardsWithDetails = repository.getUserCardsWithDetails(userId)
                 
                 // Filter to only show owned cards in the collection list
                 val ownedCardsWithDetails = allCardsWithDetails.filter { it.first.isOwned }
                 
-                // Get total count of cards for all favorite Pokemon
-                val totalCardsForFavorites = repository.getTotalCardsCountForFavoritePokemon(userId)
+                val ownedCount: Int
+                val totalCount: Int
                 
-                val completionPercentage = if (totalCardsForFavorites > 0) {
-                    (ownedCards.toFloat() / totalCardsForFavorites) * 100
+                if (countVariants) {
+                    // Count all variant entries
+                    ownedCount = userCards.filter { it.isOwned }.size
+                    // Total = all possible variants for all cards in master set
+                    totalCount = repository.getTotalVariantsCountForFavoritePokemon(userId)
+                } else {
+                    // Count unique cards only (ignore variants)
+                    ownedCount = userCards.filter { it.isOwned }
+                        .distinctBy { it.cardId }
+                        .size
+                    // Total = unique cards in master set
+                    totalCount = repository.getTotalCardsCountForFavoritePokemon(userId)
+                }
+                
+                val completionPercentage = if (totalCount > 0) {
+                    (ownedCount.toFloat() / totalCount) * 100
                 } else {
                     0f
                 }
@@ -80,13 +104,22 @@ class UserCollectionViewModel @Inject constructor(
                 _collectionUiState.value = UserCollectionUiState(
                     userCards = userCards,
                     userCardsWithDetails = ownedCardsWithDetails,
-                    ownedCount = ownedCards,
-                    totalCount = totalCardsForFavorites,
+                    ownedCount = ownedCount,
+                    totalCount = totalCount,
                     completionPercentage = completionPercentage,
                     totalValue = totalValue,
-                    loading = false
+                    loading = false,
+                    countVariants = countVariants
                 )
             }
+        }
+    }
+    
+    fun toggleVariantCounting() {
+        viewModelScope.launch {
+            val currentSetting = _collectionUiState.value.countVariants
+            userPreferences.setCountVariantsInCollection(!currentSetting)
+            // Collection will auto-reload via flow
         }
     }
 

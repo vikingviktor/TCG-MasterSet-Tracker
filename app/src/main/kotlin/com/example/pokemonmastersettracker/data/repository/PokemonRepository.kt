@@ -405,6 +405,33 @@ class PokemonRepository @Inject constructor(
         }
     }
     
+    suspend fun getTotalVariantsCountForFavoritePokemon(userId: String): Int {
+        return try {
+            val favoritePokemon = favoritePokemonDao.getUserFavoritesSync(userId)
+            var totalVariants = 0
+            
+            favoritePokemon.forEach { fav ->
+                // Get all cards for this Pokemon
+                val cards = cardDao.getCardsByPokemonName(fav.pokemonName)
+                
+                // Count all available variants for each card
+                val variantsForPokemon = cards.sumOf { card ->
+                    card.variants?.getAvailableVariants()?.size ?: 1 // If no variants, count as 1
+                }
+                
+                android.util.Log.d("PokemonRepository", "  - ${fav.pokemonName}: ${cards.size} cards, $variantsForPokemon total variants")
+                totalVariants += variantsForPokemon
+            }
+            
+            android.util.Log.d("PokemonRepository", "✓ Total variants for ${favoritePokemon.size} favorite Pokemon: $totalVariants")
+            totalVariants
+        } catch (e: Exception) {
+            android.util.Log.e("PokemonRepository", "Error getting total variants count: ${e.message}")
+            // Fallback to unique cards count
+            getTotalCardsCountForFavoritePokemon(userId)
+        }
+    }
+    
     suspend fun getOwnedCardsCountForPokemon(userId: String, pokemonName: String): Int {
         return try {
             // Get all cards for this Pokemon from database

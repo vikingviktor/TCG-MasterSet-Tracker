@@ -16,7 +16,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.ButtonDefaults
@@ -230,7 +232,9 @@ fun CollectionContent(
             totalCount = collectionUiState.totalCount,
             completionPercentage = collectionUiState.completionPercentage,
             totalValue = collectionUiState.totalValue,
-            onRefresh = onRefresh
+            countVariants = collectionUiState.countVariants,
+            onRefresh = onRefresh,
+            onToggleVariantCounting = { viewModel.toggleVariantCounting() }
         )
 
         // Card list
@@ -294,8 +298,12 @@ fun CollectionHeader(
     totalCount: Int,
     completionPercentage: Float,
     totalValue: Double = 0.0,
-    onRefresh: (() -> Unit)? = null
+    countVariants: Boolean = false,
+    onRefresh: (() -> Unit)? = null,
+    onToggleVariantCounting: (() -> Unit)? = null
 ) {
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,21 +321,36 @@ fun CollectionHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Your Collection",
+                    text = "Your Master Set",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 
-                // Refresh button
-                onRefresh?.let {
-                    Button(
-                        onClick = it,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PokemonColors.Primary
-                        )
-                    ) {
-                        Text("Refresh", fontSize = 12.sp)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Settings button
+                    onToggleVariantCounting?.let {
+                        IconButton(onClick = { showSettingsDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Collection Settings",
+                                tint = PokemonColors.Primary
+                            )
+                        }
+                    }
+                    
+                    // Refresh button
+                    onRefresh?.let {
+                        Button(
+                            onClick = it,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PokemonColors.Primary
+                            )
+                        ) {
+                            Text("Refresh", fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -388,6 +411,53 @@ fun CollectionHeader(
                 trackColor = Color.LightGray
             )
         }
+    }
+    
+    // Settings Dialog
+    if (showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            title = { Text("Collection Tracking Settings") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "How should variants be counted?",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Text(
+                        text = if (countVariants) {
+                            "✓ Currently counting variants\n\nWith this enabled:\n• Total = all available variants in master set\n• Owned = total variant entries you own\n\nExample: If you own Holo + Normal of the same card, owned count = 2"
+                        } else {
+                            "✓ Currently counting unique cards only\n\nWith this enabled:\n• Total = unique cards in master set\n• Owned = unique cards you own (ignoring variants)\n\nExample: If you own Holo + Normal of the same card, owned count = 1"
+                        },
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onToggleVariantCounting?.invoke()
+                        showSettingsDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PokemonColors.Primary
+                    )
+                ) {
+                    Text(if (countVariants) "Count Unique Cards Only" else "Count All Variants")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showSettingsDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
