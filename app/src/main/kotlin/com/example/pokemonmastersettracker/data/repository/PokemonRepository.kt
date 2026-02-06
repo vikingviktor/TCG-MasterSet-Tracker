@@ -416,7 +416,8 @@ class PokemonRepository @Inject constructor(
                 
                 // Count all available variants for each card
                 val variantsForPokemon = cards.sumOf { card ->
-                    card.variants?.getAvailableVariants()?.size ?: 1 // If no variants, count as 1
+                    val variants = card.variants?.getAvailableVariants()
+                    variants?.size ?: 1 // If no variants, count as 1
                 }
                 
                 android.util.Log.d("PokemonRepository", "  - ${fav.pokemonName}: ${cards.size} cards, $variantsForPokemon total variants")
